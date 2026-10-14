@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <Reference Include="mscorlib"><HintPath>$(ClientManaged)\mscorlib.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="netstandard"><HintPath>$(ClientManaged)\netstandard.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="netstandard" Condition="Exists('$(ClientManaged)\netstandard.dll')"><HintPath>$(ClientManaged)\netstandard.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="System"><HintPath>$(ClientManaged)\System.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="System.Core"><HintPath>$(ClientManaged)\System.Core.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>

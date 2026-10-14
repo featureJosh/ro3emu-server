@@ -264,7 +264,7 @@ what to include in a report or proposed change.
 
 ## Documentation
 
-- [`docs/guide/`](docs/guide): running a server: GM access, open content, feedback, launcher and patch repository
+- [`docs/guide/`](docs/guide): running a server: GM access, open content, feedback, launcher and patch repository, [Linux and the Asia client](docs/guide/linux.md)
 - [`docs/systems/`](docs/systems): how each system is implemented and which choices are inferred
 - [`docs/research/`](docs/research): client evidence behind the protocol and rules
 
