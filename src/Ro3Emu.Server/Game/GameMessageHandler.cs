@@ -614,8 +614,32 @@ public sealed partial class GameMessageHandler(RoleStore roles, MsgCatalog catal
     {
         var settings = roles.LoadSettings(roleId) is { } bytes ? DBSettingInfo.Parser.ParseFrom(bytes) : new DBSettingInfo();
         settings.WildAFKInfo ??= new SettingWildAFKInfo(); // OnHook's setting editor requires a real object.
+        if (!settings.ClientSetting.ContainsKey((int)SettingType.BaseBattle))
+            settings.ClientSetting[(int)SettingType.BaseBattle] = DefaultBaseBattle.ToByteString();
         return settings;
     }
+
+    /// <summary>
+    /// A role without saved battle settings gets the client's own defaults (LC_DAL_Setting._processBaseBattleInfo),
+    /// except click-to-attack (eSelectTargetNormalAttack, 1 = on): the client's 2 (off) leaves a fresh action-mode
+    /// Novice, whose bar is empty, with no way to attack. Clicking an enemy attacks it in both modes on the official
+    /// servers, so the server default is on (inferred). Players can still switch it off in the settings.
+    /// </summary>
+    private static readonly SettingBaseBattle DefaultBaseBattle = new()
+    {
+        EFixSkillChaseTypePC = 1, EFixSkillChaseTypeMobile = 1,
+        EDragSkillChaseTypePC = 1, EDragSkillChaseTypeMobile = 1,
+        EDragSkillDefaultReleaseTypePC = 3, EDragSkillDefaultReleaseTypeMobile = 3,
+        EChaseDistanceTypePC = 1, EChaseDistanceTypeMobile = 1,
+        FUserSetDistancePC = 12, FUserSetDistanceMobile = 12,
+        ETabSelectTargetConditionTypePC = 3, ETabSelectTargetConditionTypeMobile = 3,
+        ETabSelectTargetTypePC = 2, ETabSelectTargetTypeMobile = 2,
+        ELockSkillSelectType = 1,
+        ESkillWordRangePC = 1, ESkillWordRangeMobile = 1,
+        ESkillWordDensityPC = 1, ESkillWordDensityMobile = 1,
+        EFastSkillPC = 1,
+        ESelectTargetNormalAttackPC = 1,
+    };
 
     /// <summary>Full-state increment (syncAllMark): each field N of DBSettingInfo travels as field N*10 { all = value }.</summary>
     private static DBSettingInfoIncrement SettingsSync(DBSettingInfo s)
