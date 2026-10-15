@@ -13,12 +13,13 @@ namespace Ro3Emu.ClientHooks
 # within a second. Controls: <Gamepad>/ + buttonSouth (A/Cross), buttonEast (B/Circle), buttonWest (X/Square),
 # buttonNorth (Y/Triangle), leftShoulder, rightShoulder, leftTrigger, rightTrigger, start, select, leftStickPress,
 # rightStickPress, dpad/up|down|left|right, leftStick/up|down|left|right, rightStick/up|down|left|right.
-# Game actions (the Key Settings list): MoveForward MoveBackward MoveLeft MoveRight OpenBag OpenMap OpenChat OpenShop
-# OpenTrading OpenActivity OpenMustDo OpenFriend OpenRole OpenGuild Mount MountCareer OpenTask OpenSkill OpenEquip
-# OpenAutoFight OpenKneelDown OpenEquipGrowth OpenTalent OpenCard OpenPet OpenTotem OpenSoulEcho OpenMonsterHunt
-# OpenWardrobe OpenCollection OpenLifeJob OpenEmoji OpenBattleReport Direction_Up Direction_Down FixTip ActionPageLeft
-# ActionPageRight NormalSkill_01..06 ExpandSkill_1..6 GamePlaySkill_01..03 Interactive_1..3 ShortCut_1..6
-# SwitchTarget FastPickUp FastPickUpAll Esc.
+# Game actions (the Input System names, not the Lua enum_InputKey keys; dev command ""actions"" lists them):
+# MoveForward MoveBackward MoveLeft MoveRight SwitchTarget OpenMap OpenChat OpenShop OpenTrading OpenActivity
+# OpenMustDo OpenFriend OpenGuild OpenAutoFight Mount MountCareer NormalSkill_01..06 ExpandSkill_01..02
+# InteractiveSkill_01..03 OpenKneelDown ShortCut_1..6 OpenTalent OpenCard OpenPet OpenTotem OpenSoulEcho
+# OpenMonsterHunt OpenWardrobe OpenCollection OpenLifeJob OpenEmoji OpenTask OpenRole OpenBag OpenSkill
+# OpenEquipGrowth ClosePanel (Esc) Jump OpenBattleReport FastPickUp FastPickUpAll FixTip Direction_Up Direction_Down
+# ActionPageLeft ActionPageRight GamePlaySkill_01..03.
 # Controller actions: CursorMode (toggle the menu cursor), LeftClick / RightClick (in cursor mode),
 # CameraZoom (hold, then right stick up/down). In menus: MenuConfirm, MenuBack, MenuTabLeft, MenuTabRight
 # (D-pad / left stick move the focus, right stick scrolls).
@@ -29,7 +30,7 @@ MoveForward = <Gamepad>/leftStick/up
 MoveBackward = <Gamepad>/leftStick/down
 MoveLeft = <Gamepad>/leftStick/left
 MoveRight = <Gamepad>/leftStick/right
-Interactive_1 = <Gamepad>/buttonSouth
+InteractiveSkill_01 = <Gamepad>/buttonSouth
 FastPickUp = <Gamepad>/buttonEast
 NormalSkill_01 = <Gamepad>/buttonWest
 NormalSkill_02 = <Gamepad>/buttonNorth
@@ -41,7 +42,7 @@ Direction_Up = <Gamepad>/dpad/up
 Direction_Down = <Gamepad>/dpad/down
 ShortCut_1 = <Gamepad>/dpad/left
 ShortCut_2 = <Gamepad>/dpad/right
-Esc = <Gamepad>/start
+ClosePanel = <Gamepad>/start
 OpenMap = <Gamepad>/leftStickPress
 CameraZoom = <Gamepad>/rightStickPress
 CursorMode = <Gamepad>/select

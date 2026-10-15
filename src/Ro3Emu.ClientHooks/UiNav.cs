@@ -21,7 +21,7 @@ namespace Ro3Emu.ClientHooks
     /// <item>MenuTabLeft / MenuTabRight (L1/R1): previous / next toggle of the panel's top-most toggle group (tab bars).</item>
     /// <item>Right stick: scrolls the scroll view around the focus (or the panel's largest); the focus is kept in view.</item>
     /// </list>
-    /// While a menu is open the game's gamepad bindings are dropped except Esc (Controller.Sync), so ✕ does not also talk
+    /// While a menu is open the game's gamepad bindings are dropped except ClosePanel (Esc) (Controller.Sync), so ✕ does not also talk
     /// to an NPC behind the panel.
     /// </summary>
     public static class UiNav
@@ -53,9 +53,19 @@ namespace Ro3Emu.ClientHooks
             if (!enabled || pad == null) { Close(); return; }
             if (++_frame % 6 == 0) Scan(); // ponytail: FindObjectsOfType<Canvas> every 6th frame; panel open/close events if it costs
             if (_panel == null) { Close(); return; }
+            if (_guide != null)
+            {
+                var hole = ScreenRect(_guide);
+                if (Pressed(pad, "MenuConfirm", "buttonSouth")) ClickThrough(hole.center);
+                DrawRing(hole);
+                PromptList.Clear();
+                PromptList.Add((Control("MenuConfirm", "buttonSouth"), "Continue"));
+                Overlay.SetPrompts(PromptList);
+                return;
+            }
             if (_focus == null || !Usable(_focus)) _focus = DefaultFocus();
             Input(pad);
-            DrawRing();
+            if (_focus != null) DrawRing(ScreenRect(_focus)); else HideRing();
             Prompts();
         }
 
@@ -72,6 +82,17 @@ namespace Ro3Emu.ClientHooks
 
         private static void Scan()
         {
+            // Tutorial guide: a full-screen mask (GuideMaskRaycastFilter) with a hole over Rect_Img; only a click inside the
+            // hole reaches the target, which a pad cannot do. It has no Selectables, so it is handled on its own.
+            _guide = FindGuideTarget();
+            if (_guide != null)
+            {
+                if (_panel == null || _panel.name != GuidePanel) Debug.Log("[Ro3Emu.UiNav] guide: target " + _guide.name);
+                _panel = ViewRoot(_guide);
+                _focus = null;
+                Items.Clear();
+                return;
+            }
             Transform top = null;
             int topOrder = int.MinValue;
             foreach (var canvas in UnityEngine.Object.FindObjectsOfType<Canvas>())
@@ -96,6 +117,43 @@ namespace Ro3Emu.ClientHooks
             if (_panel == null) return;
             foreach (var s in Selectable.allSelectablesArray)
                 if (s.transform.IsChildOf(_panel) && Usable(s)) Items.Add(s);
+        }
+
+        private const string GuidePanel = "UI_Sys_GuidePanel(Clone)";
+        private static RectTransform _guide;
+
+        /// <summary>The active guide's highlight (Rect_Img under UI_Sys_GuidePanel), or null.</summary>
+        private static RectTransform FindGuideTarget()
+        {
+            var panel = GameObject.Find(GuidePanel);
+            if (panel == null) return null;
+            foreach (var t in panel.GetComponentsInChildren<RectTransform>(false))
+                if (t.name == "Rect_Img" && t.rect.width > 4) return t;
+            return null;
+        }
+
+        /// <summary>A mouse click at the screen point on the first thing under it that is not part of the guide panel.</summary>
+        private static void ClickThrough(Vector2 point)
+        {
+            if (EventSystem.current == null) return;
+            var data = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left, position = point, clickCount = 1 };
+            var hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(data, hits);
+            foreach (var hit in hits)
+            {
+                if (ViewRoot(hit.gameObject.transform)?.name == GuidePanel) continue;
+                var target = ExecuteEvents.GetEventHandler<IPointerClickHandler>(hit.gameObject);
+                if (target == null) continue;
+                data.pointerPress = target;
+                data.pressPosition = point;
+                data.pointerCurrentRaycast = data.pointerPressRaycast = hit;
+                ExecuteEvents.Execute(target, data, ExecuteEvents.pointerDownHandler);
+                ExecuteEvents.Execute(target, data, ExecuteEvents.pointerUpHandler);
+                ExecuteEvents.Execute(target, data, ExecuteEvents.pointerClickHandler);
+                Debug.Log("[Ro3Emu.UiNav] guide click " + target.name);
+                return;
+            }
+            Debug.Log("[Ro3Emu.UiNav] guide click: nothing clickable under " + point);
         }
 
         /// <summary>The outermost UI_Sys_* / UI_Com_* object above t (the opened view's root), or null.</summary>
@@ -343,15 +401,18 @@ namespace Ro3Emu.ClientHooks
 
         // ---- visuals ----
 
-        private static void DrawRing()
+        private static void HideRing()
+        {
+            if (_ring != null) foreach (var r in _ring) r.gameObject.SetActive(false);
+        }
+
+        private static void DrawRing(Rect rect)
         {
             if (_ring == null)
             {
                 _ring = new Image[4];
                 for (int i = 0; i < 4; i++) _ring[i] = Overlay.Image("Ro3emuFocus" + i, null, new Color(1f, 0.78f, 0.3f, 0.95f));
             }
-            if (_focus == null) { foreach (var r in _ring) r.gameObject.SetActive(false); return; }
-            var rect = ScreenRect(_focus);
             float s = Overlay.Scale, pad = 4 * s, w = Math.Max(2f, 3 * s) * (1f + 0.25f * Mathf.Sin(Time.unscaledTime * 6f));
             rect = Rect.MinMaxRect(rect.xMin - pad, rect.yMin - pad, rect.xMax + pad, rect.yMax + pad);
             Place(_ring[0], rect.xMin, rect.yMax - w, rect.width, w);

@@ -2,12 +2,12 @@ namespace Ro3Emu.ClientHooks.Tests;
 
 public class ControllerIniTests
 {
-    // enum_InputKey (Config/Define/Lua_GameDefine.lua) plus the hook's own controller actions.
+    // Input System action names (dev command "actions"; not the Lua enum_InputKey keys) plus the hook's own controller actions.
     private static readonly HashSet<string> Known = new(StringComparer.OrdinalIgnoreCase)
     {
-        "MoveForward", "MoveBackward", "MoveLeft", "MoveRight", "OpenMap", "Interactive_1", "FastPickUp", "SwitchTarget",
+        "MoveForward", "MoveBackward", "MoveLeft", "MoveRight", "OpenMap", "InteractiveSkill_01", "FastPickUp", "SwitchTarget",
         "NormalSkill_01", "NormalSkill_02", "NormalSkill_03", "NormalSkill_04", "NormalSkill_05", "Direction_Up",
-        "Direction_Down", "ShortCut_1", "ShortCut_2", "Esc", "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight",
+        "Direction_Down", "ShortCut_1", "ShortCut_2", "ClosePanel", "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight",
     };
 
     [Fact]
@@ -22,7 +22,7 @@ public class ControllerIniTests
             Assert.Contains(action, Known);
             Assert.All(paths, p => Assert.StartsWith("<Gamepad>/", p));
         }
-        Assert.Equal(["<Gamepad>/buttonSouth"], binds["Interactive_1"]);
+        Assert.Equal(["<Gamepad>/buttonSouth"], binds["InteractiveSkill_01"]);
         Assert.Equal(0.2f, tune["Deadzone"]);
         Assert.Equal(6, tune.Count);
     }

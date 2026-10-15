@@ -120,7 +120,7 @@ namespace Ro3Emu.ClientHooks
                 var want = new List<string>();
                 if (on && Binds.TryGetValue(action.name, out var paths))
                     foreach (var p in paths)
-                        if (!(_cursor && CursorOwns(p)) && !(_menu && action.name != "Esc")) want.Add(p); // menus: UiNav has the pad
+                        if (!(_cursor && CursorOwns(p)) && !(_menu && action.name != "ClosePanel")) want.Add(p); // menus: UiNav has the pad; ClosePanel is Esc
                 var have = new List<string>();
                 foreach (var b in action.bindings) if (b.path != null && b.path.StartsWith(Pad)) have.Add(b.path);
                 if (have.Count == want.Count && have.TrueForAll(want.Contains)) continue;
