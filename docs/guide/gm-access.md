@@ -53,3 +53,5 @@ Environment=Ro3Emu__GmAccounts__0=your-admin-login
 
 More GMs: `Ro3Emu__GmAccounts__1=...`. Passwords never go in the unit, the repository or these docs. After
 `systemctl daemon-reload` and a restart, the log shows `GM accounts: your-admin-login`.
+
+Ambient offline players: `!bots [0..100|off|status|reset]`. See [offline population](offline-population.md).

@@ -278,3 +278,8 @@ RO3Emu is an independent research and interoperability project. It is not affili
 any publisher of Ragnarok Online. It does not include or distribute the game client, its data or its art; you need
 your own copy, and you are responsible for using it in line with the applicable laws and license terms. Ragnarok
 Online is a trademark of Gravity Co., Ltd.
+
+## Offline population
+
+Optional ambient fake players: `!bots 20` in game, `!bots off` to remove them. Disabled by default; see
+[configuration, behavior and validation limits](docs/guide/offline-population.md).
