@@ -108,22 +108,22 @@ public sealed class SiegeTests : IAsyncLifetime
         Assert.Equal(40, before.SiegeBaseInfo.BattleInfos.Count);
         Assert.Equal(0, before.SiegeBaseInfo.CurrentCityId);
         var city = before.SiegeBaseInfo.BattleInfos[1001];
-        Assert.Equal(At(2026, 10, 14, 20, 30), city.StartTime);
+        Assert.Equal(At(2026, 10, 14, 21, 0), city.StartTime);
         Assert.Equal(At(2026, 10, 14, 21, 30), city.EndTime);
         Assert.Equal(SiegeCityActivityState.NotOpen, city.ActivityState);
         Assert.Equal(0, city.AttackGuildInfo.Guid);
         Assert.Equal(0, Assert.Single(city.AttackGuildInfo.GuildManagerData).PlayerID);
         Assert.Equal("", Assert.Single(city.AttackGuildInfo.HistoryNames));
-        clock.Set(At(2026, 10, 14, 20, 30));
+        clock.Set(At(2026, 10, 14, 21, 0));
         await OnLoop(Service<TerritoryWarsService>().ReconcileAsync);
         var open = await Base(bot, state: SiegeCityActivityState.Fighting);
         Assert.Equal(SiegeCityActivityState.Fighting, open.SiegeBaseInfo.BattleInfos[1001].ActivityState);
         clock.Set(At(2026, 10, 14, 21, 30));
         await OnLoop(Service<TerritoryWarsService>().ReconcileAsync);
         var closed = await Base(bot, state: SiegeCityActivityState.NotOpen,
-            starts: At(2026, 10, 21, 20, 30));
+            starts: At(2026, 10, 21, 21, 0));
         Assert.Equal(SiegeCityActivityState.NotOpen, closed.SiegeBaseInfo.BattleInfos[1001].ActivityState);
-        Assert.Equal(At(2026, 10, 21, 20, 30), closed.SiegeBaseInfo.BattleInfos[1001].StartTime);
+        Assert.Equal(At(2026, 10, 21, 21, 0), closed.SiegeBaseInfo.BattleInfos[1001].StartTime);
         await bot.SendGameAsync(TerritoryWarsService.SiegeHistoryQuery, new SiegeCityHistoryInfoReq { CityIds = { 1001 } });
         Assert.Equal(ErrorCodes.DataNotFound, (await Next(bot, TerritoryWarsService.SiegeHistoryQuery, SiegeCityHistoryInfoResp.Parser)).Result);
         await bot.SendGameAsync(TerritoryWarsService.SiegeToolList, new GetGuildWartimeToolBelongListReq());
