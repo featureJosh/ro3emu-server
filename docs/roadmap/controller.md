@@ -43,7 +43,8 @@ not started, `❓` needs investigation. Tick an item only after it works in game
   bindings and glyph style.
 - [x] Login, character select and world entry with the pad only (player, 2026-10-14; `353bc6f`).
 - [x] Menus verified by scripted run: login, character select (cards), bag + equip windows (item cells via UIDragButton), ○ Back closes the top window.
-- [ ] Cross-window focus (Equip -> Backpack) and R1/L1 tabs on the Backpack: not yet exercised.
+- [x] Cross-window focus (45° cone), L1/R1 tabs incl. the game's ClickEvent tabs, item tooltip -> Use (potion used,
+  cooldown shown), focus returns to the item after the popup (`0511532`, `9d586a8`, scripted runs).
 - [ ] 🔄 Navigation core: focus scan of the top panel (stock buttons, toggles, sliders, dropdowns, input fields, scroll
   views), spatial moves, focus ring, ✕ click / ○ back / L1 R1 tabs / R-stick scroll, hold-to-repeat.
 - [x] Glyph size readable on the skill bar (`36ca586`, player: "bigger now, too big"); tune size later.
