@@ -18,6 +18,7 @@ namespace Ro3Emu.Tests;
 public sealed class Cd13eOwnerTests : IAsyncLifetime
 {
     private const int Token = 1250709;
+    // Floor-10 server-first milestone: AwardConfig 10011010 = [[1250709, 3, 0]] (via MultiverseGroupConfig 11010 _iValue_default).
     private readonly string directory = Path.Combine(Path.GetTempPath(), "ro3-cd13e-" + Guid.NewGuid().ToString("N"));
     private static readonly Lazy<EconomyCatalog> Catalog = new(() => EconomyCatalog.Load(Path.Combine(RepoRoot(), "data")));
     private WebApplication app = null!;
@@ -134,7 +135,7 @@ public sealed class Cd13eOwnerTests : IAsyncLifetime
         finally { release.TrySetResult(); }
         Assert.Equal(0, (await Next(alice, TowerService.ClaimFirstPass, ClimbTowerClaimFirstPassRewardRes.Parser)).Result);
         await Task.WhenAll(gm!, timer!).WaitAsync(TimeSpan.FromSeconds(10));
-        Assert.Equal(10, Count(role)); Assert.Equal(10, s.Tower!.ServerFirstPassClaimedLayer); Assert.Equal(1, Claims());
+        Assert.Equal(3, Count(role)); Assert.Equal(10, s.Tower!.ServerFirstPassClaimedLayer); Assert.Equal(1, Claims());
         Assert.Equal(1, Scalar($"SELECT COUNT(*) FROM operation_source WHERE source_key='tower-milestone/{role}/0/10'"));
         var closing = S3EconomyReader.Read(directory, Catalog.Value);
         var ledger = S3EconomyReader.ReadLedger(directory, Catalog.Value, opening, closing)!;
@@ -144,7 +145,7 @@ public sealed class Cd13eOwnerTests : IAsyncLifetime
         Assert.All(check.Locations, x => Assert.Equal("0", x.Residual));
         await alice.SendGameAsync(TowerService.ClaimFirstPass, new ClimbTowerClaimFirstPassRewardReq());
         Assert.Equal(ErrorCodes.Parameter, (await Next(alice, TowerService.ClaimFirstPass, ClimbTowerClaimFirstPassRewardRes.Parser)).Result);
-        Assert.Equal(10, Count(role)); Assert.Equal(1, Claims());
+        Assert.Equal(3, Count(role)); Assert.Equal(1, Claims());
     }
 
     [Fact]
@@ -165,7 +166,7 @@ public sealed class Cd13eOwnerTests : IAsyncLifetime
         finally { FixtureSql.Execute(Service<AccountStore>(), "DROP TRIGGER fail_milestone"); }
         await bot.SendGameAsync(TowerService.ClaimFirstPass, new ClimbTowerClaimFirstPassRewardReq());
         Assert.Equal(0, (await Next(bot, TowerService.ClaimFirstPass, ClimbTowerClaimFirstPassRewardRes.Parser)).Result);
-        Assert.Equal(10, Count(role)); Assert.Equal(1, Claims());
+        Assert.Equal(3, Count(role)); Assert.Equal(1, Claims());
     }
 
     [Fact]
@@ -193,7 +194,7 @@ public sealed class Cd13eOwnerTests : IAsyncLifetime
         finally { release.TrySetResult(); }
         await claim.WaitAsync(TimeSpan.FromSeconds(10));
         await handover!.WaitAsync(TimeSpan.FromSeconds(10));
-        Assert.Equal(10, Count(role)); Assert.Equal(1, Claims());
+        Assert.Equal(3, Count(role)); Assert.Equal(1, Claims());
         Assert.Equal(10, DBClimTower.Parser.ParseFrom(Service<RoleStore>().LoadTower(role)!).ServerFirstPassClaimedLayer);
     }
 
