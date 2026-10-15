@@ -63,8 +63,8 @@ A忽视魔防	A Ignore MDEF
 A忽视魔防%	A Ignore MDEF%
 A技能倍率	A Skill Multiplier
 A技能额外伤害	A Skill Bonus DMG
-A物理追加	A Additional PATK
-B物理追加减伤	B Additional Phys DMG Reduction
+A物理追加	A Bonus PATK
+B物理追加减伤	B Bonus Phys DMG Reduction
 A魔法追加	A Bonus MATK
 B魔法追加减伤	B Bonus Magic DMG Reduction
 影响技能倍率固定值	Skill Multiplier Flat Modifier

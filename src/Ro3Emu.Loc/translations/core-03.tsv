@@ -12,8 +12,8 @@
 小迪看世界	Xiaodi Sees the World
 空间裂隙挑战	Space Rift Challenge
 倒计时：<#ff6161>20</color>秒	Countdown: <#ff6161>20</color>s
-每周一5:00重置次数	Resets Mondays 5:00
-装备精炼可增强基础属性和附加属性,同时可以激活装备附带的 装备特效和特技,对角色实力有较大提升对角色提升对角色提升对角色	Refining boosts base and bonus stats and activates the equipment's special effects and skills, greatly improving your character's power.
+每周一5:00重置次数	Resets Mondays at 5:00
+装备精炼可增强基础属性和附加属性,同时可以激活装备附带的 装备特效和特技,对角色实力有较大提升对角色提升对角色提升对角色	Refining boosts base and bonus stats and activates the equipment's effects and Stunts, greatly improving your character's power.
 10-20级	Lv. 10-20
 全部通关	All Cleared
 普隆德拉【1-9】	Prontera [1-9]
@@ -74,7 +74,7 @@ S1:自然之神的乐章	S1: Melody of the God of Nature
 玩法暂未开放	Mode not open yet
 等待新赛季的开始	Waiting for the new season
 本季段位	Season Rank
-合成宝箱获得以下奖励	Synthesized chest rewards
+合成宝箱获得以下奖励	Synthesize chests for these rewards
 累计合成	Total Synthesized
 点击任意位置跳过动画	Tap anywhere to skip the animation
 新赛季奖励	New Season Rewards
@@ -204,9 +204,9 @@ E点复活	Revive at E
 公会<color=#CC5C5C>s%</color>占领了<color=#FA983A>s%</color>	Guild <color=#CC5C5C>s%</color> captured <color=#FA983A>s%</color>
 GVG还未开始	GVG hasn't started yet
 请先参加一个工会再来吧	Join a guild first
-传送点未解锁, 无法使用	Warp point locked, cannot use
+传送点未解锁, 无法使用	Warp point locked; unavailable
 占领<color=#FA983A>s%</color>后可使用	Usable after capturing <color=#FA983A>s%</color>
-传送点保护中, 攻方无法使用	Warp point protected, attackers cannot use
+传送点保护中, 攻方无法使用	Warp point protected; attackers can't use it
 技能冷却中	Skill on cooldown
 战场资源不足	Not enough battlefield resources
 攻城战正式开始后可使用战场技能	Battlefield skills are usable once the siege begins

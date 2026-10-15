@@ -15,7 +15,7 @@
 元素	Element
 全部	All
 公告	Notice
-关	Close
+关	Off
 再来一次	Try Again
 再试一次	Try Again
 击杀提示	Kill Feed
@@ -24,8 +24,8 @@
 创建队伍	Create Party
 初心者，请选择石雕确认你的性别	Novice, please select the statue to confirm your gender
 前往	Go
-前往挑战	Go Challenge
-前往租赁	Go Rent
+前往挑战	Challenge
+前往租赁	Rent
 加载中…	Loading…
 反馈	Feedback
 发型	Hairstyle
@@ -53,10 +53,10 @@
 强攻 is on cooldown.	Assault is on cooldown.
 当前任务	Current Quest
 当前效果	Current Effect
-当前游玩体验非最终品质\n	Current play experience is not final quality\n
-快捷吃药	Quick Heal
+当前游玩体验非最终品质\n	This build is not final quality\n
+快捷吃药	Quick Potion
 快捷选择目标	Quick Target Select
-怀旧模式	Nostalgia Mode
+怀旧模式	Classic Mode
 恢复默认	Restore Default
 成员管理	Member Management
 成就	Achievements
@@ -120,7 +120,7 @@
 苍蝇翅膀	Fly Wing
 获取	Obtain
 获得 <sprite name="item_100"> 	Obtained <sprite name="item_100"> 
-获得奖励	Obtained Rewards
+获得奖励	Rewards Obtained
 菜单	Menu
 装备	Equipment
 角色	Character
@@ -140,7 +140,7 @@
 进入游戏	Enter Game
 追踪任务	Track Quest
 退出登录	Log Out
-适合熟悉RO Online的玩家	Suitable for players familiar with RO Online
+适合熟悉RO Online的玩家	For players familiar with Ragnarok Online
 选中目标	Selected Target
 选择服务器	Select Server
 选择模式	Select Mode

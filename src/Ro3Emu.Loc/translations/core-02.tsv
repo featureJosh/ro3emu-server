@@ -8,7 +8,7 @@ S1赛季	Season 1
 杰出贡献榜	Top Contributors
 前往任务	Go to Quest
 待达成	Incomplete
-道具品质颜色道具品质颜色	Item Name Item Name
+道具品质颜色道具品质颜色	Item Quality Color
 类型A	Type A
 类型E	Type E
 类型C	Type C
@@ -23,7 +23,7 @@ B点复活	Revive at B
 据点战还未开启	Stronghold War has not started
 据点B	Stronghold B
 据点战还未开是	Stronghold War has not started
-相同出价者，押镖交易货物总数多则排名在前	On equal bids, more Caravan Escort goods traded ranks higher
+相同出价者，押镖交易货物总数多则排名在前	On equal bids, the guild with more Caravan Escort goods traded ranks higher
 <size=104>7</size>天	<size=104>7</size> Days
 此处为相应模块名称	Module Name Here
 所选属性<color=#c26b47>洗炼后将</color>随机增减	After <color=#c26b47>Refining</color>, selected stats randomly rise or fall
@@ -39,7 +39,7 @@ B点复活	Revive at B
 集合点	Rally Point
 元素修正	Element Modifier
 体型修正	Size Modifier
-职业修正	Class Modifier
+职业修正	Job Modifier
 附加伤害	Bonus Damage
 A魔法攻击	A MATK
 A暴击伤害	A CRIT DMG
@@ -123,7 +123,7 @@ A暴击伤害	A CRIT DMG
 小小礼物，不成敬意。	Just a small gift for you.
 折扣限时: 5天	Discount ends in: 5 days
 Base等级达到<color=#c26b47>80</color>级开放	Unlocks at Base Lv. <color=#c26b47>80</color>
-暂无职业天赋	No class Talents yet
+暂无职业天赋	No Job Talents yet
 已提交	Submitted
 相机当前状态	Camera Status
 编辑相机参数	Edit Camera Settings
@@ -182,7 +182,7 @@ BOSS技能提示	BOSS Skill Alerts
 选择传送目标	Select Teleport Target
 技能说明	Skill Info
 产自:	Source:
-暂未开始阅读	Not started reading yet
+暂未开始阅读	Not read yet
 待借阅	To Borrow
 名字名字	Name
 进度等级	Progress Level
