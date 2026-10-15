@@ -34,6 +34,10 @@ not started, `❓` needs investigation. Tick an item only after it works in game
 - [x] Controller mode in Select Mode (relabelled Mobile column) saves Modern PC + controller flag (`810d1ce`,
   `bc00967`; the mobile-UI fallback fixed, re-check after restart).
 - [x] PS5 glyph set embedded; dev command file (`9a5bcf4`).
+- [x] Controller card uses its own mode value 4; no mobile HUD on re-pick (`79e753e`, verified by the player).
+- [x] Glyphs replace stock key labels (`InputBinder`) in controller mode (`79e753e`, verified by the player: shown, but
+  too small to read the shapes at the label size).
+- [ ] 🔄 `GlyphScale` (default 2.4x, live) for readable glyphs; to check in game.
 - [ ] 🔄 HUD inventory: dump the PC HUD widgets (skill bar, HP/SP, buffs, minimap, quest tracker, chat, team, target).
 - [ ] Overlay canvas + UI scale; theme (frame, fonts from the game's TMP assets, colours); glyph component that follows
   bindings and glyph style.
