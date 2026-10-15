@@ -156,7 +156,13 @@ partial class Program
           local data = t
           if type(t) == "table" and type(rawget(t, "m_kValues")) == "table" then
             data = {}
-            for k, row in next, rawget(t, "m_kValues") do data[k] = merged(row) end
+            for k, row in next, rawget(t, "m_kValues") do
+              -- Grouped tables (DropGroupConfig) key a plain list of rows; the defaults hang on each inner row.
+              if type(row) == "table" and getmetatable(row) == nil then
+                data[k] = {}
+                for i, r in next, row do data[k][i] = merged(r) end
+              else data[k] = merged(row) end
+            end
           end
           local out = {}
           encode(data, out, 0)
