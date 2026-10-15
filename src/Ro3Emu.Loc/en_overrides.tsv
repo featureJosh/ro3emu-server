@@ -4,3 +4,5 @@ Welcome to RO Ragnarok Online 3!	Welcome to Ragnarok Online 3!
 Goodbye, imitators! Only the real RO can fight!	Adventure awaits across Rune-Midgard!
 # Auction list cell (PUBLIC lot): the shipped sentence overflows the cell on both sides.
 Fixed price purchases will become available after the listing period ends.	Buyout opens when the listing ends.
+# Job select screen button (Localization 42006 / 42010 ship "Choosing a Job"; the button applies the job).
+Choosing a Job	Choose This Job
