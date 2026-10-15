@@ -8,56 +8,125 @@ built for a couch distance. It is a remake, not a reskin of the mobile UI.
 Status legend as in [ROADMAP.md](../../../ROADMAP.md): `[x]` done and verified in game, `[ ] 🔄` in progress, `[ ]`
 not started, `❓` needs investigation. Tick an item only after it works in game.
 
-## Handoff for the next agent (2026-10-15)
+## Handoff for the next agent (2026-10-15, updated)
 
-**State.** Phase 0 (controller works everywhere on the stock UI) is largely done and verified by scripted runs: pad-only
-login without passwords, character select, tutorial guide, bag/equip navigation, tabs, item use, on-screen keyboard,
-PS5 glyphs on stock key labels. **Nothing looks Diablo-like yet**: the player expects that, and it is Phase 2/3. The
-player asked for a full remake, no shortcuts.
+**State.** Phase 0 (pad works on the stock UI) is done and verified: pad-only login without passwords, character
+select, tutorial guide, bag/equip navigation, tabs, item use, on-screen keyboard, PS5 glyphs on stock key labels.
+Phase 2 has a first prototype, all verified in game:
+- **Controller HUD v1** (`ControllerHud.cs`, `3bb7fa7`): HP/SP orbs, bound skills (icons, cooldowns, glyphs), D-pad
+  potions with counts, on a plate. The stock bars are hidden but keep running as the data source, and contextual stock
+  widgets (buffs, auto-potion...) are lifted above it.
+- **Radial menu** (`Wheel.cs`, `91b84cf`): tap Create/View. Entries run the game's own input actions through
+  InputSystemManager's private handlers. Cursor mode is now a 0.5 s hold on the same button.
+- **Context interaction** (`Interact.cs`, `f566b40`, verified by the player): ✕ Talk / Pick up / Gather on the nearest
+  unit, sending the same click as the mouse (`MyInput.Obf_xj`).
 
-**Code** (all in `src/Ro3Emu.ClientHooks`): `Controller.cs` (bindings on the game's Input System actions, camera,
-virtual cursor, mode select hooks, own per-frame button edges), `ControllerIni.cs` (defaults + parser, tested),
-`UiNav.cs` (menu navigation, guide mode), `Osk.cs` (on-screen keyboard), `Overlay.cs` (our canvas, prompt bar,
-`Overlay.Scale`), `Glyphs.cs` (PS5 sprites by control path, stock key labels -> glyphs), `Diagnostics.cs` (dev commands),
-`UiTweaks.cs` (mode-select relabel, password row hidden). Server: `RequirePasswords` (off in appsettings).
+It is a **barebones prototype**: the player wants it polished and then skinned with assets they draw themselves (see
+the two sections below). The player asked for a full remake, no shortcuts, and for **reusing the game's own UI wherever
+it exists** (see "How it is built").
 
-**Dev loop (use it, do not ask the player to restart or press buttons):**
+**Code** (all in `src/Ro3Emu.ClientHooks`):
+- `Controller.cs`: bindings on the game's Input System actions, camera, virtual cursor, wheel button, mode-select
+  hooks, own per-frame button edges.
+- `ControllerIni.cs`: defaults and parser, tested.
+- `UiNav.cs`: menu navigation and guide mode.
+- `Osk.cs`: on-screen keyboard.
+- `Overlay.cs`: our canvas, prompt bar, `Overlay.Scale`.
+- `Glyphs.cs`: PS5 sprites by control path; stock key labels -> glyphs.
+- `ControllerHud.cs`: HUD, plus `Shapes` (procedural sprites).
+- `Wheel.cs`: radial menu, plus `Wheel.Run(action)`, which runs any game action.
+- `Interact.cs`: context interaction.
+- `Diagnostics.cs`: dev commands.
+- `UiTweaks.cs`: mode-select relabel, password row hidden.
+- Server: `RequirePasswords` (off in appsettings).
+
+**Dev loop (use it; do not ask the player to restart or press buttons):**
 1. Build: `RO3_CLIENT_DIR="$PWD/../RO3 Launcher/Client" dotnet build src/Ro3Emu.ClientHooks` (toolchain in CLAUDE.md).
-2. `tools/linux/dev/restart-client.sh`: installs the DLL (atomic rename), restarts the client, waits for the login panel.
-3. `cat tools/linux/dev/to-world.txt more-commands.txt | tools/linux/dev/cmd.sh`: reaches the world by virtual pad.
-4. Commands (one per line, one per frame): `focus ignore` (first; input works while the window is in the background),
-   `verbose`, `pad <GamepadButton>` (South/East/West/North/DpadUp/LeftShoulder/LeftTrigger/RightStick/Start/Select...;
-   a virtual `Ro3emuTestPad`, the real DualSense overwrites injected states), `key <Key>`, `wait <frames>`,
-   `waitmenu <part of panel name> [seconds]`, `select <object name>`, `shot <name>` -> `<client>/ro3emu/shot-<name>.png`,
-   `tree <object> [depth]` -> `ro3emu/tree.txt`, `find`, `panels`, `actions` (real Input System action names), `lua`,
-   `luacall`. Log: `~/.local/share/ro3emu/prefix/drive_c/users/steamuser/AppData/LocalLow/gravity/ro3/Player.log`.
-5. Read the screenshots; restart the server with `start-server.sh --Ro3Emu:Population:Enabled=true
-   --Ro3Emu:Population:PerMap=50 --Ro3Emu:Population:MaxTotal=50` when server code changes.
+2. `tools/linux/dev/restart-client.sh` installs the DLL (atomic rename), restarts the client and waits for the login panel.
+3. `cat tools/linux/dev/to-world.txt more-commands.txt | tools/linux/dev/cmd.sh` reaches the world by virtual pad.
+4. Commands, one per line, run one per frame:
+   - `focus ignore` (send first: input works while the window is in the background), `verbose`.
+   - `pad <GamepadButton>` (South/East/West/North/DpadUp/LeftShoulder/LeftTrigger/RightStick/Start/Select...) presses a
+     button on a virtual `Ro3emuTestPad`; the real DualSense overwrites injected states. `stick <x> <y> <frames>` holds
+     the left stick (walk). `key <Key>`.
+   - `wait <frames>`, `waitmenu <part of panel name> [seconds]`, `select <object name>`.
+   - `shot <name>` -> `<client>/ro3emu/shot-<name>.png`; `tree <object> [depth]` -> `ro3emu/tree.txt`;
+     `pick <x> <y>` lists the UI under a screenshot pixel.
+   - `find`, `panels`, `actions` (real Input System action names), `lua`, `luacall`.
+   - Log: `~/.local/share/ro3emu/prefix/drive_c/users/steamuser/AppData/LocalLow/gravity/ro3/Player.log`.
+5. GM warp over loopback: `curl -X POST "http://127.0.0.1:5380/ro3emu/gm?account=featureJosh" --data '!warp 10101 155 55'`.
+   10101 155 55 is the Prontera bridge, by the NPC "Person Resting"; 10111 150 190 is a field with Fabre monsters.
+6. Read the screenshots. When server code changes, restart the server with `start-server.sh
+   --Ro3Emu:Population:Enabled=true --Ro3Emu:Population:PerMap=50 --Ro3Emu:Population:MaxTotal=50`.
 
-**Gotchas learned.** Use Input System action names (`ClosePanel`, `InteractiveSkill_01`), not Lua `enum_InputKey` keys.
-Game buttons are Selectables, but item cells (`UIDragButton`) and many links (`ClickEvent`) are plain click handlers.
-Key labels are `InputBinder` (`m_inputKey`, `m_tip`, `m_view`), often inside a layout-group badge. The guide panel
-blocks Esc and hotkeys until its hole is clicked. `UiTweaks.Tick` can be pumped more than once a frame (guarded).
-Commit only your own files: another agent has uncommitted `ClickAttackTrace.cs`, a `LuaPatches.cs` hunk, guide and
-`tools/Loc` edits. The player's `controller.ini` still has a temporary `OpenBag = <Gamepad>/rightStickPress`; remove it
-once an in-game way to open the bag exists (radial menu).
+**Gotchas learned.**
+- Use Input System action names (`ClosePanel`, `InteractiveSkill_01`), not Lua `enum_InputKey` keys.
+- Item cells (`UIDragButton`) and many links (`ClickEvent`) are plain click handlers, not Selectables.
+- Key labels are `InputBinder` (`m_inputKey`, `m_tip`, `m_view`), often inside a layout-group badge.
+- The guide panel blocks Esc and hotkeys.
+- `UiTweaks.Tick` can be pumped more than once a frame (guarded).
+- `CP_ColliderBase.m_bIsLocalPlayer` is never set; the player's position is `WS_WorldStreamProxy.Obf_fbA()`.
+- Colliders are pooled, so re-resolve them at use.
+- Commit only explicit paths.
 
 **Next goals, in order:**
-1. **Phase 2 HUD (Diablo-style), the visible change the player is waiting for.** Inventory the PC HUD widgets with
-   `tree` (skill bar `UI_Sys_Main_JoyStickSkillWidget_PC`, props/potions `UI_Sys_Main_PropsWidget_PC`, avatar/HP-SP
-   `Transf_Avatar`, target `UI_Sys_Main_TargetAvatarInfoWidget_PC`, EXP bar). Build on `Overlay`: bottom-centre bar with
-   HP orb (left), SP orb (right), six skill slots with glyphs, cooldown fills (mirror the stock slot Images' sprite and
-   fillAmount), D-pad potions, EXP line. Hide the stock skill bar/bars with CanvasGroup alpha 0 (keep them running as the
-   data source). Size by `Overlay.Scale`; check at 1080p and 4K (player plays at 4K; glyphs are currently "too big").
-2. **Radial menu** on TOUCHPAD/CREATE or hold Start: bag, equip, skills, character, map, quests, guild, friends, mail,
-   shop, settings (call the same actions as the stock HUD buttons). Replaces the temporary R3 bag binding.
-3. **World interaction:** context prompt (✕ talk / pick up / portal) and soft targeting (R1 cycle, target frame).
-4. **Controller settings page** (in-game remap writing `controller.ini`, glyph style, UiScale/GlyphScale, sensitivity).
-5. **Phase 3 rebuilt menus** in usage order (inventory with paper doll first), then the rest of the roadmap above.
-6. Open issues: Options glyph reads poorly; prompt bar placement vs. HUD; camera speed/sign unverified; L3 OpenMap
-   and other defaults unreviewed; English text/grammar pass (separate roadmap item).
+1. **HUD polish** (checklist below, player feedback).
+2. **Reuse stock UI**: the stock prompts take our glyphs, and our duplicates are dropped (see below).
+3. **Targeting:** soft lock / R1 cycle with a target frame (the stock `UI_Sys_Main_TargetAvatarInfoWidget_PC` already
+   shows one: reuse it).
+4. **Controller settings page:** in-game remap writing `controller.ini`, glyph style, UiScale/GlyphScale, sensitivity.
+5. **Art pass** with the player's assets (section below): build the skin loader early, so the player can start drawing.
+6. **Phase 3 rebuilt menus** in usage order (inventory with paper doll first).
+7. **Open issues:** the Options glyph reads poorly; camera speed/sign unverified; L3 OpenMap and other defaults
+   unreviewed; English text/grammar pass (separate roadmap item).
+
+## HUD polish (player feedback 2026-10-15)
+
+- [ ] **Glyph legibility:** glyphs have no background, so on a skill icon of the same colour they are hard to read.
+  Switch to glyph art with a built-in stroke/outline (Kenney Input Prompts' outline variants, or another CC0 set) rather
+  than drawing outlines in code or detecting pixel colours.
+- [ ] **Glyph size:** a little smaller everywhere (`GlyphScale` default and the HUD/slot glyph sizes).
+- [ ] **Prompt bar** (control guide, lower right): too big; shrink it.
+- [ ] **HUD size:** the Diablo-style HUD is a bit too big overall; lower its base size (still times `Overlay.Scale` / `UiScale`).
+- [ ] **Feedback animations:** using □ or an item gives no visual response. Add a press animation (scale punch, flash) on
+  skill and potion slots when used, and on wheel entries.
+- [ ] **Cooldown display** does not show properly: the radial sweep and seconds are unreliable. Check against the stock
+  slot's state (`Mask_Img` / `BarTime_Img` fill / `Time_TTxt`; potions `CD_RTransform` / `CD_Img`) and fix.
+- [ ] **Stock prompts instead of our prompt bar:** the game already draws prompts. The NPC dialog shows
+  "SPACE / [mouse] Continue" in its bottom-right corner, while our bar draws a second, redundant "✕ Select ○ Back" on top:
+
+  ![Stock NPC dialog prompt next to our prompt bar](img/stock-continue-prompt.png)
+
+  Find the widget that draws it (`tree` on `UI_Sys_NpcDialogPanel`), give it our glyph and text (it is likely an
+  InputBinder-style label, which `Glyphs.cs` already handles), and hide our bar on screens that have their own prompts.
+
+## Art pass: custom assets (drawn by the player)
+
+The current look is procedural placeholders (`Shapes`: circles, rings, rounded squares). The player will draw the real
+assets. Plan:
+- [ ] **Skin loader:** PNGs dropped into `<client>/ro3emu/skin/` override the procedural shapes by file name, without a
+  rebuild (re-read on change like `controller.ini`). A missing file falls back to the placeholder; log which names were
+  found. Optional `skin.ini` for 9-slice borders and tints.
+- [ ] **Asset list with sizes** (PNG with alpha). Draw at 4K, i.e. 2x the 1080p numbers below; the loader scales.
+  Frames are 9-slice where noted.
+  - HUD: `orb_frame` (300x300), `orb_glass` (shine, 300x300), `orb_fill_hp` / `orb_fill_sp` (276x276; liquid,
+    optionally tileable for a wave scroll), `plate` (9-slice, about 120 high), `plate_edge`.
+  - Slots: `slot_frame` normal / pressed / disabled / ready-flash (156x156), `slot_cooldown_mask` (156x156),
+    `potion_frame` (116x116).
+  - Radial menu: `wheel_disc` (1000x1000), `wheel_ring`, `wheel_slice` normal / selected (9-slice), optional per-entry
+    icons (`wheel_bag`, `wheel_map`, ... 96x96).
+  - Navigation: `focus_ring` (9-slice), `prompt_bar` (9-slice), `interact_prompt` (9-slice), `osk_key` normal / focused
+    (9-slice).
+  - Glyphs: optional own glyph set by control name (`glyph_buttonSouth.png`, ...), overriding Kenney's.
+  - Font: optional TMP font (the game's font is used today).
+- [ ] **Animation hooks** for the art: press punch, cooldown-ready flash, low-HP pulse on the orb, wheel open/close.
+- [ ] Write the art spec as its own doc (`docs/roadmap/controller-art.md`) with a template sheet the player can draw on.
 
 ## How it is built
+
+**Principle (player, 2026-10-15): reuse the game's own UI first.** Prefer the game's widgets, prompts, panels and
+animations; add our own UI only where nothing exists. Review the existing overlay pieces (prompt bar, focus ring, wheel,
+HUD) against stock equivalents: e.g. stock key-hint widgets for prompts, the stock target frame, stock tooltips.
 
 - **Code:** client hooks (`src/Ro3Emu.ClientHooks`), C# loaded into the client. The signed Lua cannot be changed, so
   the hooks replace Lua table functions with C# delegates (see `LuaPatches`, `Controller`) and build Unity UI from C#.
@@ -122,19 +191,22 @@ once an in-game way to open the bag exists (radial menu).
 
 ## Phase 2: in the world (Diablo-style HUD)
 
+- [x] Prototype v1 of the bar below (`3bb7fa7`, screenshots): orbs, bound skills with glyphs and cooldowns, D-pad potions. Polish: see HUD polish.
 - [ ] Bottom-centre action bar: HP orb (left), SP orb (right), six skill slots on ✕ ○ □ △ / L1+, R1+ layers with
   icons, cooldowns, charges and SP-cost dimming; potions and shortcut items on the D-pad; EXP bar.
-- [ ] Hide the stock skill bar, HP/SP bars and keyboard key labels while Controller mode is on.
+- [x] Hide the stock skill bar and potion bar while Controller mode is on (kept running as data source; `3bb7fa7`).
 - [ ] Skill layers: hold L2 / R2 for a second bar (12+ skills without menus), configurable.
 - [ ] Targeting: soft lock on the nearest enemy in the stick direction, R1 cycle, R3 lock, target frame with HP and
   casting bar, ally targeting for heals and buffs (L1 + face button or a toggle).
 - [ ] Ground-target skills: aim reticle on the right stick, ✕ confirm, ○ cancel.
 - [ ] Analog movement (stick angle and magnitude instead of 8 WASD directions), auto-run toggle.
+- [x] Context prompt v1: ✕ Talk / Pick up / Gather on the nearest unit (`f566b40`, player verified).
 - [ ] Context prompt: talk to NPC, pick up item, open chest, use portal / Kafra, revive, mount (✕ label changes with
   what is in front of you).
 - [ ] Loot: pick up nearest / all, item-name popups with rarity colours.
 - [ ] Compact quest tracker (one main quest, objectives, auto-path with a button), minimap with zoom on the D-pad
   layer, buffs/debuffs row, party frames.
+- [x] Radial menu v1 on Create/View: bag, character, skills, quests, map, friends, guild, shop, auto battle, settings (`91b84cf`, screenshot: opened the bag).
 - [ ] Radial menus: TOUCHPAD / CREATE opens the menu wheel (bag, equip, skills, character, map, quests, guild, friends,
   mail, shop, settings); hold D-pad for consumables and emotes.
 - [ ] Combat feedback: damage numbers sized for 4K, low-HP vignette, rumble.
