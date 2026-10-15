@@ -86,6 +86,9 @@ namespace Ro3Emu.ClientHooks
                 var param = Module(manager, global, "publicparamconfig");
                 if (param != null) param.Obf_luA<string, object>("StallsNameCharacterLimit", (long)StallNameMaxLength);
                 _doneEnv = env;
+                CombatSettings.Install(global, Module(manager, global, "lc_settingprocessfunc"),
+                    Module(manager, global, "lc_settinghelper"));
+                if (ClickProbe.Enabled) ClickProbe.Install(global, Module(manager, global, "lc_actor_controlmove"));
                 PatchCountdowns(manager, global);
                 var functionHelper = Module(manager, global, "lc_functionhelper");
                 FeedbackButton.Install(global, functionHelper);

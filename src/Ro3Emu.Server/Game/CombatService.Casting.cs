@@ -58,6 +58,8 @@ public sealed partial class CombatService
 
     private async Task CastCoreAsync(GameSession s, CastSkillReq request)
     {
+        log.LogInformation("{Name} casts skill {SkillId} on {TargetId} (auto {Auto})",
+            s.Role?.Name, request.SkillId, request.TargetId, request.IsAutoCast);
         var req = request.Clone();
         var row = EffectiveSkillRow(s, req.SkillId);
         var owned = req.OpUnitId == 0 || req.OpUnitId == s.Role?.Id ? null
@@ -150,6 +152,8 @@ public sealed partial class CombatService
     // Refusal must not interrupt a different accepted cast: the client does not compare 31103.sessionId.
     private async Task RefuseCoreAsync(GameSession s, CastSkillReq req, int error, long parameter)
     {
+        log.LogInformation("{Name} cast of skill {SkillId} refused: error {Error} ({Parameter})",
+            s.Role?.Name, req.SkillId, error, parameter);
         var reply = new CastSkillRsp { Result = error, IsAutoCast = req.IsAutoCast };
         if (parameter != 0) reply.Params.Add(parameter);
         await s.SendGameAsync(UseSkill, reply);
