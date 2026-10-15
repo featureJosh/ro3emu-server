@@ -105,7 +105,13 @@ line isolation, limits, names and real UserDataService responses, long journeys,
 monster retaliation, First Aid and the absence of player kill rewards. In-game names/skill animation and LAN
 behavior still require manual verification after each update; a passing server test is not proof of client rendering.
 
-Manual acceptance: restart only the bot server, reconnect the bot client and use `!bots 20`; check head names,
+Manual acceptance: restart the main server when convenient, reconnect the regular client and use `!bots 20`; check head names,
 follow a bot across a longer journey, observe attacks and job skills near Porings, then attack its target and
 confirm the bot yields. Check First Aid/monster retaliation and death/revival. Change line, visit a dungeon,
 and use `!bots off` to verify cleanup. NPC stops should look like questing without changing your own quests.
+
+## Planned improvements
+
+See the [bot improvement roadmap](../roadmap/offline-population.md) for per-map density, contextual chat/reactions,
+temporary party companions, dungeon populations and later AI/quest/economy work. All items there are proposals
+unless marked complete; they are not additional settings available in this version.

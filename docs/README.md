@@ -2,6 +2,7 @@
 
 ## Guides: running a server
 
+- [Offline population](guide/offline-population.md): current bot settings and behavior; [improvement roadmap](roadmap/offline-population.md)
 - [GM access](guide/gm-access.md): who may use GM commands (`Ro3Emu:GmAccounts`)
 - [Open content](guide/open-content.md): every feature the client can show is playable (`Ro3Emu:OpenContent`)
 - [Bug reports](guide/feedback.md): the in-game Feedback button and `/bug`, and how to read the reports
