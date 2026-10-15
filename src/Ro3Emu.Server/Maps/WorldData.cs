@@ -156,8 +156,11 @@ public sealed partial class WorldData(IOptions<ServerOptions> options, GameData 
             if (_kafraDestinations == null)
             {
                 _kafraDestinations = new();
-                var path = Path.Combine(Dir("sceneeditor"), "maplinkdata.json");
-                if (File.Exists(path))
+                // The export names it MapLinkData.json; match any casing (case-sensitive file systems).
+                var dir = Dir("sceneeditor");
+                var path = Directory.Exists(dir) ? Directory.EnumerateFiles(dir, "maplinkdata.json",
+                    new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive }).FirstOrDefault() : null;
+                if (path != null)
                 {
                     using var doc = JsonDocument.Parse(File.ReadAllBytes(path));
                     if (doc.RootElement.TryGetProperty("Capra", out var capra) && capra.ValueKind == JsonValueKind.Object)
