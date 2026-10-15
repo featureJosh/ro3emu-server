@@ -346,8 +346,8 @@ public sealed class GuildChallengeTests : IAsyncLifetime
     {
         var schedule = Service<TimedTodoSchedule>();
         var window = schedule.CurrentOrNext(125)!;
-        Assert.Equal(new DateTimeOffset(2026, 10, 11, 20, 30, 0, TimeSpan.FromHours(2)).ToUnixTimeSeconds(), window.Start);
-        Assert.Equal(5400, window.End - window.Start);
+        Assert.Equal(new DateTimeOffset(2026, 10, 11, 21, 0, 0, TimeSpan.FromHours(2)).ToUnixTimeSeconds(), window.Start);
+        Assert.Equal(1800, window.End - window.Start);
         Assert.False(window.Contains(window.Start - 1)); Assert.True(window.Contains(window.Start));
         Assert.False(window.Contains(window.End));
     }

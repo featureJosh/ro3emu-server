@@ -69,25 +69,25 @@ public sealed class DailyWindowsTests : IAsyncLifetime
     public void WeeklyLeagueUsesOpeningWeekdayAndSkipsEmptyCustomWeeks()
     {
         // Monday-open week 1: Wednesday/Friday/Saturday, not the Friday-open row selected by the old code.
-        Window(109, "2026-10-21 20:00:00", "2026-10-21 20:30:00");
+        Window(109, "2026-10-21 20:30:00", "2026-10-21 21:00:00");
         Window(110, "2026-10-09 20:30:00", "2026-10-09 21:00:00");
         Window(111, "2026-10-10 20:30:00", "2026-10-10 21:00:00");
         clock.Set("2026-10-09 20:30:00");
         Assert.True(Service<TimedTodoSchedule>().IsOpen(110));
         clock.Set("2026-10-09 21:00:00");
         Assert.False(Service<TimedTodoSchedule>().IsOpen(110));
-        Window(110, "2026-10-24 20:00:00", "2026-10-24 20:30:00");
+        Window(110, "2026-10-24 20:30:00", "2026-10-24 21:00:00");
         clock.Set("2026-10-12 12:00:00");
         Assert.False(Service<TimedTodoSchedule>().IsOpen(109));
-        Window(109, "2026-10-21 20:00:00", "2026-10-21 20:30:00");
+        Window(109, "2026-10-21 20:30:00", "2026-10-21 21:00:00");
     }
 
     [Fact]
     public void ConfiguredTimedRowsUseCurrentThenNextOccurrence()
     {
         // Despite the task's example label, 115 is Wednesday-only and 125 is custom/weekly, not daily.
-        Window(115, "2026-10-14 20:30:00", "2026-10-14 21:30:00");
-        Window(125, "2026-10-25 20:00:00", "2026-10-25 21:00:00");
+        Window(115, "2026-10-14 21:00:00", "2026-10-14 21:30:00");
+        Window(125, "2026-10-25 21:00:00", "2026-10-25 21:30:00");
         Window(200, "2026-10-09 10:00:00", "2026-10-09 22:00:00");
         clock.Set("2026-10-09 22:00:00");
         Assert.False(Service<TimedTodoSchedule>().IsOpen(200));
@@ -123,10 +123,10 @@ public sealed class DailyWindowsTests : IAsyncLifetime
         Assert.False(Service<TimedTodoSchedule>().IsOpen(3004));
         Window(3301, "2026-10-09 18:30:00", "2026-10-09 19:00:00");
         Window(3303, "2026-10-15 20:30:00", "2026-10-15 21:00:00");
-        clock.Set("2026-10-11 16:15:00");
-        Window(3304, "2026-10-11 16:20:00", "2026-10-11 16:35:00");
+        clock.Set("2026-10-11 18:25:00");
+        Window(3304, "2026-10-11 18:30:00", "2026-10-11 18:45:00");
         Assert.False(Service<TimedTodoSchedule>().IsOpen(3304));
-        clock.Set("2026-10-11 16:20:00");
+        clock.Set("2026-10-11 18:30:00");
         Assert.True(Service<TimedTodoSchedule>().IsOpen(3304));
         clock.Set("2026-10-06 20:40:00");
         Window(3400, "2026-10-06 20:30:00", "2026-10-06 21:00:00"); // custom overrides conflicting 1079
@@ -202,8 +202,8 @@ public sealed class DailyWindowsTests : IAsyncLifetime
         var update = await Next(bot, s => s.ActivityData.TryGetValue(110, out var f) && f.Inc?.HasStartTime == true);
         Assert.False(update.SyncAllMark);
         Assert.True(update.Version > first.Version);
-        Assert.Equal(clock.Unix("2026-10-24 20:00:00"), update.ActivityData[110].Inc.StartTime);
-        Assert.Equal(clock.Unix("2026-10-24 20:30:00"), update.ActivityData[110].Inc.EndTime);
+        Assert.Equal(clock.Unix("2026-10-24 20:30:00"), update.ActivityData[110].Inc.StartTime);
+        Assert.Equal(clock.Unix("2026-10-24 21:00:00"), update.ActivityData[110].Inc.EndTime);
         Assert.False(update.ActivityData[110].Inc.HasTaskCompleteTimes);
         Assert.Empty(update.ActivityData[110].Inc.Tasks);
         Assert.False(update.ActivityData.ContainsKey(101));
