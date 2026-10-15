@@ -1,0 +1,1300 @@
+# GM panel (Lua_CFG_GMConfig, GMConfig, GMCombinationConfig): button labels and descriptions, zh_CN and zh_TW.
+俯仰角Pitch：	Pitch:
+距离Distance：	Distance:
+纵向FOV：	Vertical FOV:
+焦点类型：	Focus Type:
+头	Head
+背	Back
+相机旋转速度:	Camera Rotation Speed:
+相机远近速度:	Camera Zoom Speed:
+0=添加标签；1=删除标签（可以添加任意标签ID）	0 = Add Tag; 1 = Remove Tag (any tag ID can be added)
+0添加1删除	0 Add, 1 Remove
+100级50%免伤	Lv.100 50% Damage Reduction
+1100  剑士     1200 骑士   1300 骑士领主\n2100 魔法师   2200 巫师   2300 超魔导师\n2100 弓箭手   2200 猎人   3300 神射手\n4100 服事      4200 牧师    4300 神官\n5100 盗贼      5200 刺客    5300 十字刺客	1100 Swordman   1200 Knight   1300 Lord Knight\n2100 Mage   2200 Wizard   2300 High Wizard\n2100 Archer   2200 Hunter   3300 Sniper\n4100 Acolyte   4200 Priest   4300 High Priest\n5100 Thief   5200 Assassin   5300 Assassin Cross
+1100  剑士     1200 骑士   1300 骑士领主\n2100 魔法师   2200 巫师   2300 超魔导师\n3100 弓箭手   3200 猎人   3300 神射手\n4100 服事      4200 牧师    4300 神官\n5100 盗贼      5200 刺客    5300 十字刺客\n6100 商人      6200 机匠    6300 神工匠	1100 Swordman   1200 Knight   1300 Lord Knight\n2100 Mage   2200 Wizard   2300 High Wizard\n3100 Archer   3200 Hunter   3300 Sniper\n4100 Acolyte   4200 Priest   4300 High Priest\n5100 Thief   5200 Assassin   5300 Assassin Cross\n6100 Merchant   6200 Blacksmith   6300 Mastersmith
+1、BuffID：Buff表中ID，不支持多位\\n\n2、时间：BUFF对应的持续时间，如果未配置那么读取对应BuffID表中配置的持续时间\n3、目标ID：目标唯一ID，如果没有填写或者0默认为角色自身\\n	1. BuffID: ID from the Buff table; only one ID supported\\n\n2. Duration: Buff duration; if not set, the duration configured for that BuffID in the table is used\n3. Target ID: Unique target ID; if empty or 0, defaults to your own character\\n
+1、BuffID：目标需要删除的BuffID，不支持多位\\n\n2、目标ID：目标唯一ID，如果没有填写或者0默认为角色自身\\n	1. BuffID: ID of the buff to remove from the target; only one ID supported\\n\n2. Target ID: Unique target ID; if empty or 0, defaults to your own character\\n
+1、未选中目标，显示自己属性，选中目标，显示目标属性\n2、属性ID，请查看AttributeConfig.xlsx属性表中ID，不支持多位	1. With no target selected, shows your own attributes; with a target selected, shows the target's attributes\n2. Attribute ID: see the IDs in the AttributeConfig.xlsx attribute table; only one ID supported
+1、目标ID，目标唯一ID，如果是0或者未填写即为查看角色自身单位属性\\n\n2、属性ID，请查看AttributeConfig.xlsx属性表中ID，不支持多位	1. Target ID: Unique target ID; if 0 or empty, shows your own character's attributes\\n\n2. Attribute ID: see the IDs in the AttributeConfig.xlsx attribute table; only one ID supported
+1、道具ID：填写需要删除道具的ID，不支持多位\\n\n2、道具数量：每个道具ID对应的删除数量，如果未填写数量，默认删除1个\\n\n3、道具ID未填写，道具数量输入为999删除背包全部道具	1. Item ID: ID of the item to delete; only one ID supported\\n\n2. Item Quantity: Number to delete for each item ID; if not set, deletes 1\\n\n3. If no item ID is set and the quantity is 999, all items in the bag are deleted
+1、部位ID：填写需要强化的部位ID，不支持多位\\n\n武器（主副）=1、盔甲=2、披风=3、鞋子=4、左饰品=5、右饰品=6\\n\n2、强化等级：对应部位需要强化到达的等级，如果未填写，默认强化到1级	1. Slot ID: ID of the slot to enhance; only one ID supported\\n\nWeapon (main/off-hand)=1, Armor=2, Garment=3, Shoes=4, Left Accessory=5, Right Accessory=6\\n\n2. Enhance Level: Target enhance level for the slot; if not set, enhances to Lv.1
+1、部位ID：填写需要精炼的部位ID，不支持多位\\n\n武器（主副）=1、盔甲=2、披风=3、鞋子=4、左饰品=5、右饰品=6\\n\n2、精炼等级：对应部位需要精炼到达的等级，如果未填写，默认精炼到1级	1. Slot ID: ID of the slot to refine; only one ID supported\\n\nWeapon (main/off-hand)=1, Armor=2, Garment=3, Shoes=4, Left Accessory=5, Right Accessory=6\\n\n2. Refine Level: Target refine level for the slot; if not set, refines to Lv.1
+1号BOSS	Boss No. 1
+24; //扣血 "10" 表示扣10点血\n	24; //Deal damage: "10" deducts 10 HP\n
+27; //加怪 "20000005" 表示加一个怪\n\n\n	27; //Add monster: "20000005" adds one monster\n\n\n
+29级秒伤测试木桩	Lv.29 DPS Test Training Dummy
+2D角色模拟俯仰设置	2D Character Simulated Pitch Settings
+2号BOSS	Boss No. 2
+39级秒伤测试木桩	Lv.39 DPS Test Training Dummy
+3号BOSS	Boss No. 3
+49级秒伤测试木桩	Lv.49 DPS Test Training Dummy
+4号BOSS	Boss No. 4
+50级50%免伤	Lv.50 50% Damage Reduction
+59级秒伤测试木桩	Lv.59 DPS Test Training Dummy
+70级标准木桩	Lv.70 Standard Training Dummy
+99级标准木桩（中立）	Lv.99 Standard Training Dummy (Neutral)
+99级标准木桩（友方）	Lv.99 Standard Training Dummy (Ally)
+99级残血木桩（友方）	Lv.99 Low-HP Training Dummy (Ally)
+AOI测试开关	AOI Test Toggle
+Android Java 崩溃	Android Java Crash
+Android 原生崩溃	Android Native Crash
+断言	Assert
+Buff日志	Buff Log
+CD控制	CD Control
+配置锁定	Config Lock
+Crash 测试	Crash Test
+崩溃测试	Crash Test
+删除邮件	Delete Mail
+调用 Lua 函数	Call Lua Function
+错误	Error
+异常	Exception
+FSR类型	FSR Type
+GM等级属性	GM Level Attributes
+GPU渲染帧率(间隔)	GPU Render Frame Rate (Interval)
+GVETimeline出生	GvE Timeline Spawn
+GVETimeline死亡	GvE Timeline Death
+GVE巨龙围猎	GvE Dragon Hunt
+GVE播放Timeline	GvE Play Timeline
+游戏玩法	Gameplay
+访客	Guest
+日志	Log
+Lua 远程调试器	Lua Remote Debugger
+Lua热注入	Lua Hot Injection
+MapConfig表中ID	ID in MapConfig Table
+过度绘制可视化	Overdraw Visualization
+PC 应用崩溃	PC App Crash
+PC 空指针	PC Null Pointer
+PC模式界面安全区	PC Mode UI Safe Area
+PC调整后界面画布大小	PC Adjusted UI Canvas Size
+预制体类型	Prefab Type
+程序	Program
+质量	Quality
+运行时检查器	Runtime Inspector
+缩放值	Scale Value
+TBT转职（威猛版）	TBT Job Change (Mighty Edition)
+UI一键隐藏	Hide All UI
+警告	Warning
+XY坐标可不填，会传送到地图固定传送点	X/Y coordinates are optional; if left empty you will be teleported to the map's fixed teleport point
+X坐标	X Coordinate
+Y坐标	Y Coordinate
+UI 栏/名称	UI Bar/Name
+假	False
+iOS 原生崩溃	iOS Native Crash
+iOS ObjC 崩溃	iOS ObjC Crash
+间隔	Interval
+多行 GM	Multi-line GM
+Lua 代码字符串	Lua Code String
+真	True
+{酒馆房间ID}（必填），以下三个参数都可以单独填写，空下不填就不会影响房间已有数据。\n{总热度}\n{房间内时间段热度增长值}\n{酒馆内人数，方便以后idip指令直接扩充}	{Tavern Room ID} (required). The three parameters below can each be filled in separately; leaving one empty will not affect the room's existing data.\n{Total Popularity}\n{Popularity growth per time period in the room}\n{Number of people in the tavern, for future direct expansion via IDIP commands}
+“123”表示 1s后开始 准备时间 2s 战斗时间 3s\nopen  开启GVG\nnext   下一阶段GVG	"123" means: start after 1s, 2s preparation time, 3s battle time\nopen  Start GVG\nnext   Next GVG phase
+一键全养成	Max Out All Progression
+一键完成头衔	Complete All Titles
+一键添加灵魂残响	Add All Soul Echoes
+一键添加神术图腾	Add All Divine Totems
+一键添加装备	Add All Equipment
+一键添加道具	Add All Items
+一键清理引导	Clear All Tutorials
+一键解锁时装	Unlock All Costumes
+三合一画布大小	Three-in-One Canvas Size
+上传日志文件	Upload Log Files
+下雨关	Rain Off
+下雨开	Rain On
+下雪关	Snow Off
+下雪开	Snow On
+中R	Mid Spender
+中立	Neutral
+主帧率	Main Frame Rate
+主类型（公会1，世界2）	Main Type (Guild 1, World 2)
+五人本首通	5-Player Dungeon First Clear
+五百人	500 Players
+仅显示选中圆环	Show Selected Ring Only
+仅显示选中框	Show Selection Box Only
+今日酒馆时长	Today's Tavern Time
+任务ID	Quest ID
+任务ID显示	Show Quest IDs
+任务状态	Quest Status
+任务相关	Quests
+伤害日志	Damage Log
+伤害波动控制	Damage Variance Control
+伤害范围快照	Damage Area Snapshot
+使用预设配置设置角色滑梯移动模式：Free(自由视角)、Locked(锁定视角)、ConfigLocked(配置锁定)	Set the character slide movement mode using a preset config: Free (free camera), Locked (locked camera), ConfigLocked (config-locked)
+修改属性	Modify Attributes
+充值1	Top-up 1
+充值2	Top-up 2
+充值3	Top-up 3
+充值4	Top-up 4
+充值5	Top-up 5
+充值6	Top-up 6
+免定段条件检测	Skip Rank Placement Checks
+全学	Learn All
+全局(true)	Global (true)
+全特技装备	All Special-Effect Equipment
+全部显示	Show All
+全部隐藏	Hide All
+公共频道序号	Public Channel Index
+关闭3d场景	Disable 3D Scene
+关闭下载限速	Disable Download Speed Limit
+关闭无CD	Disable No Cooldown
+关闭无敌无消耗	Disable Invincible/No Cost
+其他玩家	Other Players
+具体数值	Exact Value
+冒号调用(:)	Colon Call (:)
+函数名	Function Name
+切换PC模式画布分辨率	Toggle PC Mode Canvas Resolution
+切换剧本标签	Switch Scenario Tab
+切换场景	Switch Scene
+切换平台模式	Switch Platform Mode
+切换角色LOD	Switch Character LOD
+切换语言	Switch Language
+初始化消息SDK	Initialize Messaging SDK
+删除BUFF	Remove Buff
+删除任务	Delete Quest
+删除心震刺BD	Remove Soul Breaker Assassin Build
+删除所有日志文件	Delete All Log Files
+删除暴暴刺BD	Remove Burst Assassin Build
+删除道具	Delete Item
+刺客套装	Assassin Set
+剧本包(例如M101)	Scenario Package (e.g. M101)
+副本id	Dungeon ID
+副本日志	Dungeon Log
+加入/删除	Add/Remove
+加入/退出	Join/Leave
+加血	Restore HP
+加载最大限制	Max Load Limit
+十人本1号	10-Player Dungeon #1
+十人本2号	10-Player Dungeon #2
+十人本3号	10-Player Dungeon #3
+十人本4号	10-Player Dungeon #4
+十人本首通	10-Player Dungeon First Clear
+十字切割者：回旋	Guillotine Cross: Spin
+十字切割者：影刺	Guillotine Cross: Shadow Strike
+半/全屏隐藏切换	Toggle Half/Full Screen Hide
+半屏	Half Screen
+单位ID	Unit ID
+单位id如果是0则是玩家本身单位	A unit ID of 0 means the player's own unit
+参数	Parameter
+参数1	Parameter 1
+参数2	Parameter 2
+参数3	Parameter 3
+参数输入	Parameter Input
+反射关	Reflections Off
+反射开	Reflections On
+发送协议	Send Protocol
+发送自定义个人邮件	Send Custom Personal Mail
+发送自定义全局邮件	Send Custom Global Mail
+发送配置全局邮件	Send Configured Global Mail
+变更数值	Change Value
+台湾繁体	Traditional Chinese (Taiwan)
+后处理开关	Post-Processing Toggle
+四同色灵魂残响	Four Same-Color Soul Echoes
+地图ID	Map ID
+堆箱子小游戏	Box Stacking Minigame
+大R	Big Spender
+大世界流式强制模拟器	Force Open-World Streaming Simulator
+大主教：赞美	Archbishop: Praiser
+大主教：驱魔	Archbishop: Exorciser
+大法师：元素	Arch Mage: Element
+大法师：念力	Arch Mage: Psychokinesis
+天气参数设置	Weather Parameter Settings
+奖励ID	Reward ID
+奖励只生效一个配置	Only one reward config takes effect
+奶妈	Healer
+子类型（例如GVE 1001）	Subtype (e.g. GVE 1001)
+学会全部技能	Learn All Skills
+学会所有技能	Learn All Skills
+完成次数	Completion Count
+实时阴影开关	Real-time Shadows Toggle
+对自己使用技能	Use Skill on Self
+寻路到XYZ(当前地图)	Pathfind to XYZ (Current Map)
+寻路片显示	Show Pathfinding Tiles
+导入玩家数据	Import Player Data
+小R	Small Spender
+小区ID	Zone ID
+小游戏关卡id	Minigame Stage ID
+屏蔽UI	Hide UI
+屏蔽名字板	Hide Nameplates
+屏蔽后处理	Disable Post-Processing
+屏蔽场景	Hide Scene
+屏蔽模型	Hide Models
+屏蔽特效	Hide Effects
+屏蔽阴影	Hide Shadows
+屏蔽飘字	Hide Floating Text
+属性值	Attribute Value
+属性变化值	Attribute Change Value
+常规界面画布大小	Standard UI Canvas Size
+开关	Toggle
+开关角色高亮和描边	Toggle Character Highlight and Outline
+开启3d场景	Enable 3D Scene
+开启3d场景，设置HUD参数	Enable 3D Scene, Set HUD Parameters
+开启公共聊天Debug	Enable Public Chat Debug
+开启后打开任务面板，每条任务旁边显示任务ID；关闭后恢复正常显示并关闭任务面板	When enabled, opens the Quest panel and shows the quest ID next to each quest; when disabled, restores normal display and closes the Quest panel
+开启头衔	Unlock Titles
+开启宠物	Unlock Pets
+开启强化	Unlock Enhancement
+开启技能第一步	Unlock Skills Step 1
+开启技能第二步	Unlock Skills Step 2
+开始统计	Start Tracking
+开起和关闭移动校验	Enable/Disable Movement Validation
+强化装备	Enhance Equipment
+微服务网关	Microservice Gateway
+快速建号	Quick Character Creation
+快速建号说明	Quick Character Creation Help
+性别	Gender
+性能面板	Performance Panel
+怪物ID	Monster ID
+手游模式	Mobile Mode
+打印Ping延迟	Print Ping Latency
+打印单位属性	Print Unit Attributes
+打印客户端Forbidden	Print Client Forbidden
+打印当前版本CL号	Print Current Build CL Number
+打印等级信息	Print Level Info
+打印资源队列	Print Resource Queue
+打印酒馆属性	Print Tavern Attributes
+打开 Dots	Open Dots
+打开1 关闭0	1 = On, 0 = Off
+打开十人本系统界面	Open 10-Player Dungeon UI
+打开或关闭伤害范围快照	Toggle Damage Area Snapshot
+打开新手挑战界面	Open Beginner Challenge UI
+打开模型编辑界面	Open Model Editor UI
+打开聊天消息DebugMode	Enable Chat Message Debug Mode
+打开语音信息面板	Open Voice Info Panel
+打开面板	Open Panel
+扣血	Reduce HP
+执行DoLuaFunc/DoGlobalLuaFunc并打印返回值。类型推断：数字/true/false/'string'。模块名留空→全局函数。	Runs DoLuaFunc/DoGlobalLuaFunc and prints the return value. Type inference: number/true/false/'string'. Leave the module name empty for a global function.
+执行Lua函数	Run Lua Function
+执行操作	Execute Action
+批量创角	Batch Create Characters
+批量生成公会	Batch Generate Guilds
+持续时间	Duration
+指定频道	Specified Channel
+按平台和崩溃类型触发 Crash	Trigger a crash by platform and crash type
+掉落ID	Drop ID
+掉落ID：掉落池表ID	Drop ID: Drop pool table ID
+掉落参数值	Drop Parameter Value
+接取任务	Accept Quest
+接受方	Recipient
+控制战斗日志	Combat Log Control
+提交任务	Turn In Quest
+撤销系统邮件	Revoke System Mail
+播放录制文件	Play Recording File
+播放类型	Playback Type
+支付	Payment
+文件名	File Name
+断线测试	Disconnect Test
+无CD	No Cooldown
+无敌无消耗	Invincible/No Cost
+无防御高血量	No DEF, High HP
+日志开关	Log Toggle
+日志文件	Log File
+日志类型	Log Type
+日志面板	Log Panel
+时长	Duration
+是否在跨服：	Cross-server: 
+是否开启伤害波动	Enable Damage Variance
+是否开启无CD	Enable No Cooldown
+是否打开面板	Open Panel?
+是否按层数删除	Remove by Stack Count
+是否播放	Play?
+是否有BD	Has Build?
+是否隐藏	Hide?
+显示EasyGM	Show EasyGM
+显示参数	Show Parameters
+显示语音频道列表数据	Show Voice Channel List Data
+显示隐藏多语言Key	Show/Hide Localization Keys
+显示隐藏模型和HUD	Show/Hide Models and HUD
+曲线名称	Curve Name
+更换属性	Change Attribute
+最大可见距离 输入错误	Max Visible Distance: invalid input
+最大缩放比例 输入错误	Max Zoom Ratio: invalid input
+最小缩放比例 输入错误	Min Zoom Ratio: invalid input
+期望模型	Desired Model
+木桩模式	Training Dummy Mode
+本地GM日志	Local GM Log
+机械工匠：战斧	Mechanic: Axe
+机械工匠：机甲	Mechanic: Madogear
+杀死目标ID：目标唯一ID，不支持多位，一个就行，如果没有填写或者0默认为角色自身	Kill Target ID: the target's unique ID. Multiple IDs are not supported, just one. If empty or 0, defaults to your own character
+杀死目标单位	Kill Target Unit
+极限自动战斗	Extreme Auto Battle
+极限自动战斗开关	Extreme Auto Battle Toggle
+查看下载进度资源	View Resource Download Progress
+查看关卡变量	View Stage Variables
+查看单位脏数据	View Unit Dirty Data
+查询BUFF	Query Buff
+查询属性	Query Attributes
+标签id	Tag ID
+模块名(留空=全局)	Module Name (empty = global)
+每帧同步	Sync Every Frame
+活跃天数	Active Days
+流派ID	Build ID
+流派手册账号	Build Handbook Account
+消息内容	Message Content
+消息功能登录	Messaging Login
+消息延迟统计	Message Latency Stats
+消息文本发送	Send Text Message
+添加BUFF	Add Buff
+添加NPC	Add NPC
+添加一些拍卖行道具	Add Some Auction House Items
+添加心震刺BD	Add Soul Breaker Assassin Build
+添加暴暴刺BD	Add Burst Assassin Build
+添加潜力点	Add Potential Points
+添加潜力点数	Add Potential Points
+添加经验	Add EXP
+添加道具	Add Item
+添加：大主教（赞美）	Add: Archbishop (Praiser)
+添加：大主教（驱魔）	Add: Archbishop (Exorciser)
+添加：大法师（元素）	Add: Arch Mage (Element)
+添加：机械工匠（斧）	Add: Mechanic (Axe)
+添加：机械工匠（炮）	Add: Mechanic (Cannon)
+添加：游侠（射击）	Add: Ranger (Shooting)
+添加：皇家禁卫军（惩戒）	Add: Royal Guard (Retribution)
+添加：皇家禁卫军（盾）	Add: Royal Guard (Shield)
+添加：符文骑士（龙骑）	Add: Rune Knight (Dragon Knight)
+清空对象池	Clear Object Pool
+清空背包	Clear Inventory
+清除指定频道聊天记录(-1为全清除)	Clear chat history for the specified channel (-1 clears all)
+清零	Reset to Zero
+渲染帧率限制	Render Frame Rate Limit
+游侠：射击	Ranger: Shooting
+游侠：狼猎	Ranger: Warg Hunter
+滑梯配置类型	Slide Config Type
+满血满蓝	Full HP and SP
+灵魂残响（S1）	Soul Echo (S1)
+点调用(.)	Dot Call (.)
+热度	Popularity
+热度增长值	Popularity Growth Value
+热注入编号	Hot Injection Number
+热重载技能	Hot Reload Skills
+焦点(1头2背)	Focus (1 Head, 2 Back)
+物品参数	Item Parameters
+特效测试工具	Effect Test Tool
+特效渲染	Effect Rendering
+状态机日志	State Machine Log
+玩家坐标朝向	Player Position and Facing
+玩家赛季服：	Player Season Server: 
+生命变化	HP Change
+用户	User
+用户ID	User ID
+男	Male
+界面名称	UI Name
+登录方式	Login Method
+百人	100 Players
+皇家禁卫军：枪	Royal Guard: Lance
+皇家禁卫军：盾	Royal Guard: Shield
+目标ID	Target ID
+目标ID：选择指令目标ID，如果没有填写或者填写0默认是角色自身\n 加血：增加目标当前生命（非生命上限）\n 扣血：扣除目标当前生命（非生命上限）	Target ID: the target ID for the command. If empty or 0, defaults to your own character\n Restore HP: increases the target's current HP (not Max HP)\n Reduce HP: deducts the target's current HP (not Max HP)
+目标id	Target ID
+目标唯一ID，如果是0或者未填写即为查看角色自身单位属性	Target's unique ID. If 0 or empty, shows your own character's unit attributes
+相机	Camera
+相机开关	Camera Toggle
+相机旋转速度	Camera Rotation Speed
+相机远近速度	Camera Zoom Speed
+礼包1	Gift Pack 1
+移动校验	Movement Validation
+移动校验开关	Movement Validation Toggle
+移除：大主教（赞美）	Remove: Archbishop (Praiser)
+移除：大主教（驱魔）	Remove: Archbishop (Exorciser)
+移除：大法师（元素）	Remove: Arch Mage (Element)
+移除：机械工匠（斧）	Remove: Mechanic (Axe)
+移除：机械工匠（炮）	Remove: Mechanic (Cannon)
+移除：游侠（射击）	Remove: Ranger (Shooting)
+移除：皇家禁卫军（惩戒）	Remove: Royal Guard (Retribution)
+移除：皇家禁卫军（盾）	Remove: Royal Guard (Shield)
+移除：符文骑士（龙骑）	Remove: Rune Knight (Dragon Knight)
+空白装备	Blank Equipment
+窗口界面画布大小	Windowed UI Canvas Size
+符文骑士：枪骑	Rune Knight: Lance Knight
+符文骑士：龙骑	Rune Knight: Dragon Knight
+第三方登录	Third-Party Login
+精炼装备	Refine Equipment
+纵向FOV	Vertical FOV
+经验日志	EXP Log
+结束统计	Stop Tracking
+结算Mvp	Settle MVP
+编辑器本地热注入(不要编号)	Editor Local Hot Injection (no number)
+网络消息统计	Network Message Stats
+职业1骑士	Job 1 Knight
+职业2法师	Job 2 Mage
+职业3猎人	Job 3 Hunter
+职业4牧师	Job 4 Priest
+职业5刺客	Job 5 Assassin
+职业6商人	Job 6 Merchant
+联赛GM	League GM
+自动战斗锚点	Auto Battle Anchor
+自动战斗锚点开关	Auto Battle Anchor Toggle
+自动给当前职业当前转职阶段所有技能加点，且加满	Automatically assigns and maxes out all skill points for the current job at its current job stage
+获取加载资源	Get Loaded Resources
+行为树AI日志	Behavior Tree AI Log
+表现ID	Display ID
+视频录制模式(+号打开GM)	Video Recording Mode (+ opens GM)
+角色GM控制	Character GM Controls
+角色模拟俯仰角度变化率	Character Simulated Pitch Change Rate
+角色模拟俯仰起始角度	Character Simulated Pitch Start Angle
+角色渲染	Character Rendering
+解锁所有宠物	Unlock All Pets
+触发掉落	Trigger Drop
+让目标使用技能	Make Target Use Skill
+设置CBB链接地址	Set CBB Link URL
+设置FPS	Set FPS
+设置FSRType	Set FSRType
+设置RenderScale	Set RenderScale
+设置分辨率	Set Resolution
+设置单位属性	Set Unit Attributes
+设置单位阵营	Set Unit Faction
+设置场景3d参数	Set Scene 3D Parameters
+设置垂直同步	Set V-Sync
+设置开启碰撞检测和检测Layer	Enable Collision Detection and Set Detection Layer
+设置开服日期	Set Server Launch Date
+设置开服日期 年-月-日	Set Server Launch Date (YYYY-MM-DD)
+设置服务器时间	Set Server Time
+设置服务器时间 年-月-日 时:分:秒  24小时制	Set Server Time (YYYY-MM-DD HH:MM:SS, 24-hour)
+设置模型场景模型剔除透明度	Set Scene Model Culling Transparency
+设置滑梯模式	Set Slide Mode
+设置酒馆参数	Set Tavern Parameters
+语音GM	Voice GM
+语音加入/退出频道	Voice Join/Leave Channel
+语音加入黑名单(不收听)	Voice Add to Blocklist (Mute)
+语音延迟统计	Voice Latency Stats
+语音是否在频道中	Voice In Channel?
+语音查询扬声器静音	Voice Query Speaker Mute
+语音查询扬声器音量	Voice Query Speaker Volume
+语音查询麦克风静音	Voice Query Mic Mute
+语音查询麦克风音量	Voice Query Mic Volume
+语音登出	Voice Logout
+语音登录	Voice Login
+语音设置扬声器静音	Voice Set Speaker Mute
+语音设置扬声器音量	Voice Set Speaker Volume
+语音设置麦克风静音	Voice Set Mic Mute
+语音设置麦克风音量	Voice Set Mic Volume
+语音退出频道	Voice Leave Channel
+请输入搜索...	Search...
+请选择...	Please select...
+调整到下一阶段时间	Advance to Next Phase Time
+调用方式	Call Method
+账号：账号，不支持多位，一个就行\n数量：账号对应的数量\n职业ID：账号对应生成的职业ID\nBase等级：账号对应生成的Base等级\nJob等级：账号对应生成的Job等级\n流派ID：账号对应流派ID\n创建账号携带道具ID：携带道具ID，不支持多位\n创建账号携带道具数量：道具数量，没有配置默认为1	Account: account name; multiple not supported, just one\nQuantity: number of characters for the account\nJob ID: job ID generated for the account\nBase Level: Base Level generated for the account\nJob Level: Job Level generated for the account\nBuild ID: Build ID for the account\nItem ID on Account Creation: ID of the item to carry; multiple not supported\nItem Quantity on Account Creation: item quantity; defaults to 1 if not set
+质量测试开关	Quality Test Toggle
+质量过滤	Quality Filter
+贴图质量	Texture Quality
+超R	Whale
+距离Distance	Distance
+跳转地图	Go to Map
+跳过CutScene	Skip Cutscene
+转十字刺客	Change Job to Assassin Cross
+转十字斩首者	Change Job to Guillotine Cross
+转圣殿十字军	Change Job to Paladin
+转大主教	Change Job to Archbishop
+转大法师	Change Job to Arch Mage
+转机械工匠	Change Job to Mechanic
+转游侠	Change Job to Ranger
+转皇家禁卫军	Change Job to Royal Guard
+转神官	Change Job to High Priest
+转神射手	Change Job to Sniper
+转神工匠	Change Job to Mastersmith
+转符文骑士	Change Job to Rune Knight
+转职相关	Job Change
+转职（威猛版）	Job Change (Mighty Edition)
+转超魔导师	Change Job to High Wizard
+转骑士领主	Change Job to Lord Knight
+过期时间	Expiration Time
+近战战斗木桩	Melee Training Dummy
+进入房间	Enter Room
+进入退出	Enter/Exit
+进测试环境	Enter Test Environment
+远程战斗木桩	Ranged Training Dummy
+选中表现设置	Selection Display Settings
+透明度[0,10]	Opacity [0,10]
+道具ID	Item ID
+道具数量	Item Quantity
+邮件ID	Mail ID
+邮件内容	Mail Content
+邮件标题	Mail Title
+邮件类型	Mail Type
+邮件过期时间	Mail Expiration Time
+部位ID	Slot ID
+酒馆id	Tavern ID
+酒馆任务完成次数	Tavern Quest Completion Count
+酒馆标签状态	Tavern Tag Status
+酒馆活跃天数	Tavern Active Days
+酒馆获取明星值	Tavern Star Points Earned
+重置任务	Reset Quest
+重置并开始记录	Reset and Start Recording
+隐藏/显示主界面下标签	Hide/Show Main UI Bottom Tabs
+隔帧同步	Sync Every Other Frame
+非R	Non-Spender
+音量	Volume
+首包资源上报	First Package Resource Report
+黑白棋小游戏	Reversi Minigame
+默认模式	Default Mode
+0=添加標籤；1=刪除標籤（可以添加任意標籤ID）	0 = Add Tag; 1 = Remove Tag (any tag ID can be added)
+0添加1刪除	0 Add, 1 Remove
+1.卡片系統：對應的是15級\n2.強化系統：對應的是18級\n3.成長手冊：任務105120，對應的是25級\n4.打造：對應的是21級\n5.寵物：對應的是28級\n6.技能：完成轉職任務後開啓	1. Card System: Lv.15\n2. Enhancement System: Lv.18\n3. Growth Handbook: Quest 105120, Lv.25\n4. Crafting: Lv.21\n5. Pets: Lv.28\n6. Skills: unlocked after completing the Job Change quest
+100級50%免傷	Lv.100 50% Damage Reduction
+1100  劍士     1200 騎士   1300 騎士領主\n2100 魔法師   2200 巫師   2300 超魔導師\n2100 弓箭手   2200 獵人   3300 神射手\n4100 服事      4200 牧師    4300 神官\n5100 盜賊      5200 刺客    5300 十字刺客	1100  Swordsman     1200 Knight   1300 Lord Knight\n2100 Mage   2200 Wizard   2300 High Wizard\n2100 Archer   2200 Hunter   3300 Sniper\n4100 Acolyte      4200 Priest    4300 High Priest\n5100 Thief      5200 Assassin    5300 Assassin Cross
+1100  劍士     1200 騎士   1300 騎士領主\n2100 魔法師   2200 巫師   2300 超魔導師\n3100 弓箭手   3200 獵人   3300 神射手\n4100 服事      4200 牧師    4300 神官\n5100 盜賊      5200 刺客    5300 十字刺客\n6100 商人      6200 機匠    6300 神工匠	1100  Swordsman     1200 Knight   1300 Lord Knight\n2100 Mage   2200 Wizard   2300 High Wizard\n3100 Archer   3200 Hunter   3300 Sniper\n4100 Acolyte      4200 Priest    4300 High Priest\n5100 Thief      5200 Assassin    5300 Assassin Cross\n6100 Merchant      6200 Blacksmith    6300 Mastersmith
+1、BuffID：Buff表中ID，不支持多位\\n\n2、時間：BUFF對應的持續時間，如果未配置那麼讀取對應BuffID表中配置的持續時間\n3、目標ID：目標唯一ID，如果沒有填寫或者0默認為角色自身\\n	1. BuffID: ID from the Buff table; multiple not supported\\n\n2. Time: the buff's duration; if not set, uses the duration configured for that BuffID in the table\n3. Target ID: the target's unique ID; if empty or 0, defaults to your own character\\n
+1、BuffID：目標需要刪除的BuffID，不支持多位\\n\n2、目標ID：目標唯一ID，如果沒有填寫或者0默認為角色自身\\n	1. BuffID: the BuffID to remove from the target; multiple not supported\\n\n2. Target ID: the target's unique ID; if empty or 0, defaults to your own character\\n
+1、未選中目標，顯示自己屬性，選中目標，顯示目標屬性\n2、屬性ID，請查看AttributeConfig.xlsx屬性表中ID，不支持多位	1. With no target selected, shows your own attributes; with a target selected, shows the target's attributes\n2. Attribute ID: see the IDs in the AttributeConfig.xlsx attribute table; multiple not supported
+1、目標ID，目標唯一ID，如果是0或者未填寫即為查看角色自身單位屬性\\n\n2、屬性ID，請查看AttributeConfig.xlsx屬性表中ID，不支持多位	1. Target ID: the target's unique ID; if 0 or empty, shows your own character's unit attributes\\n\n2. Attribute ID: see the IDs in the AttributeConfig.xlsx attribute table; multiple not supported
+1、道具ID：填寫需要刪除道具的ID，不支持多位\\n\n2、道具數量：每個道具ID對應的刪除數量，如果未填寫數量，默認刪除1個\\n\n3、道具ID未填寫，道具數量輸入為999刪除背包全部道具	1. Item ID: the ID of the item to delete; multiple not supported\\n\n2. Item Quantity: how many to delete for each item ID; deletes 1 if not set\\n\n3. If Item ID is empty and Item Quantity is 999, deletes all items in the inventory
+1、部位ID：填寫需要強化的部位ID，不支持多位\\n\n武器（主副）=1、盔甲=2、披風=3、鞋子=4、左飾品=5、右飾品=6\\n\n2、強化等級：對應部位需要強化到達的等級，如果未填寫，默認強化到1級	1. Slot ID: the ID of the slot to enhance; multiple not supported\\n\nWeapon (Main/Off) = 1, Armor = 2, Cape = 3, Shoes = 4, Left Accessory = 5, Right Accessory = 6\\n\n2. Enhancement Level: the level to enhance the slot to; defaults to Lv.1 if not set
+1、部位ID：填寫需要精煉的部位ID，不支持多位\\n\n武器（主副）=1、盔甲=2、披風=3、鞋子=4、左飾品=5、右飾品=6\\n\n2、精煉等級：對應部位需要精煉到達的等級，如果未填寫，默認精煉到1級	1. Slot ID: the ID of the slot to refine; multiple not supported\\n\nWeapon (Main/Off) = 1, Armor = 2, Cape = 3, Shoes = 4, Left Accessory = 5, Right Accessory = 6\\n\n2. Refine Level: the level to refine the slot to; defaults to Lv.1 if not set
+1號BOSS	Boss #1
+24; //扣血 "10" 表示扣10點血\n	24; //Reduce HP: "10" deducts 10 HP\n
+27; //加怪 "20000005" 表示加一個怪\n\n\n	27; //Add monster: "20000005" adds one monster\n\n\n
+29級秒傷測試木樁	Lv.29 DPS Test Training Dummy
+2D角色模擬俯仰設置	2D Character Simulated Pitch Settings
+2號BOSS	Boss #2
+39級秒傷測試木樁	Lv.39 DPS Test Training Dummy
+3dHud參數（場景3d開啓後生效）	3D HUD Parameters (take effect when 3D scene is enabled)
+3號BOSS	Boss #3
+49級秒傷測試木樁	Lv.49 DPS Test Training Dummy
+4號BOSS	Boss #4
+50級50%免傷	Lv.50 50% Damage Reduction
+59級秒傷測試木樁	Lv.59 DPS Test Training Dummy
+70級標準木樁	Lv.70 Standard Training Dummy
+99級標準木樁（中立）	Lv.99 Standard Training Dummy (Neutral)
+99級標準木樁（友方）	Lv.99 Standard Training Dummy (Friendly)
+99級殘血木樁（友方）	Lv.99 Low-HP Training Dummy (Friendly)
+AOI測試開關	AOI Test Toggle
+Android Java 崩潰	Android Java Crash
+Android 原生崩潰	Android Native Crash
+斷言	Assert
+Buff日誌	Buff Log
+設定鎖定	Lock Settings
+崩潰測試	Crash Test
+刪除郵件	Delete Mail
+呼叫 Lua 函式	Call Lua Function
+輸入文字...	Enter text...
+錯誤	Error
+例外	Exception
+FSR類型	FSR Type
+GM等級屬性	GM Level Attributes
+GPU渲染幀率(間隔)	GPU Render Frame Rate (Interval)
+GVE巨龍圍獵	GVE Dragon Hunt
+遊戲玩法	Gameplay
+訪客	Guest
+鎖定	Locked
+日誌	Log
+Lua 遠端偵錯器	Lua Remote Debugger
+Lua熱注入	Lua Hot Injection
+過度繪製視覺化	Overdraw Visualization
+PC 應用程式崩潰	PC App Crash
+PC 空指針	PC Null Pointer
+PC模式界面安全區	PC Mode UI Safe Area
+PC調整後界面畫布大小	PC Adjusted UI Canvas Size
+預製體類型	Prefab Type
+程式	Program
+品質	Quality
+執行階段檢查器	Runtime Inspector
+縮放值	Scale Value
+TBT轉職（威猛版）	TBT Job Change (Power Version)
+UI一鍵隱藏	Hide UI (One Click)
+XY坐標可不填，會傳送到地圖固定傳送點	X/Y coordinates are optional; if left blank, you will be teleported to the map's fixed teleport point.
+X坐標	X Coordinate
+Y坐標	Y Coordinate
+UI 欄／名稱	UI Bar / Name
+iOS 原生崩潰	iOS Native Crash
+iOS ObjC 崩潰	iOS ObjC Crash
+間隔	Interval
+Lua 程式碼字串	Lua Code String
+{酒館房間ID}（必填），以下三個參數都可以單獨填寫，空下不填就不會影響房間已有數據。\n{總熱度}\n{房間內時間段熱度增長值}\n{酒館內人數，方便以後idip指令直接擴充}	{Tavern Room ID} (required). Each of the three parameters below can be filled in individually; leaving one blank will not affect the room's existing data.\n{Total Popularity}\n{Popularity gain per time period in the room}\n{Number of people in the Tavern, for future direct expansion via IDIP commands}
+“123”表示 1s後開始 準備時間 2s 戰鬥時間 3s\nopen  開啓GVG\nnext   下一階段GVG	"123" means: start after 1s, 2s preparation time, 3s battle time\nopen  Start GVG\nnext   Next GVG phase
+一鍵全養成	Max All Progression
+一鍵完成頭銜	Complete All Titles
+一鍵開啓	Unlock All
+一鍵添加靈魂殘響	Add All Soul Echoes
+一鍵添加神術圖騰	Add All Divine Art Totems
+一鍵添加裝備	Add All Equipment
+一鍵添加道具	Add All Items
+一鍵清理引導	Clear All Tutorials
+一鍵解鎖時裝	Unlock All Costumes
+三合一畫布大小	3-in-1 Canvas Size
+上傳日誌文件	Upload Log Files
+下雨關	Rain Off
+下雨開	Rain On
+下雪關	Snow Off
+下雪開	Snow On
+主幀率	Main Frame Rate
+主類型（公會1，世界2）	Main Type (Guild 1, World 2)
+亞爾夫海姆	Alfheim
+僅顯示選中圓環	Show Selection Ring Only
+僅顯示選中框	Show Selection Box Only
+今日酒館時長	Today's Tavern Time
+任務ID	Quest ID
+任務ID顯示	Show Quest IDs
+任務狀態	Quest Status
+任務相關	Quests
+傷害	Damage
+傷害日誌	Damage Log
+傷害波動控制	Damage Variance Control
+傷害範圍快照	Damage Area Snapshot
+使用預設配置設置角色滑梯移動模式：Free(自由視角)、Locked(鎖定視角)、ConfigLocked(配置鎖定)	Set the character slide movement mode using the preset config: Free (free camera), Locked (locked camera), ConfigLocked (config locked)
+修改屬性	Modify Attributes
+俯仰角Pitch：31.2454\n距離Distance：12.2465\n縱向FOV：45.344\n焦點類型：頭\n	Pitch: 31.2454\nDistance: 12.2465\nVertical FOV: 45.344\nFocus Type: Head\n
+免定段條件檢測	Skip Tier Requirement Check
+全學	Learn All
+全特技裝備	Full Stunt Gear
+全部顯示	Show All
+全部隱藏	Hide All
+公會	Guild
+公會郵件	Guild Mail
+公共頻道序號	Public Channel Index
+關閉3d場景	Disable 3D Scene
+關閉下載限速	Disable Download Speed Limit
+關閉無CD	Disable No Cooldown
+關閉無敵無消耗	Disable Invincible/No Cost
+具體數值	Exact Value
+冒號調用(:)	Colon Call (:)
+函數名	Function Name
+切換PC模式畫布分辨率	Switch PC Mode Canvas Resolution
+切換劇本標籤	Switch Script Tag
+切換場景	Switch Scene
+切換平台模式	Switch Platform Mode
+切換角色LOD	Switch Character LOD
+切換語言	Switch Language
+創建公會	Create Guild
+刪除	Delete
+刪除BUFF	Delete Buff
+刪除任務	Delete Quest
+刪除心震刺BD	Delete Soul Breaker Assassin BD
+刪除所有日誌文件	Delete All Log Files
+刪除暴暴刺BD	Delete Burst Assassin BD
+刪除道具	Delete Item
+刺客套裝	Assassin Set
+劇本包(例如M101)	Script Package (e.g. M101)
+副本日誌	Dungeon Log
+加入/刪除	Add/Delete
+加載最大限制	Max Load Limit
+十人本1號	10-Player Dungeon #1
+十人本2號	10-Player Dungeon #2
+十人本3號	10-Player Dungeon #3
+十人本4號	10-Player Dungeon #4
+半/全屏隱藏切換	Toggle Half/Full Screen Hide
+單位ID	Unit ID
+單位id如果是0則是玩家本身單位	A unit ID of 0 means the player's own unit
+參數	Parameter
+參數1	Parameter 1
+參數2	Parameter 2
+參數3	Parameter 3
+參數輸入	Parameter Input
+反射關	Reflection Off
+反射開	Reflection On
+發送協議	Send Protocol
+發送自定義個人郵件	Send Custom Personal Mail
+發送自定義全局郵件	Send Custom Global Mail
+發送配置全局郵件	Send Configured Global Mail
+變更數值	Change Value
+台灣繁體	Traditional Chinese (Taiwan)
+後處理開關	Post-Processing Toggle
+四同色靈魂殘響	Four Same-Color Soul Echoes
+地圖ID	Map ID
+場景3d設置	Scene 3D Settings
+場景模式GM工具	Scene Mode GM Tool
+堆箱子小游戲	Box Stacking Minigame
+大世界流式強制模擬器	Open World Streaming Force Simulator
+大主教：贊美	Archbishop: Praiser
+大主教：驅魔	Archbishop: Exorciser
+大法師：元素	Arch Mage: Element
+大法師：念力	Arch Mage: Psychic
+天氣參數設置	Weather Parameter Settings
+頭	Head
+獎勵ID	Reward ID
+獎勵只生效一個配置	Only one reward config takes effect
+奶媽	Healer
+子類型（例如GVE 1001）	Subtype (e.g. GVE 1001)
+學會全部技能	Learn All Skills
+學會所有技能	Learn Every Skill
+完成任務	Complete Quest
+完成次數	Completion Count
+實時陰影開關	Real-Time Shadows Toggle
+對自己使用技能	Use Skill on Self
+尋路到XYZ(當前地圖)	Pathfind to XYZ (Current Map)
+尋路片顯示	Show Pathfinding Tiles
+導入玩家數據	Import Player Data
+小區ID	Zone ID
+小游戲關卡id	Minigame Stage ID
+屏蔽後處理	Disable Post-Processing
+屏蔽場景	Hide Scene
+屏蔽陰影	Disable Shadows
+屏蔽飄字	Hide Floating Text
+屬性ID	Attribute ID
+屬性值	Attribute Value
+屬性變化值	Attribute Change Value
+屬性數值	Attribute Amount
+常規界面畫布大小	Standard UI Canvas Size
+應用參數	Apply Parameters
+開關	Toggle
+開關角色高亮和描邊	Toggle Character Highlight and Outline
+開啓	Enable
+開啓3d場景	Enable 3D Scene
+開啓3d場景，設置HUD參數	Enable 3D Scene, Set HUD Parameters
+開啓公共聊天Debug	Enable Public Chat Debug
+開啓後打開任務面板，每條任務旁邊顯示任務ID；關閉後恢復正常顯示並關閉任務面板	When enabled, opens the Quest panel and shows each quest's ID next to it; when disabled, restores normal display and closes the Quest panel
+開啓頭銜	Unlock Titles
+開啓寵物	Unlock Pets
+開啓強化	Unlock Enhancement
+開啓技能第一步	Unlock Skills (Step 1)
+開啓技能第二步	Unlock Skills (Step 2)
+開始統計	Start Tracking
+開起和關閉移動校驗	Toggle Movement Validation
+強化裝備	Enhance Equipment
+微服務網關	Microservice Gateway
+快速建號	Quick Character Creation
+快速建號說明	Quick Character Creation Help
+快速搜索服務器...	Quick search servers...
+性別	Gender
+打印Ping延遲	Print Ping Latency
+打印單位屬性	Print Unit Attributes
+打印客戶端Forbidden	Print Client Forbidden
+打印當前版本CL號	Print Current Build CL Number
+打印等級信息	Print Level Info
+打印資源隊列	Print Resource Queue
+打印酒館屬性	Print Tavern Attributes
+打開 Dots	Open Dots
+打開1 關閉0	1 = On, 0 = Off
+打開十人本系統界面	Open 10-Player Dungeon UI
+打開或關閉傷害範圍快照	Toggle Damage Area Snapshot
+打開新手挑戰界面	Open Novice Challenge UI
+打開模型編輯界面	Open Model Editor UI
+打開聊天消息DebugMode	Enable Chat Message Debug Mode
+打開語音信息面板	Open Voice Info Panel
+打開面板	Open Panel
+執行	Execute
+執行DoLuaFunc/DoGlobalLuaFunc並打印返回值。類型推斷：數字/true/false/'string'。模塊名留空→全局函數。	Run DoLuaFunc/DoGlobalLuaFunc and print the return value. Type inference: number/true/false/'string'. Leave module name blank for a global function.
+執行Lua函數	Run Lua Function
+執行操作	Execute Action
+批量創角	Batch Create Characters
+批量生成公會	Batch Generate Guilds
+持續時間	Duration
+指定頻道	Specified Channel
+按平台和崩潰類型觸發 Crash	Trigger Crash by Platform and Crash Type
+掉落參數值	Drop Parameter Value
+接取任務	Accept Quest
+控制戰鬥日誌	Combat Log Control
+提交任務	Submit Quest
+撤銷系統郵件	Revoke System Mail
+播放錄制文件	Play Recording File
+播放類型	Playback Type
+放棄任務	Abandon Quest
+敏劍	AGI Swordsman
+斷線測試	Disconnect Test
+無	None
+無CD	No Cooldown
+無敵無消耗	Invincible/No Cost
+無防禦高血量	No Defense, High HP
+日誌開關	Log Toggle
+日誌文件	Log Files
+日誌類型	Log Type
+日誌面板	Log Panel
+時長	Duration
+時間	Time
+是否開啓	Enable?
+是否開啓3d	Enable 3D?
+是否開啓傷害波動	Enable Damage Variance?
+是否開啓無CD	Enable No Cooldown?
+是否打開面板	Open Panel?
+是否按層數刪除	Delete by Stacks?
+是否隱藏	Hide?
+顯示EasyGM	Show EasyGM
+顯示tips	Show Tips
+顯示參數	Show Parameters
+顯示語音頻道列表數據	Show Voice Channel List Data
+顯示隱藏多語言Key	Show/Hide Localization Keys
+顯示隱藏模型和HUD	Show/Hide Models and HUD
+曲線名稱	Curve Name
+更換屬性	Change Attributes
+最大可見距離	Max Visible Distance
+最大可見距離 輸入錯誤	Max Visible Distance: Invalid Input
+最大縮放比例	Max Zoom Scale
+最大縮放比例 輸入錯誤	Max Zoom Scale: Invalid Input
+最小縮放比例	Min Zoom Scale
+最小縮放比例 輸入錯誤	Min Zoom Scale: Invalid Input
+服務器信息	Server Info
+服務器快速搜索	Server Quick Search
+木樁信息	Training Dummy Info
+木樁模式	Training Dummy Mode
+本地GM日誌	Local GM Log
+機械工匠：戰斧	Mechanic: Axe
+機械工匠：機甲	Mechanic: Madogear Pilot
+殺死目標ID：目標唯一ID，不支持多位，一個就行，如果沒有填寫或者0默認為角色自身	Kill Target ID: the target's unique ID. Only one ID is supported. If left blank or 0, defaults to your own character
+殺死目標單位	Kill Target Unit
+極限自動戰鬥	Extreme Auto Battle
+極限自動戰鬥開關	Extreme Auto Battle Toggle
+查看下載進度資源	View Download Progress Resources
+查看關卡變量	View Stage Variables
+查看單位髒數據	View Unit Dirty Data
+查詢BUFF	Query Buff
+查詢屬性	Query Attributes
+標  題	Title
+標籤id	Tag ID
+模塊名(留空=全局)	Module Name (blank = global)
+模式選擇	Mode Selection
+每幀同步	Sync Every Frame
+泰語	Thai
+活躍天數	Active Days
+流派手冊賬號	Build Handbook Account
+消息內容	Message Content
+消息功能登錄	Message Function Login
+消息延遲統計	Message Latency Stats
+消息文本發送	Send Text Message
+添加一些拍賣行道具	Add Some Auction House Items
+添加潛力點	Add Potential Points
+添加潛力點數	Add Potential Point Amount
+添加經驗	Add EXP
+添加：大主教（贊美）	Add: Archbishop (Praiser)
+添加：大主教（驅魔）	Add: Archbishop (Exorciser)
+添加：大法師（元素）	Add: Arch Mage (Element)
+添加：機械工匠（斧）	Add: Mechanic (Axe)
+添加：機械工匠（炮）	Add: Mechanic (Cannon)
+添加：游俠（射擊）	Add: Ranger (Wind Walker)
+添加：皇家禁衛軍（懲戒）	Add: Royal Guard (Retribution)
+添加：皇家禁衛軍（盾）	Add: Royal Guard (Shield)
+添加：符文騎士（龍騎）	Add: Rune Knight (Dragon Knight)
+清空對象池	Clear Object Pool
+清除指定頻道聊天記錄(-1為全清除)	Clear Chat History of Specified Channel (-1 = clear all)
+渲染幀率限制	Render Frame Rate Limit
+游俠：射擊	Ranger: Wind Walker
+游俠：狼獵	Ranger: Warg Hunter
+滑梯配置類型	Slide Config Type
+滿血滿藍	Full HP and SP
+靈魂殘響（S1）	Soul Echo (S1)
+點調用(.)	Dot Call (.)
+熱度	Popularity
+熱度增長值	Popularity Gain
+熱注入編號	Hot Injection Number
+熱重載技能	Hot Reload Skills
+焦點(1頭2背)	Focus (1 Head, 2 Back)
+焦點類型：	Focus Type:
+牧師	Priest
+物品參數	Item Parameters
+特效測試工具	Effect Test Tool
+狀態機日誌	State Machine Log
+玩家坐標朝向	Player Coordinates and Facing
+玩家賽季服：	Player Season Server:
+生命變化	HP Change
+用戶	User
+用戶ID	User ID
+界面名稱	UI Name
+登錄方式	Login Method
+皇家禁衛軍：槍	Royal Guard: Lance
+皇家禁衛軍：盾	Royal Guard: Shield
+目標ID	Target ID
+目標ID：選擇指令目標ID，如果沒有填寫或者填寫0默認是角色自身\n 加血：增加目標當前生命（非生命上限）\n 扣血：扣除目標當前生命（非生命上限）	Target ID: select the command's target ID. If left blank or 0, defaults to your own character\n Heal: increases the target's current HP (not Max HP)\n Damage: reduces the target's current HP (not Max HP)
+目標id	Target ID
+目標唯一ID，如果是0或者未填寫即為查看角色自身單位屬性	Target unique ID. If 0 or left blank, shows your own character's unit attributes
+相機	Camera
+相機GM工具	Camera GM Tool
+相機開關	Camera Toggle
+相機當前狀態	Camera Current State
+相機旋轉速度	Camera Rotation Speed
+相機旋轉速度:	Camera Rotation Speed:
+相機遠近速度	Camera Zoom Speed
+相機遠近速度:	Camera Zoom Speed:
+禮包1	Gift Pack 1
+移動校驗	Movement Validation
+移動校驗開關	Movement Validation Toggle
+移除：大主教（贊美）	Remove: Archbishop (Praiser)
+移除：大主教（驅魔）	Remove: Archbishop (Exorciser)
+移除：大法師（元素）	Remove: Arch Mage (Element)
+移除：機械工匠（斧）	Remove: Mechanic (Axe)
+移除：機械工匠（炮）	Remove: Mechanic (Cannon)
+移除：游俠（射擊）	Remove: Ranger (Wind Walker)
+移除：皇家禁衛軍（懲戒）	Remove: Royal Guard (Retribution)
+移除：皇家禁衛軍（盾）	Remove: Royal Guard (Shield)
+移除：符文騎士（龍騎）	Remove: Rune Knight (Dragon Knight)
+空白裝備	Blank Equipment
+窗口界面畫布大小	Windowed UI Canvas Size
+符文騎士：槍騎	Rune Knight: Lance Knight
+符文騎士：龍騎	Rune Knight: Dragon Knight
+第三方登錄	Third-Party Login
+精煉裝備	Refine Equipment
+系統郵件	System Mail
+縱向FOV	Vertical FOV
+縱向FOV：	Vertical FOV:
+經驗日誌	EXP Log
+結束統計	Stop Tracking
+結算Mvp	Settle MVP
+編輯器本地熱注入(不要編號)	Editor Local Hot Injection (no number)
+編輯相機參數	Edit Camera Parameters
+網絡消息統計	Network Message Stats
+職業1騎士	Job 1 Knight
+職業2法師	Job 2 Mage
+職業3獵人	Job 3 Hunter
+職業4牧師	Job 4 Priest
+職業5刺客	Job 5 Assassin
+職業6商人	Job 6 Merchant
+職業流派	Job Build
+聯賽GM	League GM
+自動戰鬥錨點	Auto Battle Anchor
+自動戰鬥錨點開關	Auto Battle Anchor Toggle
+自動給當前職業當前轉職階段所有技能加點，且加滿	Automatically assign and max out all skills for the current job at its current Job Change stage
+英語	English
+獲取加載資源	Get Loaded Resources
+行為樹AI日誌	Behavior Tree AI Log
+表現ID	Display ID
+視頻錄制模式(+號打開GM)	Video Recording Mode (+ opens GM)
+角色模擬俯仰角度變化率	Character Simulated Pitch Change Rate
+角色模擬俯仰起始角度	Character Simulated Pitch Start Angle
+解鎖所有寵物	Unlock All Pets
+觸發掉落	Trigger Drop
+讓目標使用技能	Make Target Use Skill
+設置CBB鏈接地址	Set CBB Link URL
+設置FPS	Set FPS
+設置FSRType	Set FSRType
+設置RenderScale	Set RenderScale
+設置分辨率	Set Resolution
+設置單位屬性	Set Unit Attributes
+設置單位陣營	Set Unit Faction
+設置場景3d參數	Set Scene 3D Parameters
+設置垂直同步	Set V-Sync
+設置開啓碰撞檢測和檢測Layer	Enable Collision Detection and Set Detection Layer
+設置開服日期	Set Server Launch Date
+設置開服日期 年-月-日	Set Server Launch Date (YYYY-MM-DD)
+設置服務器時間	Set Server Time
+設置服務器時間 年-月-日 時:分:秒  24小時制	Set Server Time (YYYY-MM-DD HH:MM:SS, 24-hour)
+設置模型場景模型剔除透明度	Set Model/Scene Culling Transparency
+設置滑梯模式	Set Slide Mode
+設置酒館參數	Set Tavern Parameters
+語音GM	Voice GM
+語音加入/退出頻道	Voice Join/Leave Channel
+語音加入黑名單(不收聽)	Voice Add to Blacklist (Don't Listen)
+語音延遲統計	Voice Latency Stats
+語音是否在頻道中	Voice In Channel?
+語音查詢揚聲器靜音	Voice Query Speaker Mute
+語音查詢揚聲器音量	Voice Query Speaker Volume
+語音查詢麥克風靜音	Voice Query Mic Mute
+語音查詢麥克風音量	Voice Query Mic Volume
+語音登出	Voice Logout
+語音登錄	Voice Login
+語音設置揚聲器靜音	Voice Set Speaker Mute
+語音設置揚聲器音量	Voice Set Speaker Volume
+語音設置麥克風靜音	Voice Set Mic Mute
+語音設置麥克風音量	Voice Set Mic Volume
+語音退出頻道	Voice Leave Channel
+說明	Description
+請輸入...	Please enter...
+請輸入搜索...	Search...
+請選擇...	Please select...
+調整到下一階段時間	Skip to Next Phase Time
+調用方式	Call Method
+賬號	Account
+賬號：賬號，不支持多位，一個就行\n數量：賬號對應的數量\n職業ID：賬號對應生成的職業ID\nBase等級：賬號對應生成的Base等級\nJob等級：賬號對應生成的Job等級\n流派ID：賬號對應流派ID\n創建賬號攜帶道具ID：攜帶道具ID，不支持多位\n創建賬號攜帶道具數量：道具數量，沒有配置默認為1	Account: the account; only one is supported\nQuantity: number of characters for the account\nJob ID: job ID generated for the account\nBase Level: Base Level generated for the account\nJob Level: Job Level generated for the account\nBuild ID: build ID for the account\nStarting Item ID: item ID the new account carries; only one is supported\nStarting Item Quantity: item quantity; defaults to 1 if not set
+質量測試開關	Quality Test Toggle
+質量過濾	Quality Filter
+貼圖質量	Texture Quality
+賽季服：	Season Server:
+賽季：	Season:
+贊美	Praiser
+距離Distance	Distance
+距離Distance：	Distance:
+跳轉地圖	Teleport to Map
+跳過CutScene	Skip Cutscene
+轉十字刺客	Change Job: Assassin Cross
+轉十字斬首者	Change Job: Guillotine Cross
+轉聖殿十字軍	Change Job: Paladin
+轉大主教	Change Job: Archbishop
+轉大法師	Change Job: Arch Mage
+轉機械工匠	Change Job: Mechanic
+轉游俠	Change Job: Ranger
+轉皇家禁衛軍	Change Job: Royal Guard
+轉神官	Change Job: High Priest
+轉神射手	Change Job: Sniper
+轉神工匠	Change Job: Mastersmith
+轉符文騎士	Change Job: Rune Knight
+轉職相關	Job Change
+轉職（威猛版）	Job Change (Power Version)
+轉超魔導師	Change Job: High Wizard
+轉騎士領主	Change Job: Lord Knight
+輸入字符串	Enter String
+輸入指令ID	Enter Command ID
+過期時間	Expiration Time
+近戰戰鬥木樁	Melee Training Dummy
+進入房間	Enter Room
+進入退出	Enter/Exit
+進測試環境	Enter Test Environment
+遠程戰鬥木樁	Ranged Training Dummy
+選中表現設置	Selected Display Settings
+道具數量	Item Quantity
+郵件ID	Mail ID
+郵件內容	Mail Content
+郵件標題	Mail Title
+郵件類型	Mail Type
+郵件過期時間	Mail Expiration Time
+酒館id	Tavern ID
+酒館任務完成次數	Tavern Quest Completion Count
+酒館標籤狀態	Tavern Tag Status
+酒館活躍天數	Tavern Active Days
+酒館獲取明星值	Tavern Star Points Earned
+重置任務	Reset Quest
+重置參數	Reset Parameters
+重置並開始記錄	Reset and Start Recording
+隱藏/顯示主界面下標籤	Hide/Show Tabs Below Main UI
+隔幀同步	Sync Every Other Frame
+韓語	Korean
+首包資源上報	Initial Package Resource Report
+黑白棋小游戲	Reversi Minigame
+默認模式	Default Mode
+龍槨島外圍戰	Dragon Coffin Island Outer Battle
+请求按道具ID和数量删除道具，数量留空时默认为1。道具ID留空且数量为999会请求删除背包全部道具。	Requests deleting items by item ID and quantity; quantity defaults to 1 if left blank. Leaving item ID blank with quantity 999 requests deleting every item in the Backpack.
+请求把指定装备部位强化到目标等级；目标等级留空时配置说明默认为1级。	Requests enhancing the specified equipment slot to the target level; if target level is left blank, the config says it defaults to Lv.1.
+请求把指定装备部位精炼到目标等级；目标等级留空时配置说明默认为1级。	Requests refining the specified equipment slot to the target level; if target level is left blank, the config says it defaults to Lv.1.
+请求打印服务器等级信息用于诊断；配置未说明输出位置或范围。	Requests printing server level info for diagnostics; the config does not specify output location or scope.
+请求按紧凑参数批量创建角色，参数包含账号、数量、职业、Base/Job等级、流派和初始道具。服务器端格式校验和实际创建范围未由配置证明。	Requests batch character creation from compact parameters: account, quantity, job, Base/Job Level, build, and starting items. Server-side format validation and actual creation scope are not confirmed by the config.
+请求发送自定义个人邮件，包含标题、正文、类型、NPC、到期时间和奖励参数。配置说明一次只生效一种奖励配置。	Requests sending custom personal mail with title, body, type, NPC, expiration time, and reward parameters. The config says only one reward config takes effect at a time.
+请求按邮件配置ID和到期时间发送全局邮件，可能影响广泛收件人。安装说明提到小区ID，但本行没有该输入字段，因此不应依赖该说明。	Requests sending global mail by mail config ID and expiration time; may affect a wide range of recipients. The setup notes mention a Zone ID, but this row has no such input field, so do not rely on that note.
+请求向指定小区发送自定义全局邮件，包含标题、正文、NPC、到期时间和奖励参数；可能影响大量收件人。	Requests sending custom global mail to the specified zone with title, body, NPC, expiration time, and reward parameters; may affect many recipients.
+请求对任务ID执行接取、放弃、重置、提交、完成或删除操作。重置和删除可能破坏任务进度，配置未说明恢复方式。	Requests accepting, abandoning, resetting, submitting, completing, or deleting the quest by quest ID. Reset and delete may break quest progress; the config does not explain how to recover.
+请求打印当前酒馆房间ID、人数、热度和5秒内热度增长值，用于诊断。	Requests printing the current Tavern room ID, headcount, popularity, and 5-second popularity gain for diagnostics.
+请求为指定酒馆添加或删除任意标签ID；操作值0表示添加，1表示删除。	Requests adding or removing any tag ID for the specified Tavern; action value 0 adds, 1 removes.
+请求以输入秒数执行今日酒馆活跃时长操作；配置未证明该值是增加量还是最终值。	Requests applying the entered number of seconds to today's Tavern active time; the config does not confirm whether the value is an increment or the final value.
+提供多种职业与流派预设按钮；规范参考显示预设会组合等级、职业、功能、技能和装备请求，但安装服务器实现才是最终权威。	Provides preset buttons for various jobs and builds; the reference spec shows presets combining level, job, feature, skill, and equipment requests, but the installed server implementation is the final authority.
+请求按流派ID、等级、付费等级和是否有BD来设置角色属性；配置未说明具体属性清单。	Requests setting character attributes by build ID, level, paid tier, and whether a BD exists; the config does not list the specific attributes.
+请求打印目标单位属性用于诊断；目标ID留空或为0时使用自己。	Requests printing the target unit's attributes for diagnostics; uses yourself if target ID is blank or 0.
+请求按选择项关闭或开启无冷却状态，影响当前战斗测试会话。	Requests disabling or enabling No Cooldown per the selection; affects the current combat test session.
+请求按选择项关闭或开启伤害波动，影响当前战斗测试结果。	Requests disabling or enabling damage variance per the selection; affects current combat test results.
+请求热重载技能蓝图；配置未说明作用范围、失败处理或持久性。	Requests hot reloading skill blueprints; the config does not specify scope, failure handling, or persistence.
+请求向目标添加指定Buff，可指定持续时间；未填时间时读取Buff配置，目标留空或为0时指向自己。预设按钮请求成组测试Buff。	Requests adding the specified buff to the target, with an optional duration; if no duration is set, the buff config is used. If target is blank or 0, it targets yourself. Preset buttons request groups of test buffs.
+请求从目标移除指定Buff，可选择按层数删除；目标留空或为0时指向自己。预设按钮请求移除成组测试Buff。	Requests removing the specified buff from the target, optionally by stacks; if target is blank or 0, it targets yourself. Preset buttons request removing groups of test buffs.
+请求查询指定属性ID；未选择目标时查看自己，选择目标时查看目标，用于诊断。	Requests querying the specified attribute ID; shows your own if no target is selected, otherwise the target's, for diagnostics.
+请求杀死指定目标单位；目标ID留空或为0时会指向自己。	Requests killing the specified target unit; if target ID is blank or 0, it targets yourself.
+请求把角色传送到指定地图ID和可选X/Y坐标；坐标留空时配置说明使用地图固定传送点。	Requests teleporting the character to the specified map ID and optional X/Y coordinates; if coordinates are blank, the config says the map's fixed teleport point is used.
+请求显示玩家当前坐标和朝向，用于诊断。	Requests displaying the player's current coordinates and facing for diagnostics.
+请求开启或关闭所选战斗日志类型，包括伤害、AI、经验、副本、技能、Buff和状态机日志。	Requests enabling or disabling the selected combat log types, including damage, AI, EXP, dungeon, skill, buff, and state machine logs.
+请求开启或关闭伤害范围快照显示，用于战斗诊断。	Requests enabling or disabling the damage area snapshot display for combat diagnostics.
+请求把Base等级和Job等级设为下拉框所选值；当前安装选项分别显示40级和10级。	Requests setting Base Level and Job Level to the values selected in the dropdowns; the current install shows Lv.40 and Lv.10 respectively.
+请求重置或推进GVG流程；配置说明数字串定义开始、准备和战斗秒数，open开启GVG，next推进下一阶段。	Requests a reset or advance of the GVG flow. The config's number string defines the start, preparation and battle durations in seconds; "open" starts GVG and "next" advances to the next phase.
+请求执行副本enter或leave操作；此行虽然名为“退出副本”，但安装选项同时提供进入和离开。	Requests a dungeon enter or leave operation. Although this row is named "Exit Dungeon", the installed options provide both enter and leave.
+请求把目标单位阵营设为中立、玩家或怪物。	Requests setting the target unit's faction to Neutral, Player or Monster.
+提供三个联赛管理预设：免定段条件检测、批量生成公会和推进到下一阶段时间。这些请求可能改变联赛全局数据或阶段。	Provides three league management presets: skip-placement condition check, bulk guild generation, and advance to the next phase time. These requests may change global league data or phases.
+提供10人本四个BOSS阶段入口预设；规范参考对应副本ID 3020101、3020102、3020103和3020108。	Provides entry presets for the four boss phases of the 10-player dungeon; the reference spec maps them to dungeon IDs 3020101, 3020102, 3020103 and 3020108.
+请求关闭或开启服务器移动校验；关闭校验会改变移动验证规则。	Requests disabling or enabling server movement validation; disabling it changes the movement verification rules.
+广播客户端事件以显示或隐藏整个游戏界面。	Broadcasts a client event to show or hide the entire game UI.
+修改登录服务器列表地址；加载预设下拉列表时可能请求远程环境目录。	Changes the login server list address; loading the preset dropdown may request a remote environment directory.
+控制聊天消息附加日志，用于诊断公共聊天行为。	Controls extra logging for chat messages, used to diagnose public chat behavior.
+开始或结束聊天延迟统计；结束后在控制台和日志中查看结果。	Starts or stops chat latency statistics; after stopping, view the results in the console and logs.
+将角色特效层加入或移出主相机渲染范围。	Adds or removes the character effects layer from the main camera's rendering.
+控制资源下载是否绕过限速；不限速可能占用更多带宽。	Controls whether resource downloads bypass the speed limit; unthrottled downloads may use more bandwidth.
+调整渲染器后处理状态，影响画面效果。	Adjusts the renderer's post-processing state, affecting visual effects.
+调整客户端画质控制器是否应用画质过滤。	Adjusts whether the client graphics quality controller applies quality filtering.
+将角色模型层加入或移出主相机渲染范围。	Adds or removes the character model layer from the main camera's rendering.
+控制主光源实时阴影，用于画面与性能测试。	Controls real-time shadows from the main light, for visual and performance testing.
+向输入地址启动 Lua 调试连接；调试可能中断脚本执行。	Starts a Lua debug connection to the entered address; debugging may interrupt script execution.
+删除客户端日志文件，移除诊断历史。	Deletes client log files, removing diagnostic history.
+通过网络管理器请求重连，测试连接恢复流程。	Requests a reconnect through the network manager to test the connection recovery flow.
+存在副本数据时，显示当前副本事件变量及其值。	When dungeon data exists, shows the current dungeon's event variables and their values.
+使用旧加载器检查下载；新加载器分支仅提示尚未实现。	Checks downloads using the old loader; the new loader branch only reports that it is not implemented yet.
+调用客户端游戏重启流程，中断当前会话。	Calls the client game restart flow, interrupting the current session.
+打开或关闭 GM 服务器搜索面板，查找服务器条目。	Opens or closes the GM server search panel to find server entries.
+加载并播放指定演出时间轴，回调会追加 .asset 后缀。	Loads and plays the specified cutscene timeline; the callback appends the .asset extension.
+准备测试角色：每个选项都会先请求 Base 99、Job 40 和功能解锁，再添加选定养成资源。	Prepares a test character: every option first requests Base 99, Job 40 and feature unlocks, then adds the selected progression resources.
+报告指定频道接收语音是否静音。	Reports whether received voice is muted in the specified channel.
+初始化消息 SDK 并显示初始化结果。	Initializes the messaging SDK and shows the initialization result.
+使用输入账号登录消息服务并显示结果。	Logs in to the messaging service with the entered account and shows the result.
+查询是否已加入指定语音频道，并显示参与状态。	Checks whether the specified voice channel has been joined and shows the participation status.
+请求加入或退出指定语音频道；附加按钮退出所有语音频道。	Requests joining or leaving the specified voice channel; an extra button leaves all voice channels.
+调用指定 Lua 函数并记录返回值；参数解析为数字、布尔值或文本，函数可能修改游戏状态。	Calls the specified Lua function and logs the return value; arguments are parsed as numbers, booleans or text, and the function may modify game state.
+主入口为空；分配和释放按钮加载固定测试资源并释放资源句柄。	The main entry is empty; the Allocate and Release buttons load a fixed test resource and release the resource handle.
+切换旧版 GM 面板；内部函数名并不表示打开背包。	Toggles the legacy GM panel; despite the internal function name, it does not open the inventory.
+切换客户端 DOTS 动画，用于渲染和性能测试。	Toggles client DOTS animation, for rendering and performance testing.
+打开所选副本首通或 MVP 结算界面，并应用选定表现设置。	Opens the first-clear or MVP results screen for the selected dungeon and applies the selected presentation settings.
+调整资源加载器是否启用最大加载限制。	Adjusts whether the resource loader enables the maximum load limit.
+控制本地 GM 诊断日志标记，不更改服务器权限。	Controls the local GM diagnostic log flag; does not change server permissions.
+将缓存日志写入磁盘并打开日志文件。	Writes cached logs to disk and opens the log file.
+打开模型编辑面板，用于检查和调整角色模型表现。	Opens the model edit panel to inspect and adjust character model presentation.
+通过客户端界面管理器打开新手挑战面板。	Opens the Novice Challenge panel through the client UI manager.
+在自动战斗当前锚点显示或隐藏标记，不会改变锚点位置。	Shows or hides a marker at the current auto-battle anchor; does not change the anchor position.
+显示或隐藏性能面板，检查运行时测量数据。	Shows or hides the performance panel to inspect runtime measurements.
+启用或禁用客户端画质诊断标记。	Enables or disables the client graphics quality diagnostic flag.
+创建或关闭运行时检查器，查看当前场景对象和组件。	Creates or closes the runtime inspector to view objects and components in the current scene.
+打开特效测试面板，预览特效资源。	Opens the effects test panel to preview effect assets.
+打开语音服务信息面板，检查当前状态。	Opens the voice service info panel to check its current status.
+开始播放所选预录测试，或停止当前录制回放。	Starts playback of the selected prerecorded test, or stops the current recording playback.
+旧加载器输出资源加载信息；新加载器分支仅提示此诊断尚未实现。	The old loader outputs resource loading info; the new loader branch only reports that this diagnostic is not implemented yet.
+根据显示选项启用或关闭界面拍摄状态；此回调不创建视频文件。	Enables or disables UI capture mode based on the display option; this callback does not create a video file.
+请求指定 Lua 热修复并在运行中应用；另一个按钮加载编辑器本地热修复。	Requests the specified Lua hotfix and applies it at runtime; another button loads the editor's local hotfix.
+设置目标帧率，同时关闭垂直同步。	Sets the target frame rate and disables V-Sync.
+将数值型麦克风音量设置应用于指定语音频道。	Applies a numeric microphone volume setting to the specified voice channel.
+显示或刷新寻路网格叠层，也可隐藏。	Shows or refreshes the pathfinding navmesh overlay, or hides it.
+通过设置系统应用画质预设，并刷新相关界面。	Applies a graphics quality preset through the settings system and refreshes the related UI.
+调整渲染间隔，与游戏主帧率设置分开。	Adjusts the render interval, separately from the game's main frame rate setting.
+应用所选配置分辨率档位，不接受自定义像素尺寸。	Applies the selected configured resolution tier; custom pixel sizes are not accepted.
+按百分比设置渲染缩放；回调将输入值除以 100。	Sets the render scale as a percentage; the callback divides the input value by 100.
+设置目标选中框、地面圆环、两者或均不显示，并刷新单位 HUD。	Sets whether the target selection box, ground ring, both or neither are displayed, and refreshes the unit HUD.
+应用滑梯移动预设，包括自由或锁定视角行为。	Applies slide movement presets, including free or locked camera behavior.
+将数值型纹理质量设置传入渲染器，影响纹理显示和资源开销。	Passes a numeric texture quality setting to the renderer, affecting texture display and resource cost.
+将普通、提示和窗口界面参考画布统一设为 2560×1440。	Sets the reference canvas of normal, tip and window UI to 2560×1440.
+控制雨、雪或反射；所检查源码在调整反射时也会开启雨控制器和下雨。	Controls rain, snow or reflections; in the inspected source, adjusting reflections also enables the rain controller and rain.
+切换强制世界流式模拟，并输出资源引用诊断。	Toggles forced world streaming simulation and outputs resource reference diagnostics.
+显示或隐藏备用 EasyGM 工具界面。	Shows or hides the alternate EasyGM tool UI.
+在翻译文本和本地化键之间切换界面文字，便于调试。	Switches UI text between translated text and localization keys, for debugging.
+同时启用或禁用 Lua 与引擎诊断日志输出。	Enables or disables both Lua and engine diagnostic log output.
+显示或隐藏游戏内诊断日志控制台。	Shows or hides the in-game diagnostic log console.
+切换任务 ID 显示标记，并刷新当前追踪任务条目。	Toggles the quest ID display flag and refreshes the currently tracked quest entries.
+发送所选半屏或全屏界面隐藏模式事件。	Sends the selected half-screen or full-screen UI hide mode event.
+将剧本包标识传入客户端多重世界切换流程。	Passes the scenario pack ID to the client's Multiverse switching flow.
+切换 PC、手游或默认界面模式，并重新应用操作模式。	Switches between PC, mobile or default UI mode and reapplies the control mode.
+打开场景资源名和 ID 输入界面并加载场景，同时关闭界面相机。	Opens the scene asset name and ID input UI and loads the scene, also closing the UI camera.
+根据奖励与表现配置 ID，在玩家位置创建本地掉落物显示。	Creates a local drop display at the player's position based on reward and presentation config IDs.
+异步尝试加载指定资源，并记录加载回调。	Asynchronously tries to load the specified asset and logs the load callback.
+切换角色特效；隐藏时还会清理已有自动特效并阻止新特效创建。	Toggles character effects; when hiding, also clears existing auto effects and blocks new effects from being created.
+切换自动战斗测试模式，选择下一技能时跳过部分吟唱和打断检查；请求间隔仍然生效。	Toggles auto-battle test mode, skipping some cast and interrupt checks when choosing the next skill; the request interval still applies.
+隐藏模型时将同屏玩家上限设为0，显示时恢复保存值；影响实体可见性设置，不只是渲染。	When hiding models, sets the on-screen player limit to 0 and restores the saved value when showing; this affects entity visibility settings, not just rendering.
+通过相机层遮罩显示或隐藏地形、地面、场景物件和场景特效。	Shows or hides terrain, ground, scene objects and scene effects via camera layer masks.
+同时切换角色阴影选项与主光源实时阴影。	Toggles both the character shadow option and the main light's real-time shadows.
+切换游戏界面可见性，包括面板和 HUD 元素。	Toggles game UI visibility, including panels and HUD elements.
+故意触发所选平台崩溃以测试崩溃报告；源码在 Release 构建中禁用这些测试。	Intentionally triggers a crash on the selected platform to test crash reporting; the source disables these tests in Release builds.
+仅在构建启用 COLLECT_FIRST_ASSETS 时上传首包资源采集信息，否则输出警告。	Uploads first-package asset collection info only when the build enables COLLECT_FIRST_ASSETS; otherwise outputs a warning.
+开始或结束语音延迟统计，也可打开语音测试信息面板。	Starts or stops voice latency statistics, or opens the voice test info panel.
+选项：	Options:
+可能造成数据损失或产生较大影响。使用前请核对目标及后果。	May cause data loss or have a significant impact. Verify the target and consequences before use.
+诊断信息可能包含账号或系统数据，并影响性能。	Diagnostic info may include account or system data and may affect performance.
+功能说明	Description
+参数与操作	Parameters & Actions
+更改此选项会立即调用对应操作。	Changing this option immediately calls the corresponding action.
+输入参数值。	Enter a parameter value.
+会更改本地客户端或显示效果，部分设置可能被保存。	Changes the local client or display; some settings may be saved.
+无需填写参数。点击执行一次。	No parameters required. Click to run once.
+参数说明	Parameter Notes
+注意事项	Notes
+从列表中选择一项。	Select an item from the list.
+请求修改游戏数据。请核对目标和参数，确认结果前不要反复执行。	Requests changes to game data. Verify the target and parameters, and do not run it repeatedly before confirming the result.
+可能改变当前场景、位置或会话，并中断游戏。	May change the current scene, position or session, and interrupt gameplay.
+列表中存在此指令，但尚未确认其实际行为。请勿仅凭名称推断效果。	This command exists in the list, but its actual behavior is unconfirmed. Do not infer its effect from the name alone.
+尚未确认执行路径。请勿对真实玩家试用以判断效果。	The execution path is unconfirmed. Do not test it on real players to see what it does.
+請求按道具ID和數量刪除道具，數量留空時預設為1。道具ID留空且數量為999會請求刪除背包全部道具。	Requests deleting items by item ID and quantity; quantity defaults to 1 if left blank. A blank item ID with quantity 999 requests deleting all items in the inventory.
+請求把指定裝備部位強化到目標等級；目標等級留空時設定說明預設為1級。	Requests enhancing the specified equipment slot to the target level; per the config notes, the target level defaults to Lv.1 if left blank.
+請求把指定裝備部位精煉到目標等級；目標等級留空時設定說明預設為1級。	Requests refining the specified equipment slot to the target level; per the config notes, the target level defaults to Lv.1 if left blank.
+請求列印伺服器等級資訊用於診斷；設定未說明輸出位置或範圍。	Requests printing server level info for diagnostics; the config does not specify the output location or scope.
+請求按緊湊參數批次建立角色，參數包含帳號、數量、職業、Base/Job等級、流派和初始道具。伺服器端格式驗證和實際建立範圍未由設定證明。	Requests bulk character creation from compact parameters including account, count, job, Base/Job level, build and starting items. Server-side format validation and the actual creation scope are not confirmed by the config.
+請求傳送自訂個人郵件，包含標題、正文、類型、NPC、到期時間和獎勵參數。設定說明一次只生效一種獎勵設定。	Requests sending a custom personal mail with title, body, type, NPC, expiration time and reward parameters. Per the config notes, only one reward setting takes effect at a time.
+請求按郵件設定ID和到期時間傳送全域郵件，可能影響廣泛收件人。安裝說明提到小區ID，但本列沒有該輸入欄位，因此不應依賴該說明。	Requests sending global mail by mail config ID and expiration time, which may affect many recipients. The install notes mention a zone ID, but this row has no such input field, so do not rely on that note.
+請求向指定小區傳送自訂全域郵件，包含標題、正文、NPC、到期時間和獎勵參數；可能影響大量收件人。	Requests sending a custom global mail to the specified zone with title, body, NPC, expiration time and reward parameters; may affect many recipients.
+請求對任務ID執行接取、放棄、重設、提交、完成或刪除操作。重設和刪除可能破壞任務進度，設定未說明復原方式。	Requests accepting, abandoning, resetting, submitting, completing or deleting a quest by quest ID. Reset and delete may break quest progress, and the config does not describe how to recover.
+請求列印目前酒館房間ID、人數、熱度和5秒內熱度增長值，用於診斷。	Requests printing the current tavern room ID, player count, popularity and popularity growth over 5 seconds, for diagnostics.
+請求為指定酒館新增或刪除任意標籤ID；操作值0表示新增，1表示刪除。	Requests adding or removing any tag ID for the specified tavern; an action value of 0 adds and 1 removes.
+請求以輸入秒數執行今日酒館活躍時長操作；設定未證明該值是增加量還是最終值。	Requests a daily tavern active time operation with the entered seconds; the config does not confirm whether the value is an increment or the final value.
+提供多種職業與流派預設按鈕；規範參考顯示預設會組合等級、職業、功能、技能和裝備請求，但安裝伺服器實作才是最終權威。	Provides preset buttons for various jobs and builds; the reference spec shows presets combine level, job, feature, skill and equipment requests, but the installed server implementation is the final authority.
+請求按流派ID、等級、付費等級和是否有BD來設定角色屬性；設定未說明具體屬性清單。	Requests setting character attributes by build ID, level, paid level and whether a BD exists; the config does not list the specific attributes.
+請求列印目標單位屬性用於診斷；目標ID留空或為0時使用自己。	Requests printing the target unit's attributes for diagnostics; uses yourself if the target ID is blank or 0.
+請求按選項關閉或開啟無冷卻狀態，影響目前戰鬥測試工作階段。	Requests disabling or enabling the no-cooldown state per the option, affecting the current combat test session.
+請求按選項關閉或開啟傷害波動，影響目前戰鬥測試結果。	Requests disabling or enabling damage variance per the option, affecting current combat test results.
+請求熱重載技能藍圖；設定未說明作用範圍、失敗處理或持久性。	Requests a hot reload of skill blueprints; the config does not describe scope, failure handling or persistence.
+請求向目標新增指定Buff，可指定持續時間；未填時間時讀取Buff設定，目標留空或為0時指向自己。預設按鈕請求成組測試Buff。	Requests adding the specified buff to the target with an optional duration; if no duration is entered it is read from the buff config, and a blank or 0 target means yourself. Preset buttons request groups of test buffs.
+請求從目標移除指定Buff，可選擇按層數刪除；目標留空或為0時指向自己。預設按鈕請求移除成組測試Buff。	Requests removing the specified buff from the target, optionally by stack count; a blank or 0 target means yourself. Preset buttons request removing groups of test buffs.
+請求查詢指定屬性ID；未選擇目標時查看自己，選擇目標時查看目標，用於診斷。	Requests querying the specified attribute ID for diagnostics; shows your own if no target is selected, or the target's if one is selected.
+請求殺死指定目標單位；目標ID留空或為0時會指向自己。	Requests killing the specified target unit; a blank or 0 target ID points to yourself.
+請求把角色傳送到指定地圖ID和可選X/Y座標；座標留空時設定說明使用地圖固定傳送點。	Requests teleporting the character to the specified map ID and optional X/Y coordinates; per the config notes, blank coordinates use the map's fixed teleport point.
+請求顯示玩家目前座標和朝向，用於診斷。	Requests showing the player's current coordinates and facing, for diagnostics.
+請求開啟或關閉所選戰鬥日誌類型，包括傷害、AI、經驗、副本、技能、Buff和狀態機日誌。	Requests enabling or disabling the selected combat log types, including damage, AI, EXP, dungeon, skill, buff and state machine logs.
+請求開啟或關閉傷害範圍快照顯示，用於戰鬥診斷。	Requests enabling or disabling the damage area snapshot display, for combat diagnostics.
+請求把Base等級和Job等級設為下拉選單所選值；目前安裝選項分別顯示40級和10級。	Requests setting Base Level and Job Level to the values selected in the dropdowns; the installed options currently show Lv.40 and Lv.10 respectively.
+請求重設或推進GVG流程；設定說明數字字串定義開始、準備和戰鬥秒數，open開啟GVG，next推進下一階段。	Requests a reset or advance of the GVG flow. The config's number string defines the start, preparation and battle durations in seconds; "open" starts GVG and "next" advances to the next phase.
+請求執行副本enter或leave操作；此列雖然名為「退出副本」，但安裝選項同時提供進入和離開。	Requests a dungeon enter or leave operation. Although this row is named "Exit Dungeon", the installed options provide both enter and leave.
+請求把目標單位陣營設為中立、玩家或怪物。	Requests setting the target unit's faction to Neutral, Player or Monster.
+提供三個聯賽管理預設：免定段條件檢測、批次產生公會和推進到下一階段時間。這些請求可能改變聯賽全域資料或階段。	Provides three league management presets: skip-placement condition check, bulk guild generation, and advance to the next phase time. These requests may change global league data or phases.
+提供10人本四個BOSS階段入口預設；規範參考對應副本ID 3020101、3020102、3020103和3020108。	Provides entry presets for the four boss phases of the 10-player dungeon; the reference spec maps them to dungeon IDs 3020101, 3020102, 3020103 and 3020108.
+請求關閉或開啟伺服器移動驗證；關閉驗證會改變移動驗證規則。	Requests disabling or enabling server movement validation; disabling it changes the movement verification rules.
+廣播用戶端事件以顯示或隱藏整個遊戲介面。	Broadcasts a client event to show or hide the entire game UI.
+修改登入伺服器清單位址；載入預設下拉清單時可能要求遠端環境目錄。	Changes the login server list address; loading the preset dropdown may request a remote environment directory.
+控制聊天訊息附加日誌，用於診斷公共聊天行為。	Controls extra logging for chat messages, used to diagnose public chat behavior.
+開始或結束聊天延遲統計；結束後在主控台和日誌中查看結果。	Starts or stops chat latency statistics; after stopping, view the results in the console and logs.
+將角色特效層加入或移出主攝影機繪製範圍。	Adds or removes the character effects layer from the main camera's rendering.
+控制資源下載是否略過限速；不限速可能占用更多頻寬。	Controls whether resource downloads bypass the speed limit; unthrottled downloads may use more bandwidth.
+調整繪製器後處理狀態，影響畫面效果。	Adjusts the renderer's post-processing state, affecting visual effects.
+調整用戶端畫質控制器是否套用畫質篩選。	Adjusts whether the client graphics quality controller applies quality filtering.
+將角色模型層加入或移出主攝影機繪製範圍。	Adds or removes the character model layer from the main camera's rendering.
+控制主光源即時陰影，用於畫面與效能測試。	Controls real-time shadows from the main light, for visual and performance testing.
+向輸入位址啟動 Lua 偵錯連線；偵錯可能中斷腳本執行。	Starts a Lua debug connection to the entered address; debugging may interrupt script execution.
+刪除用戶端日誌檔案，移除診斷歷史。	Deletes client log files, removing diagnostic history.
+透過網路管理器要求重新連線，測試連線恢復流程。	Requests a reconnect through the network manager to test the connection recovery flow.
+存在副本資料時，顯示目前副本事件變數及其值。	When dungeon data exists, shows the current dungeon's event variables and their values.
+使用舊載入器檢查下載；新載入器分支僅提示尚未實作。	Checks downloads using the old loader; the new loader branch only reports that it is not implemented yet.
+呼叫用戶端遊戲重新啟動流程，中斷目前工作階段。	Calls the client game restart flow, interrupting the current session.
+開啟或關閉 GM 伺服器搜尋面板，尋找伺服器項目。	Opens or closes the GM server search panel to find server entries.
+載入並播放指定演出時間軸，回呼會附加 .asset 副檔名。	Loads and plays the specified cutscene timeline; the callback appends the .asset extension.
+準備測試角色：每個選項都會先要求 Base 99、Job 40 和功能解鎖，再新增選定養成資源。	Prepares a test character: every option first requests Base 99, Job 40 and feature unlocks, then adds the selected progression resources.
+報告指定頻道接收語音是否靜音。	Reports whether received voice is muted in the specified channel.
+初始化訊息 SDK 並顯示初始化結果。	Initializes the messaging SDK and shows the initialization result.
+使用輸入帳號登入訊息服務並顯示結果。	Logs in to the messaging service with the entered account and shows the result.
+查詢是否已加入指定語音頻道，並顯示參與狀態。	Checks whether the specified voice channel has been joined and shows the participation status.
+要求加入或退出指定語音頻道；附加按鈕退出所有語音頻道。	Requests joining or leaving the specified voice channel; an extra button leaves all voice channels.
+呼叫指定 Lua 函式並記錄傳回值；參數解析為數字、布林值或文字，函式可能修改遊戲狀態。	Calls the specified Lua function and logs the return value; arguments are parsed as numbers, booleans or text, and the function may modify game state.
+主入口為空；配置和釋放按鈕載入固定測試資源並釋放資源控制代碼。	The main entry is empty; the Allocate and Release buttons load a fixed test resource and release the resource handle.
+切換舊版 GM 面板；內部函式名並不表示開啟背包。	Toggles the legacy GM panel; despite the internal function name, it does not open the inventory.
+切換用戶端 DOTS 動畫，用於繪製和效能測試。	Toggles client DOTS animation, for rendering and performance testing.
+開啟所選副本首通或 MVP 結算介面，並套用選定表現設定。	Opens the first-clear or MVP results screen for the selected dungeon and applies the selected presentation settings.
+調整資源載入器是否啟用最大載入限制。	Adjusts whether the resource loader enables the maximum load limit.
+控制本機 GM 診斷日誌旗標，不更改伺服器權限。	Controls the local GM diagnostic log flag; does not change server permissions.
+將快取日誌寫入磁碟並開啟日誌檔案。	Writes cached logs to disk and opens the log file.
+開啟模型編輯面板，用於檢查和調整角色模型表現。	Opens the model edit panel to inspect and adjust character model presentation.
+透過用戶端介面管理器開啟新手挑戰面板。	Opens the Novice Challenge panel through the client UI manager.
+在自動戰鬥目前錨點顯示或隱藏標記，不會改變錨點位置。	Shows or hides a marker at the current auto-battle anchor; does not change the anchor position.
+顯示或隱藏效能面板，檢查執行時測量資料。	Shows or hides the performance panel to inspect runtime measurements.
+啟用或停用用戶端畫質診斷旗標。	Enables or disables the client graphics quality diagnostic flag.
+建立或關閉執行時檢查器，查看目前場景物件和元件。	Creates or closes the runtime inspector to view objects and components in the current scene.
+開啟特效測試面板，預覽特效資源。	Opens the effects test panel to preview effect assets.
+開啟語音服務資訊面板，檢查目前狀態。	Opens the voice service info panel to check its current status.
+開始播放所選預錄測試，或停止目前錄製回放。	Starts playback of the selected prerecorded test, or stops the current recording playback.
+舊載入器輸出資源載入資訊；新載入器分支僅提示此診斷尚未實作。	The old loader outputs resource loading info; the new loader branch only reports that this diagnostic is not implemented yet.
+根據顯示選項啟用或關閉介面拍攝狀態；此回呼不建立影片檔案。	Enables or disables UI capture mode based on the display option; this callback does not create a video file.
+要求指定 Lua 熱修復並在執行中套用；另一個按鈕載入編輯器本機熱修復。	Requests the specified Lua hotfix and applies it at runtime; another button loads the editor's local hotfix.
+設定目標影格率，同時關閉垂直同步。	Sets the target frame rate and disables V-Sync.
+將數值型麥克風音量設定套用於指定語音頻道。	Applies a numeric microphone volume setting to the specified voice channel.
+顯示或更新尋路網格疊層，也可隱藏。	Shows or refreshes the pathfinding navmesh overlay, or hides it.
+透過設定系統套用畫質預設，並更新相關介面。	Applies a graphics quality preset through the settings system and refreshes the related UI.
+調整繪製間隔，與遊戲主影格率設定分開。	Adjusts the render interval, separately from the game's main frame rate setting.
+套用所選設定解析度等級，不接受自訂像素尺寸。	Applies the selected configured resolution tier; custom pixel sizes are not accepted.
+按百分比設定繪製縮放；回呼將輸入值除以 100。	Sets the render scale as a percentage; the callback divides the input value by 100.
+設定目標選取框、地面圓環、兩者或均不顯示，並更新單位 HUD。	Sets whether the target selection box, ground ring, both or neither are displayed, and refreshes the unit HUD.
+套用滑梯移動預設，包括自由或鎖定視角行為。	Applies slide movement presets, including free or locked camera behavior.
+將數值型材質貼圖品質設定傳入繪製器，影響貼圖顯示和資源開銷。	Passes a numeric texture quality setting to the renderer, affecting texture display and resource cost.
+將一般、提示和視窗介面參考畫布統一設為 2560×1440。	Sets the reference canvas of normal, tip and window UI to 2560×1440.
+控制雨、雪或反射；所檢查原始碼在調整反射時也會開啟雨控制器和下雨。	Controls rain, snow or reflections; in the inspected source, adjusting reflections also enables the rain controller and rain.
+切換強制世界串流模擬，並輸出資源參照診斷。	Toggles forced world streaming simulation and outputs resource reference diagnostics.
+顯示或隱藏備用 EasyGM 工具介面。	Shows or hides the alternate EasyGM tool UI.
+在翻譯文字和在地化鍵之間切換介面文字，便於偵錯。	Switches UI text between translated text and localization keys, for debugging.
+同時啟用或停用 Lua 與引擎診斷日誌輸出。	Enables or disables both Lua and engine diagnostic log output.
+顯示或隱藏遊戲內診斷日誌主控台。	Shows or hides the in-game diagnostic log console.
+切換任務 ID 顯示旗標，並更新目前追蹤任務項目。	Toggles the quest ID display flag and refreshes the currently tracked quest entries.
+傳送所選半螢幕或全螢幕介面隱藏模式事件。	Sends the selected half-screen or full-screen UI hide mode event.
+將劇本包識別碼傳入用戶端多重世界切換流程。	Passes the scenario pack ID to the client's Multiverse switching flow.
+切換 PC、手機或預設介面模式，並重新套用操作模式。	Switches between PC, mobile or default UI mode and reapplies the control mode.
+開啟場景資源名和 ID 輸入介面並載入場景，同時關閉介面攝影機。	Opens the scene asset name and ID input UI and loads the scene, also closing the UI camera.
+根據獎勵與表現設定 ID，在玩家位置建立本機掉落物顯示。	Creates a local drop display at the player's position based on reward and presentation config IDs.
+非同步嘗試載入指定資源，並記錄載入回呼。	Asynchronously tries to load the specified asset and logs the load callback.
+切換角色特效；隱藏時還會清理既有自動特效並阻止新特效建立。	Toggles character effects; when hiding, also clears existing auto effects and blocks new effects from being created.
+切換自動戰鬥測試模式，選擇下一技能時略過部分詠唱和中斷檢查；要求間隔仍然生效。	Toggles auto-battle test mode, skipping some cast and interrupt checks when choosing the next skill; the request interval still applies.
+隱藏模型時將同畫面玩家上限設為0，顯示時還原儲存值；影響實體可見性設定，不只是繪製。	When hiding models, sets the on-screen player limit to 0 and restores the saved value when showing; this affects entity visibility settings, not just rendering.
+透過攝影機圖層遮罩顯示或隱藏地形、地面、場景物件和場景特效。	Shows or hides terrain, ground, scene objects and scene effects via camera layer masks.
+同時切換角色陰影選項與主光源即時陰影。	Toggles both the character shadow option and the main light's real-time shadows.
+切換遊戲介面可見性，包括面板和 HUD 元素。	Toggles game UI visibility, including panels and HUD elements.
+故意觸發所選平台崩潰以測試崩潰報告；原始碼在 Release 建置中停用這些測試。	Intentionally triggers a crash on the selected platform to test crash reporting; the source disables these tests in Release builds.
+僅在建置啟用 COLLECT_FIRST_ASSETS 時上傳首包資源蒐集資訊，否則輸出警告。	Uploads first-package asset collection info only when the build enables COLLECT_FIRST_ASSETS; otherwise outputs a warning.
+開始或結束語音延遲統計，也可開啟語音測試資訊面板。	Starts or stops voice latency statistics, or opens the voice test info panel.
+選項：	Options:
+可能造成資料損失或產生廣泛影響。使用前請核對目標與後果。	May cause data loss or have a significant impact. Verify the target and consequences before use.
+診斷資訊可能包含帳號或系統資料，並影響效能。	Diagnostic info may include account or system data and may affect performance.
+功能說明	Description
+參數與操作	Parameters & Actions
+變更此選項會立即呼叫對應操作。	Changing this option immediately calls the corresponding action.
+輸入參數值。	Enter a parameter value.
+會變更本機客戶端或顯示效果，部分設定可能被儲存。	Changes the local client or display; some settings may be saved.
+無須填寫參數。點擊執行一次。	No parameters required. Click to run once.
+參數說明	Parameter Notes
+注意事項	Notes
+從清單中選擇一項。	Select an item from the list.
+請求修改遊戲資料。請核對目標與參數，確認結果前不要反覆執行。	Requests changes to game data. Verify the target and parameters, and do not run it repeatedly before confirming the result.
+可能改變目前場景、位置或連線階段，並中斷遊戲。	May change the current scene, position or session, and interrupt gameplay.
+清單中存在此指令，但尚未確認其實際行為。請勿僅憑名稱推斷效果。	This command exists in the list, but its actual behavior is unconfirmed. Do not infer its effect from the name alone.
+尚未確認執行路徑。請勿對真實玩家試用以判斷效果。	The execution path is unconfirmed. Do not test it on real players to see what it does.
+批量GM执行已停止	Batch GM execution stopped
+批量GM输入框为空	Batch GM input box is empty
+开始批量执行GM指令，共	Starting batch GM command execution, total: 
+条	 command(s)
+批量GM指令执行完成，共执行	Batch GM commands finished, total executed: 
+执行第	Executing #
+条GM指令:	 GM command:
+GM指令格式错误:	Invalid GM command format:
+，跳过	, skipped
+下一条GM将在	Next GM command will run in 
+秒后执行	 seconds
+执行GM指令: GMType =	Executing GM command: GMType =

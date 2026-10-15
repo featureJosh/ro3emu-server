@@ -1,0 +1,9 @@
+# Runtime misses (loc_misses.tsv, 2026-10-15): English templates around a raw Chinese skill name. Ro3Loc.CjkRuns
+# covers these generically once the patched Ro3Emu.Loc.dll is installed; these exact entries work with the map alone.
+二连矢 Lv.5	Double Strafe Lv.5
+雷击术 Lv.5	Lightning Bolt Lv.5
+冰箭术 Lv.5	Cold Bolt Lv.5
+火箭术 Lv.5	Fire Bolt Lv.5
+法术重击 is on cooldown.	Spell Smash is on cooldown.
+石化术 is on cooldown.	Stone Curse is on cooldown.
+The 冰箭术 skill is currently being chanted or cast.	The Cold Bolt skill is currently being chanted or cast.

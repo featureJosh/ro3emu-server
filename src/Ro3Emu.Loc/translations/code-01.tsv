@@ -1,0 +1,349 @@
+# Lua code literals (UI/, Logic/, CFG helpers): mostly developer log and error text, a few visible labels.
+[子弹镜头] : 真子弹transform为空，UUID {0}	[Bullet Camera] : Real bullet transform is null, UUID {0}
+[Lua_CFG_EquipAttriGroupConfig:GetAllAttriInfo] : 未找到iGroup={0}数据	[Lua_CFG_EquipAttriGroupConfig:GetAllAttriInfo] : Data not found for iGroup={0}
+[Lua_CFG_EquipConfig:GetAllEquipByRank] : 未找到iRank={0}数据	[Lua_CFG_EquipConfig:GetAllEquipByRank] : Data not found for iRank={0}
+[Lua_CFG_EquipCraftConfig:GetAllEquipByRank] : 未找到iRank={0}数据	[Lua_CFG_EquipCraftConfig:GetAllEquipByRank] : Data not found for iRank={0}
+[Lua_CFG_EquipCraftConfig:GetAllEquipByRankAndEquipType] : 未找到iRank={0}数据	[Lua_CFG_EquipCraftConfig:GetAllEquipByRankAndEquipType] : Data not found for iRank={0}
+[Lua_CFG_EquipCraftConfig:GetEquipIdsByRankAndType] : 未找到iRank={0}数据	[Lua_CFG_EquipCraftConfig:GetEquipIdsByRankAndType] : Data not found for iRank={0}
+[Lua_CFG_EquipDisplayConfig:GetResourceName] : 未找到资源iDisplay={0},iClass={1},iSex={2}	[Lua_CFG_EquipDisplayConfig:GetResourceName] : Resource not found: iDisplay={0},iClass={1},iSex={2}
+[Lua_CFG_EquipDisplayConfig:GetInspectionResourceName] : 未找到资源iDisplay={0},iClass={1},iSex={2}	[Lua_CFG_EquipDisplayConfig:GetInspectionResourceName] : Resource not found: iDisplay={0},iClass={1},iSex={2}
+[Lua_CFG_EquipEntryRandom:GetEntryCountRangeByQuality] : 未找到iQuality={0}数据	[Lua_CFG_EquipEntryRandom:GetEntryCountRangeByQuality] : Data not found for iQuality={0}
+[Lua_CFG_EquipSpecialGroupConfig:GetAllSpecialInfo] : 未找到iGroup={0}数据	[Lua_CFG_EquipSpecialGroupConfig:GetAllSpecialInfo] : Data not found for iGroup={0}
+Lua_CFG_JobProfessConfig:CheckProfessId error!, 请策划检查id为	Lua_CFG_JobProfessConfig:CheckProfessId error! Designers, please check id 
+的相关配置	 and its related config
+in Lua_CFG_LeaderBoardsConfig CheckIdHasEntry error, id为空, 请策划检查LeaderBoardsTabConfig中相关配置是否正确	in Lua_CFG_LeaderBoardsConfig CheckIdHasEntry error, id is empty; designers, please check whether the related config in LeaderBoardsTabConfig is correct
+in Lua_CFG_LeaderBoardsConfig CheckIdHasEntry error, 请策划检查LeaderBoardsConfig中	in Lua_CFG_LeaderBoardsConfig CheckIdHasEntry error, designers, please check in LeaderBoardsConfig whether leaderboard 
+的排行榜配置是否正确	 is configured correctly
+in Lua_CFG_LeaderBoardsConfig GetIDByTabBindBoardId error, _iTabBindBoardId为空, 请策划检查Lua_CFG_LeaderBoardsConfig中相关配置是否正确	in Lua_CFG_LeaderBoardsConfig GetIDByTabBindBoardId error, _iTabBindBoardId is empty; designers, please check whether the related config in Lua_CFG_LeaderBoardsConfig is correct
+in Lua_CFG_LeaderBoardsTabConfig CheckIdHasEntry error, id为空, 请策划检查LeaderBoardsTabConfig中相关配置是否正确	in Lua_CFG_LeaderBoardsTabConfig CheckIdHasEntry error, id is empty; designers, please check whether the related config in LeaderBoardsTabConfig is correct
+in Lua_CFG_LeaderBoardsTabConfig CheckIdHasEntry error, 请策划检查LeaderBoardsTabConfig中	in Lua_CFG_LeaderBoardsTabConfig CheckIdHasEntry error, designers, please check in LeaderBoardsTabConfig whether leaderboard 
+[Lua_CFG_MultiverseGroupConfig:GetSeasonValueID] : 当前阶段还没有赛季数据，无法知道当前是哪个剧本ID，通知程序排查问题，SeasonId=%s，iBookId=%s	[Lua_CFG_MultiverseGroupConfig:GetSeasonValueID] : No season data at the current stage, so the current scenario ID is unknown; notify programmers to investigate. SeasonId=%s, iBookId=%s
+[Lua_CFG_MultiverseGroupConfig:GetSeasonValueID] : 找不到改赛季参数，SeasonId=%s，BookKey=%s， BookId=%s， id=%s	[Lua_CFG_MultiverseGroupConfig:GetSeasonValueID] : Cannot find this season parameter, SeasonId=%s, BookKey=%s, BookId=%s, id=%s
+[Lua_CFG_MultiverseGroupPublicParamConfig:GetValue] : 当前阶段还没有赛季数据，无法知道当前是哪个剧本ID，通知程序排查问题，SeasonId=%s，iBookId=%s	[Lua_CFG_MultiverseGroupPublicParamConfig:GetValue] : No season data at the current stage, so the current scenario ID is unknown; notify programmers to investigate. SeasonId=%s, iBookId=%s
+[Lua_CFG_MultiverseGroupPublicParamConfig:GetValue] : 找不到改赛季参数，SeasonId=%s， BookId=%s	[Lua_CFG_MultiverseGroupPublicParamConfig:GetValue] : Cannot find this season parameter, SeasonId=%s, BookId=%s
+[Lua_CFG_SkillConfig:GetRealSKillId] : 技能ID没找到, 请策划检查SkillConfig的	[Lua_CFG_SkillConfig:GetRealSKillId] : Skill ID not found; designers, please check in SkillConfig whether skill 
+的技能配置是否正确	 is configured correctly
+[Lua_CFG_SkillConfig:GetRealSKillId] : 技能ID对应的	[Lua_CFG_SkillConfig:GetRealSKillId] : For this skill ID, the Lv.
+级技能没找到, 请策划检查SkillConfig的	 skill was not found; designers, please check in SkillConfig whether skill 
+的技能配置是否正确 	 is configured correctly 
+找不到打孔消耗配置 类型:%d 品质:%d 品阶:%d	Socket cost config not found. Type: %d Quality: %d Grade: %d
+uiprefabconfig 没有找到prefab:%s	uiprefabconfig: prefab not found: %s
+[LC_SeasonEveHelper] 章节 %d 没有线索数据	[LC_SeasonEveHelper] Chapter %d has no clue data
+[LC_SeasonEveHelper] 找不到对话配置 %d-%d	[LC_SeasonEveHelper] Dialog config not found %d-%d
+[LC_SeasonEveHelper] SeasonEveData无效	[LC_SeasonEveHelper] SeasonEveData is invalid
+[LC_SeasonEveHelper] 找不到章节 %d	[LC_SeasonEveHelper] Chapter %d not found
+[LC_SeasonEveHelper] ActivityConstant.SeasonEveSearchFirstDialogueIDList 配置错误	[LC_SeasonEveHelper] ActivityConstant.SeasonEveSearchFirstDialogueIDList config error
+ 寻路成功	 Pathfinding succeeded
+没有可达路径	No reachable path
+本次尝试失败，未找到卡普拉NPC，无法传送！	Attempt failed: no Kafra NPC found, cannot teleport!
+达到最大失败次数，未找到卡普拉NPC，无法传送！	Maximum failures reached: no Kafra NPC found, cannot teleport!
+ 当前地图寻路失败 地图ID: {0} ,起始位置:{1} 目标位置:{2}	 Pathfinding failed on current map. Map ID: {0}, Start: {1}, Target: {2}
+OpenOathPanel - 冒险团信息或成员数据不存在	OpenOathPanel - Adventure Guild info or member data does not exist
+发起浇水协议,树苗配置ID: {0}	Sending watering request, sapling config ID: {0}
+%s,  服务器下发了空包！协议ID:%s，协议或字段名为%s.%s	%s,  server sent an empty packet! Protocol ID: %s, protocol or field name: %s.%s
+成就信息双端不同步，类型：	Achievement info out of sync between client and server, type: 
+未知	Unknown
+申请增加	Application Added
+申请减少	Application Removed
+成员增加	Member Added
+成员减少	Member Removed
+成员数据变化	Member Data Changed
+IM登录鉴权获取失败	Failed to get IM login authentication
+二进制字符串长度必须为 32 位	Binary string length must be 32 bits
+非法字符: 	Invalid character: 
+[LC_DAL_Dungeon.SendClientDungeonEvent] 参数错误	[LC_DAL_Dungeon.SendClientDungeonEvent] Invalid parameter
+未找到指定装�Guid:	Specified equipment not found, Guid:
+初始化	Initialize
+zzzzzz___ 状态(%s) IsOpen(%s) 当前(%s) 初赛(%s) 复赛(%s) 决赛(%s) StartTime(%s) EndTime(%s) 下轮初赛(%s) 	zzzzzz___ State(%s) IsOpen(%s) Current(%s) Preliminary(%s) Second Round(%s) Final(%s) StartTime(%s) EndTime(%s) Next Preliminary(%s) 
+您已获得发言权限	You have been granted speaking permission
+您已被踢出公会语音频道	You have been removed from the guild voice channel
+获取角色列表失败, 	Failed to get character list, 
+选角进入游戏失败, 	Failed to enter game with the selected character, 
+[LC_DAL_Task] Task任务完成, taskID={0}	[LC_DAL_Task] Task completed, taskID={0}
+任务配置不存在，任务ID：	Quest config does not exist, quest ID: 
+镖车全量数据= {0}	Escort Cart full data = {0}
+镖车增量数据= {0}	Escort Cart delta data = {0}
+[LC_SystemManager] Update 异常 system=	[LC_SystemManager] Update exception system=
+[LC_SystemManager] OnStart 异常 systemType=	[LC_SystemManager] OnStart exception systemType=
+[LC_SystemManager] OnStop 异常 systemType=	[LC_SystemManager] OnStop exception systemType=
+[LC_System 泄漏] 	[LC_System Leak] 
+ 在 OnStop 后未清理 (值=	 not cleaned up after OnStop (value=
+ ctor初始=	 initial in ctor=
+ 但 OnStop 后残留=	 but remaining after OnStop=
+[LC_System_MapIcon] AddUnit 重复 iUUID=%s	[LC_System_MapIcon] AddUnit duplicate iUUID=%s
+出现死循环，请检查调用栈	Infinite loop detected, please check the call stack
+<color=yellow>触发表情，UUID:	<color=yellow>Emote triggered, UUID:
+, 配置ID:	, Config ID:
+[LC_System_SeasonEve] 线索配置无效 clueId:{0}	[LC_System_SeasonEve] Invalid clue config clueId:{0}
+[LC_System_SeasonEve] 找不到刷怪组中心点 clueId:{0} pointId:{1}	[LC_System_SeasonEve] Spawn group center point not found clueId:{0} pointId:{1}
+走到了目标区域执行DoEndAction: TaskID={0}	Reached target area, running DoEndAction: TaskID={0}
+走到了目标区域没有EndAction: TaskID={0}	Reached target area, no EndAction: TaskID={0}
+委托任务接取: TaskID={0}	Commission quest accepted: TaskID={0}
+[PathManager] NPC对话任务缺少地图ID	[PathManager] NPC dialog task missing map ID
+[PathManager] NPC对话任务缺少目标位置	[PathManager] NPC dialog task missing target position
+[PathManager] NPC交互任务缺少地图ID	[PathManager] NPC interaction task missing map ID
+[PathManager] NPC交互任务缺少目标ID	[PathManager] NPC interaction task missing target ID
+[PathManager] 无法获取NPC交互目标位置	[PathManager] Cannot get NPC interaction target position
+[PathManager] 简单寻路任务缺少地图ID	[PathManager] Simple pathfinding task missing map ID
+[PathManager] 镖车任务缺少参数	[PathManager] Escort Cart task missing parameters
+[PathManager] 镖车任务参数不完整：既无跟随玩家ID，也无地图位置	[PathManager] Escort Cart task parameters incomplete: neither a follow player ID nor a map position
+[PathManager] 重启任务失败，清理任务状态	[PathManager] Task restart failed, clearing task state
+[LC_System_TipNew] IsSameTipIdentity异常 TipType={0} err={1}	[LC_System_TipNew] IsSameTipIdentity exception TipType={0} err={1}
+[LC_BattlePassHelper] 档位%d奖励不可领取（%s）	[LC_BattlePassHelper] Tier %d reward cannot be claimed (%s)
+付费	Paid
+[LC_BattlePassHelper] 商品配置不存在: 	[LC_BattlePassHelper] Product config does not exist: 
+空Buff名称	Empty Buff Name
+无法读取Buff描述，检查一下Buff表和多语言表	Cannot read buff description; check the Buff table and the localization table
+开始特效	Start Effect
+持续特效	Sustain Effect
+结束特效	End Effect
+叠加特效	Stack Effect
+减少特效	Reduce Effect
+命中特效	Hit Effect
+音效	Sound Effect
+_kStartAudioP1和_kStartAudio音效	_kStartAudioP1 and _kStartAudio sound effects
+_kStartAudio音效	_kStartAudio sound effect
+持续音效	Sustain Sound
+_kEndAudioP1和_kEndAudio音效	_kEndAudioP1 and _kEndAudio sound effects
+_kEndAudio音效	_kEndAudio sound effect
+叠加音效	Stack Sound
+减少音效	Reduce Sound
+命中音效	Hit Sound
+进入取消按钮	Entered Cancel Button
+离开取消按钮	Left Cancel Button
+开始录音	Start Recording
+取消发送	Cancel Send
+发送语音	Send Voice
+已获得语音权限	Voice permission granted
+未获得语音权限，请请求权限	Voice permission not granted, please request permission
+ Vocal 还没登录成功	 Vocal has not logged in successfully yet
+频道索引不能为空	Channel index cannot be empty
+消息内容不能为空	Message content cannot be empty
+[AppearanceEffectMgr] 配置错误: PartType={0}, OwnerId={1}, Paths={2}, Bones={3}	[AppearanceEffectMgr] Config error: PartType={0}, OwnerId={1}, Paths={2}, Bones={3}
+[AppearanceEffectMgr] 特效加载失败: PartType={0}, OwnerId={1}, Path={2}	[AppearanceEffectMgr] Effect load failed: PartType={0}, OwnerId={1}, Path={2}
+[AppearanceEffectMgr] 特效对象为空: OwnerId={0}	[AppearanceEffectMgr] Effect object is null: OwnerId={0}
+提示类型参数不可为空	Tip type parameter cannot be empty
+LC_System_TipNew not found, 请确保System已注册	LC_System_TipNew not found, please make sure the System is registered
+LC_TipHelper.BindTipToButton: kButton为nil	LC_TipHelper.BindTipToButton: kButton is nil
+模型还没加载完毕， SetModelVisible 失败： iModelHandle: [%s], bVisible: [%s]	Model not loaded yet, SetModelVisible failed: iModelHandle: [%s], bVisible: [%s]
+交互物无归属	Interactable has no owner
+交互物归属与自己公会一致	Interactable owner matches your guild
+可以交互（无归属或同公会）	Can interact (no owner or same guild)
+[LC_CutSceneBuilder] BuildPointName Player 槽缺少有效 gender, iIndex={0} gender={1}	[LC_CutSceneBuilder] BuildPointName Player slot missing valid gender, iIndex={0} gender={1}
+[LC_CutSceneBuilder] BuildPointName 未知 eRole={0}	[LC_CutSceneBuilder] BuildPointName unknown eRole={0}
+[LC_CutSceneBuilder] AddPlayer entityBase 为空, iPlotId={0} iIndex={1}	[LC_CutSceneBuilder] AddPlayer entityBase is null, iPlotId={0} iIndex={1}
+[LC_CutSceneBuilder] AddPlayer 槽位重复, iPlotId={0} iIndex={1}	[LC_CutSceneBuilder] AddPlayer duplicate slot, iPlotId={0} iIndex={1}
+[LC_CutSceneBuilder] AddNpc configId 为空, iPlotId={0} iIndex={1}	[LC_CutSceneBuilder] AddNpc configId is empty, iPlotId={0} iIndex={1}
+[LC_CutSceneBuilder] AddNpc 槽位重复, iPlotId={0} iIndex={1}	[LC_CutSceneBuilder] AddNpc duplicate slot, iPlotId={0} iIndex={1}
+[LC_CutSceneBuilder] prefab 无对应挂点, iPlotId={0} kPointName={1}	[LC_CutSceneBuilder] prefab has no matching attach point, iPlotId={0} kPointName={1}
+[LC_CutSceneBuilder] iPlotId 为空	[LC_CutSceneBuilder] iPlotId is empty
+NPC 配置错误： id: 	NPC config error: id: 
+Effect 内特效为空 {0}	Effect has no inner effect {0}
+缺少功能&界面映射: 	Missing feature-to-UI mapping: 
+[GVG建造炮台] : Local Player is nil	[GVG Build Cannon] : Local Player is nil
+[GVG建造炮台] : duplicated StartBuild	[GVG Build Cannon] : duplicated StartBuild
+单位错误 uuid：	Unit error uuid: 
+[GVG开炮] : Local Player is nil	[GVG Fire Cannon] : Local Player is nil
+[GVG开炮] : Local Player is not DisplayLoadOver	[GVG Fire Cannon] : Local Player is not DisplayLoadOver
+炮弹起始最终扩散配置错误 ID: ｛0｝, @策划检查	Cannon shell start/final spread config error ID: ｛0｝, @designers please check
+LC_InteractActions.StartEscortTransport: 对话NPC未找到	LC_InteractActions.StartEscortTransport: dialog NPC not found
+PlayInteractPerformance Cannot find unit 请策划检查配置	PlayInteractPerformance Cannot find unit, designers please check the config
+SetUnitRotate Cannot find unit 请策划检查配置	SetUnitRotate Cannot find unit, designers please check the config
+UnitMoveToTarget Cannot find unit 请策划检查配置	UnitMoveToTarget Cannot find unit, designers please check the config
+LC_InteractActions.OpenEscortTransportPanel: 对话NPC未找到	LC_InteractActions.OpenEscortTransportPanel: dialog NPC not found
+LC_InteractActions.SubmitEscortCart: 对话NPC未找到	LC_InteractActions.SubmitEscortCart: dialog NPC not found
+[PlayStoryWithDynamicModel] iPlotId 无效	[PlayStoryWithDynamicModel] iPlotId is invalid
+[LC_JourneyActionSet] ShowNodeReward: nodeId={0} 无奖励配置，直接请求领奖	[LC_JourneyActionSet] ShowNodeReward: nodeId={0} has no reward config, requesting reward claim directly
+[LC_JourneyActionSet] DoMoveAction: nodeId相同，跳过移动	[LC_JourneyActionSet] DoMoveAction: same nodeId, skipping move
+[LC_JourneyActionSet] DoMoveAction callback: 移动完成，更新cachedNodeId={0}, 触发CheckNodeState	[LC_JourneyActionSet] DoMoveAction callback: move complete, updating cachedNodeId={0}, triggering CheckNodeState
+[LC_JourneyActionSet] _executeDoDialogAction: 检测到对话面板已打开，刷新界面 dialogueId={0}	[LC_JourneyActionSet] _executeDoDialogAction: dialog panel already open, refreshing UI dialogueId={0}
+[LC_JourneyActionSet] DoDialogAction callback: 对话完成，请求完成Act actId={0}	[LC_JourneyActionSet] DoDialogAction callback: dialog complete, requesting Act completion actId={0}
+CreateItemDataByDataAndNeed: 道具数据格式错误	CreateItemDataByDataAndNeed: invalid item data format
+CreateItemDataByData: 道具数据格式错误	CreateItemDataByData: invalid item data format
+BattlePassItem: 无法获取通行证数据	BattlePassItem: cannot get Battle Pass data
+AD_WwiseDefine 中未导出对应音效事件，检查音频名称或联系音频同学	Matching sound event not exported in AD_WwiseDefine; check the audio name or contact the audio team
+组件{0},没实现函数{1}	Component {0} does not implement function {1}
+找不到组件{0}	Component {0} not found
+，有效值: 	, valid values: 
+SetSlideDirection: 主角未找到	SetSlideDirection: main character not found
+SetSlideDirection: 主角移动组件未找到	SetSlideDirection: main character movement component not found
+关卡变量类型错误 [{0}]{1} Type {2} Expected {3}	Level variable type error [{0}]{1} Type {2} Expected {3}
+关卡变量类型错误 [{0}]{1} SubType {2} Expected {3}	Level variable type error [{0}]{1} SubType {2} Expected {3}
+吃鸡结束副本服务器长时间没有回结算协议包，直接退出副本，请通知服务器查看问题：	Battle Royale dungeon end: the server has not sent the results packet for a long time, exiting the dungeon directly. Please notify the server team to investigate: 
+[LC_DunGeon_Guild] RenderEffectController.Instance获取失败	[LC_DunGeon_Guild] Failed to get RenderEffectController.Instance
+ SkillConfig找不到对应技能 :{0} 	 SkillConfig cannot find skill :{0} 
+通知使用指挥技能错误 来源公会Id: {0}  目标公会ID: {1}   本地玩家公会ID:  {2}  技能ID: {3}	Command skill use notification error. Source guild ID: {0}  Target guild ID: {1}   Local player guild ID:  {2}  Skill ID: {3}
+[LC_Dungeon_ScriptCaller] SafeCall 类型错误: {0}, 降级使用 pcall 调用函数: {1}	[LC_Dungeon_ScriptCaller] SafeCall type error: {0}, falling back to pcall for function: {1}
+[LC_Dungeon_ScriptCaller] 调用函数失败: {0}, 函数名: {1}	[LC_Dungeon_ScriptCaller] Function call failed: {0}, function name: {1}
+[LC_Dungeon_ScriptCaller:{0}] 函数不存在，调用来源: {1}, ID: {2}, 函数名: {3}	[LC_Dungeon_ScriptCaller:{0}] Function does not exist, caller: {1}, ID: {2}, function name: {3}
+[LC_Dungeon_ScriptCaller:{0}] 函数不存在，调用来源: {1}, 函数名: {2}	[LC_Dungeon_ScriptCaller:{0}] Function does not exist, caller: {1}, function name: {2}
+版本检测不一致，不能进入游戏	Version check mismatch, cannot enter the game
+[SelectRole] Select_Timeline_%d_01/Timeline/VirtualCam 未找到，该机位视频屏幕将无法挂载到相机本地空间	[SelectRole] Select_Timeline_%d_01/Timeline/VirtualCam not found; the video screen for this camera position cannot be attached to the camera's local space
+[SelectRole] VideoScreen/VideoScreenBG 节点存在但缺少 Renderer 组件，背景层将无法跟随显隐	[SelectRole] VideoScreen/VideoScreenBG node exists but has no Renderer component; the background layer cannot follow visibility changes
+登录loading视频播完	Login loading video finished
+存在循环继承	Circular inheritance detected
+ 关卡 {0} 是死局！	 Level {0} is unsolvable!
+ 请修改格子初始状态	 Please change the initial cell state
+ 关卡 {0} 初始已全黑，无需点击（0步）	 Level {0} is already all black initially, no clicks needed (0 steps)
+[MiniGameHelper.Checkerboard] 关卡 %d 最优解（%d步）：	[MiniGameHelper.Checkerboard] Level %d optimal solution (%d steps):
+LC_NpcDialogHelper.GetCurrentDialogUnit: 未找到 NPC Unit, NPC 配置表 ID: 	LC_NpcDialogHelper.GetCurrentDialogUnit: NPC Unit not found, NPC config table ID: 
+[LC_LinkUtil] 路由动作未找到："%s"	[LC_LinkUtil] Router action not found: "%s"
+[LC_LinkUtil] RouterComp 未找到配置，compId=%d	[LC_LinkUtil] RouterComp config not found, compId=%d
+吃鸡副本结算流程组件:	Battle Royale dungeon results flow component:
+[LC_DunGeon_Actions.ShowGuidePointsGfx()]: 找不到引导点[{0}]	[LC_DunGeon_Actions.ShowGuidePointsGfx()]: Guide point not found [{0}]
+SceneStaticModelManager 重复注册回调	SceneStaticModelManager callback registered twice
+静态配置 UIModule_AtkCommandPointIdList {0} 数组长度不匹配	Static config UIModule_AtkCommandPointIdList {0} array length mismatch
+静态配置 UIModule_DefCommandPointIdList {0} 数组长度不匹配	Static config UIModule_DefCommandPointIdList {0} array length mismatch
+{0}:没有找到地图 基础配置数据，确认是否导出？	{0}: Map base config data not found, was it exported?
+{0}:没有找到地图 NPC数据，确认是否导出？	{0}: Map NPC data not found, was it exported?
+场景ID:{0}:没有找到怪物路点跟刷怪点转换表，是否配置错误还是未导出文件？	Scene ID:{0}: Monster waypoint to spawn point conversion table not found. Is it misconfigured or not exported?
+非NPC类型不刷,id:{0},NPCType:{1},UnitID:{2}	Non-NPC type not spawned, id:{0}, NPCType:{1}, UnitID:{2}
+检测服务器强制设置玩家到不可行走位置，坐标：	Detected the server forcing the player to an unwalkable position, coordinates: 
+[{0}] [{1}] 技能释放失败, 当前状态[{2}]不允许释放技能	[{0}] [{1}] Skill cast failed, current state [{2}] does not allow casting skills
+[LC_TransitionBase MethodName]%s报错: %s	[LC_TransitionBase MethodName]%s error: %s
+没有该时间类型： %s	No such time type: %s
+[SeasonExploration] _getViewedUnlockChapters: 无法获取角色ID	[SeasonExploration] _getViewedUnlockChapters: cannot get character ID
+[SeasonExploration] _getViewedUnlockChapters: 数据格式异常，清空记录	[SeasonExploration] _getViewedUnlockChapters: abnormal data format, clearing records
+[SeasonExploration] _getViewedUnlockChapters: 无效章节ID字符串={0}	[SeasonExploration] _getViewedUnlockChapters: invalid chapter ID string={0}
+[SeasonExploration] MarkChapterUnlockViewed: 无法获取角色ID，跳过保存	[SeasonExploration] MarkChapterUnlockViewed: cannot get character ID, skipping save
+[SeasonExploration] MarkChapterUnlockViewed: 已标记章节 {0} (赛季={1}, 角色={2})	[SeasonExploration] MarkChapterUnlockViewed: marked chapter {0} (season={1}, character={2})
+LC_SettingHelper.GetShowData: 设置项类型 %s 未定义	LC_SettingHelper.GetShowData: setting type %s is not defined
+LC_SettingHelper.GetOptionsList: 设置项类型 %s 未定义	LC_SettingHelper.GetOptionsList: setting type %s is not defined
+LC_SettingHelper.GetAppearanceType: 设置项类型 %s 未定义	LC_SettingHelper.GetAppearanceType: setting type %s is not defined
+LC_SettingHelper.GetValueName: 设置项类型 %s 未定义	LC_SettingHelper.GetValueName: setting type %s is not defined
+LC_SettingHelper.GetValue: 设置项类型 %s 未定义	LC_SettingHelper.GetValue: setting type %s is not defined
+LC_SettingHelper.SetValue: 设置项类型 %s 未定义	LC_SettingHelper.SetValue: setting type %s is not defined
+LC_SettingHelper.DecodeBytesValue: 设置项类型 %s 未定义	LC_SettingHelper.DecodeBytesValue: setting type %s is not defined
+LC_SettingHelper.GetAssetName: 设置项类型 %s 未定义	LC_SettingHelper.GetAssetName: setting type %s is not defined
+LC_SettingHelper.GetIsValueCustomFunc: 设置项类型 %s 未定义	LC_SettingHelper.GetIsValueCustomFunc: setting type %s is not defined
+LC_SettingHelper.GetSliderSetting: 设置项类型 %s 未定义	LC_SettingHelper.GetSliderSetting: setting type %s is not defined
+LC_SettingHelper.GetSliderValue: 设置项类型 %s 未定义	LC_SettingHelper.GetSliderValue: setting type %s is not defined
+LC_SettingHelper.SetSliderValue: 设置项类型 %s 未定义	LC_SettingHelper.SetSliderValue: setting type %s is not defined
+LC_SettingHelper.GetToggleValue: 设置项类型 %s 未定义	LC_SettingHelper.GetToggleValue: setting type %s is not defined
+LC_SettingHelper.SetToggleValue: 设置项类型 %s 未定义	LC_SettingHelper.SetToggleValue: setting type %s is not defined
+LC_SettingHelper.GetParentMuteState: 设置项类型 %s 未定义	LC_SettingHelper.GetParentMuteState: setting type %s is not defined
+LC_SettingHelper.RegisterValueChangeEvent: 设置项类型 %s 未定义	LC_SettingHelper.RegisterValueChangeEvent: setting type %s is not defined
+LC_SettingHelper.UnregisterValueChangeEvent: 设置项类型 %s 未定义	LC_SettingHelper.UnregisterValueChangeEvent: setting type %s is not defined
+LC_SettingHelper.ResetToDefault: 设置项类型 %s 未定义	LC_SettingHelper.ResetToDefault: setting type %s is not defined
+攻城战防守值换算比率配置错误	WoE defense value conversion ratio config error
+攻城战攻城值换算比率配置错误	WoE siege value conversion ratio config error
+战报角色数据解析失败，可能下发了非玩家数据：{0}	Failed to parse battle report character data; non-player data may have been sent: {0}
+子弹挂点数据为空, 技能ID: 	Projectile attach point data is empty, skill ID: 
+子弹挂点trans为空, 技能ID: 	Projectile attach point trans is empty, skill ID: 
+子弹未初始化成功, 技能ID: 	Projectile failed to initialize, skill ID: 
+USE_SKILL_REQ fail, iEnemyId is nil or 0,技能ID:{0};时间戳:{1}	USE_SKILL_REQ fail, iEnemyId is nil or 0, skill ID:{0}; timestamp:{1}
+{0}释放技能 {1} 第{2}段 effect id {3} 获取WeaponAttackConfig动画数据为nil。	{0} casting skill {1} stage {2} effect id {3}: WeaponAttackConfig animation data is nil.
+{0}释放技能 {1} 第{2}段 effect id {3} 动画数据为nil。	{0} casting skill {1} stage {2} effect id {3}: animation data is nil.
+{0}播放 effect id {1} 动画数据为nil。	{0} playing effect id {1}: animation data is nil.
+不能构造合法抛物线（无实数解）	Cannot construct a valid parabola (no real solution)
+表现编辑器配置错误	Performance editor config error
+未找到受击状态：{0}	Hit state not found: {0}
+[Story] 配置文件缺失或格式错误: 	[Story] Config file missing or malformed: 
+[Story] Action执行报错: %s \n错误堆栈: %s	[Story] Action execution error: %s \nStack trace: %s
+[Story] 未找到进入动作: 	[Story] Enter action not found: 
+请关注！！！当前场景未找到Npc Id: {0}	Attention!!! NPC Id not found in current scene: {0}
+[TaskNPC] 当前任务创建Npc了，taskId={0}, NpcId={1}	[TaskNPC] Current task created NPC, taskId={0}, NpcId={1}
+[TaskNPC] 当前任务不创建Npc了，ClientNPCMap Have, taskId={0}, 区域Id={1}	[TaskNPC] Current task will not create NPC, ClientNPCMap Have, taskId={0}, Area Id={1}
+[LC_TaskHelper] TriggerInteractButtonClick: 主界面Panel未打开	[LC_TaskHelper] TriggerInteractButtonClick: main UI panel not open
+[LC_TaskHelper] TriggerInteractButtonClick: 技能按钮Widget未找到	[LC_TaskHelper] TriggerInteractButtonClick: skill button widget not found
+@策划 镖车最大运载量配置错误	@designers Escort Cart max load capacity config error
+[Manager] 地块 %d 已配置 LC_TerritoryCellCollider	[Manager] Tile %d already has LC_TerritoryCellCollider configured
+[Manager] 地块 prefab 缺少 LC_TerritoryCellCollider 组件: %s (mapId=%d)	[Manager] Tile prefab missing LC_TerritoryCellCollider component: %s (mapId=%d)
+[LC_Display_Agent] 模型加载生命周期错误	[LC_Display_Agent] Model loading lifecycle error
+模型加载失败，请检查配置，unitID：	Model failed to load, please check the config, unitID: 
+模型路径无效，请检查配置，unitID：	Model path invalid, please check the config, unitID: 
+  路径：	  Path: 
+[ChickenBox] 状态Open却播CloseIdle: uid=%s, CurState=%s, LastIdle=%s, NewIdle=%s, 【npcConfigID=%s, npcType=%s, subType=%s, clientAct=%s】	[ChickenBox] State is Open but playing CloseIdle: uid=%s, CurState=%s, LastIdle=%s, NewIdle=%s, [npcConfigID=%s, npcType=%s, subType=%s, clientAct=%s]
+[ChickenBox] OpenIdle后又播CloseIdle: uid=%s, CurState=%s, LastIdle=%s, NewIdle=%s, 【npcConfigID=%s, npcType=%s, subType=%s, clientAct=%s】	[ChickenBox] Playing CloseIdle after OpenIdle: uid=%s, CurState=%s, LastIdle=%s, NewIdle=%s, [npcConfigID=%s, npcType=%s, subType=%s, clientAct=%s]
+SetAwardData: 无效奖励显示类型 {0} 	SetAwardData: invalid reward display type {0} 
+ 公会竞速：指挥技能 访问技能列表错误 SkillList: {0} SlotIdx: {1}	 Guild Race: command skill list access error SkillList: {0} SlotIdx: {1}
+ 公会竞速：指挥技能{0} 找不到技能表现数据	 Guild Race: command skill {0} has no skill presentation data
+ 公会数据异常 {0}	 Abnormal guild data {0}
+AwardItemRender: 无效Index {0} 	AwardItemRender: invalid Index {0} 
+AwardItemRender: 无效奖励Id {0} 	AwardItemRender: invalid reward Id {0} 
+ 管道:GuildHuntResult 排名数据为空	 Pipeline:GuildHuntResult ranking data is empty
+ 传入排名数据为空	 Incoming ranking data is empty
+匹配列表为空	Match list is empty
+UI_Sys_Card_List_Dropdown_WidgetCtrl SetData: kOptions为空	UI_Sys_Card_List_Dropdown_WidgetCtrl SetData: kOptions is empty
+Not on your puff!! 数量不应该超过最大值，检查代码	Not on your puff!! Count should not exceed the maximum, check the code
+未实现功能奖励领取方法: 	Reward claim method not implemented for feature: 
+ChargeWidgetCtrl:SetData 技能{0}没有配置数据	ChargeWidgetCtrl:SetData skill {0} has no config data
+StorageWidgetCtrl:SetData 技能{0}没有配置数据	StorageWidgetCtrl:SetData skill {0} has no config data
+ItemTip展示类型错误	Invalid ItemTip display type
+[UI_Com_ItemTipsWidgetCtrl_Card.RefreshView] : m_kData为空	[UI_Com_ItemTipsWidgetCtrl_Card.RefreshView] : m_kData is empty
+[UI_Com_ItemTipsWidgetCtrl_Fashion.RefreshView] : m_kData为空	[UI_Com_ItemTipsWidgetCtrl_Fashion.RefreshView] : m_kData is empty
+[UI_Com_ItemTipsWidgetCtrl_Chicken.RefreshView] : m_kData为空	[UI_Com_ItemTipsWidgetCtrl_Chicken.RefreshView] : m_kData is empty
+[UI_Com_ItemTipsWidgetCtrl_Emblem.RefreshView] : m_kData为空	[UI_Com_ItemTipsWidgetCtrl_Emblem.RefreshView] : m_kData is empty
+[UI_Com_ItemTipsWidgetCtrl_Equip.RefreshView] : m_kData为空	[UI_Com_ItemTipsWidgetCtrl_Equip.RefreshView] : m_kData is empty
+[UI_Com_ItemTipsWidgetCtrl_Item.RefreshView] : m_kData为空	[UI_Com_ItemTipsWidgetCtrl_Item.RefreshView] : m_kData is empty
+[UI_Com_ItemTipsWidgetCtrl_Pet.RefreshView] : m_kData为空	[UI_Com_ItemTipsWidgetCtrl_Pet.RefreshView] : m_kData is empty
+[UI_Com_ItemTipsWidgetCtrl_Totem.RefreshView] : m_kData为空	[UI_Com_ItemTipsWidgetCtrl_Totem.RefreshView] : m_kData is empty
+找不到道具数据或显示函数	Item data or display function not found
+非法字符: %d at index %d	Invalid character: %d at index %d
+TenGameplayConfig %s _kPicture字段配置错误%s无法找到	TenGameplayConfig %s _kPicture field config error: %s not found
+[点赞事件] 玩家被点赞，点赞者列表: %s	[Like Event] Player was liked, likers: %s
+kTopFiveBossIds _iID:%s _kBoss:%s在TenGameplayBossConfig中未找到	kTopFiveBossIds _iID:%s _kBoss:%s not found in TenGameplayBossConfig
+Lua_CFG_TenGameplayConfig _iID:%s _kBoss:%s在TenGameplayBossConfig中未找到	Lua_CFG_TenGameplayConfig _iID:%s _kBoss:%s not found in TenGameplayBossConfig
+_checkOutMainInfo 难度配置超过了预设	_checkOutMainInfo difficulty config exceeds the preset
+发送下炮请求id:	Sending cannon dismount request id: 
+木桩挑战未获取到结束时间戳，使用默认时间: 	Dummy Challenge did not get an end timestamp, using default time: 
+[木桩挑战] 保护超时触发，主动退出挑战模式	[Dummy Challenge] Protection timeout triggered, exiting challenge mode
+只支持5类型,检查Lua_CFG_BattleEventPointConfig	Only type 5 is supported, check Lua_CFG_BattleEventPointConfig
+攻城战结算战报解析错误：找不到本地玩家数据	WoE results battle report parse error: local player data not found
+UI_Sys_Life_CollectStartGame_OneWidgetCtrl:RefreshView - 配置读取失败，轮次: {0}	UI_Sys_Life_CollectStartGame_OneWidgetCtrl:RefreshView - failed to read config, round: {0}
+UI_Sys_Life_CollectStartGame_OneWidgetCtrl:RefreshView - 区域配置无效，轮次: {0}	UI_Sys_Life_CollectStartGame_OneWidgetCtrl:RefreshView - invalid area config, round: {0}
+UI_Sys_Life_CollectStartGame_OneWidgetCtrl:EndPivotRotate - 边界值未初始化，轮次: {0}	UI_Sys_Life_CollectStartGame_OneWidgetCtrl:EndPivotRotate - boundary values not initialized, round: {0}
+未选角色！	No character selected!
+选择大区id:{0}	Selected region id:{0}
+[Lua_UIObjectPool:ReleaseObjectInPool] 尝试删除%d个，实际成功%d个，跳过%d个僵尸对象	[Lua_UIObjectPool:ReleaseObjectInPool] Tried to delete %d, actually succeeded %d, skipped %d zombie objects
+[Lua_UT_PrefabPoolManager:Dealloc] ResHandle无效: 	[Lua_UT_PrefabPoolManager:Dealloc] Invalid ResHandle: 
+[Lua_UIObjectPool:_destroyObject] GameObject已被销毁 ResHandle=	[Lua_UIObjectPool:_destroyObject] GameObject already destroyed ResHandle=
+[Lua_UIObjectPool:_destroyObject] OnUnLoad失败 UIName=	[Lua_UIObjectPool:_destroyObject] OnUnLoad failed UIName=
+[Lua_UIPanelManager:_unLoadUIPanel] DeallocByID失败 ResHandle=	[Lua_UIPanelManager:_unLoadUIPanel] DeallocByID failed ResHandle=
+[Lua_UIPanelManager:_unLoadUIPanel] OnUnLoad失败 UIName=	[Lua_UIPanelManager:_unLoadUIPanel] OnUnLoad failed UIName=
+[Lua_UIPanelManager:_unLoadUIPanel] DestroyByID失败 ResHandle=	[Lua_UIPanelManager:_unLoadUIPanel] DestroyByID failed ResHandle=
+界面未设置默认层级: 	UI has no default layer set: 
+[Lua_UIWidgetManager:_tryDualWidgetOnRelease] OnUnLoad失败 UIName=	[Lua_UIWidgetManager:_tryDualWidgetOnRelease] OnUnLoad failed UIName=
+[Lua_UIWidgetManager:_tryDualWidgetOnRelease] DeallocByID失败 ResHandle=	[Lua_UIWidgetManager:_tryDualWidgetOnRelease] DeallocByID failed ResHandle=
+%s不是一个Window窗口	%s is not a Window
+未找到UI节点 请检查命名: 	UI node not found, please check the naming: 
+掉落物	Drops
+人物头像	Character Portrait
+队伍信息	Party Info
+经验条	EXP Bar
+快捷入口	Shortcuts
+电量	Battery
+轮盘	Wheel
+表情类型丢失	Emote type missing
+ 播放待机动作:	 Playing idle animation:
+不存在	 does not exist
+UI_Sys_Main_DungeonInviteTipsWidgetCtrl:RegisterInviteData 参数错误	UI_Sys_Main_DungeonInviteTipsWidgetCtrl:RegisterInviteData invalid parameter
+UIWheelHighlight组件未初始化	UIWheelHighlight component not initialized
+Error: 技能槽没有配置技能ID	Error: skill slot has no skill ID configured
+Error: 技能：%d 逻辑未做完,无法使用	Error: skill %d logic is incomplete, cannot be used
+[UI_Sys_MapPanelCtrl] _selectTab: 章节列表未初始化	[UI_Sys_MapPanelCtrl] _selectTab: chapter list not initialized
+[UI_Sys_MapPanelCtrl] _selectTab: m_kExplorationSwitchList[{0}] 为 nil	[UI_Sys_MapPanelCtrl] _selectTab: m_kExplorationSwitchList[{0}] is nil
+[ModelEdit] 导出成功: 	[ModelEdit] Export succeeded: 
+[ModelEdit] 导出失败: 	[ModelEdit] Export failed: 
+关卡配置不存在, levelId=	Level config does not exist, levelId=
+[UI_Sys_DialogListWidgetCtrl] 选项数据为空	[UI_Sys_DialogListWidgetCtrl] Option data is empty
+[UI_Sys_DialogPanelCtrl] Model中没有视图数据	[UI_Sys_DialogPanelCtrl] No view data in Model
+[UI_Sys_DialogPanelCtrl] Spine加载失败: 	[UI_Sys_DialogPanelCtrl] Spine load failed: 
+的排行榜没有二级列表，且相关配置有问题,请策划检查下LeaderBoardConfig配置	 leaderboard has no sub-list and its config is invalid; designers, please check the LeaderBoardConfig
+的排行榜没有二级列表，且相关配置有问题,	 leaderboard has no sub-list and its config is invalid,
+请策划检查下LeaderBoardConfig配置	designers, please check the LeaderBoardConfig
+[BattlePass] 点击预览按钮	[BattlePass] Preview button clicked
+[BattlePass] 点击特权：	[BattlePass] Privilege clicked: 
+未选择好友	No friend selected
+留言不能为空	Message cannot be empty
+[UI_Sys_Season_PassLevelBuyWidgetCtrl] 配置表_kBuyLevelConsume数据不完整，BattlePassID=%s	[UI_Sys_Season_PassLevelBuyWidgetCtrl] Config table _kBuyLevelConsume data incomplete, BattlePassID=%s
+[UI_Sys_Season_PassLevelBuyWidgetCtrl] 配置表缺少_kBuyLevelConsume数据，BattlePassID=%s	[UI_Sys_Season_PassLevelBuyWidgetCtrl] Config table missing _kBuyLevelConsume data, BattlePassID=%s
+[UI_Sys_Season_PassLevelBuyWidgetCtrl] 购买数量超过最大值：%d > %d	[UI_Sys_Season_PassLevelBuyWidgetCtrl] Purchase quantity exceeds maximum: %d > %d
+[UI_Sys_Season_TreasureRewardListWidgetCtrl] 奖励配置为空, iAwardId=%s	[UI_Sys_Season_TreasureRewardListWidgetCtrl] Reward config is empty, iAwardId=%s
+缺少商店Id	Missing shop Id
+EventDetailWidget: worldPos为空，无法聚焦	EventDetailWidget: worldPos is empty, cannot focus
+[MonthCardWidget] 距离上次自动领取不到1秒，跳过	[MonthCardWidget] Less than 1 second since last auto-claim, skipping
+[MonthCardWidget] 开始执行自动领取，时间戳=	[MonthCardWidget] Starting auto-claim, timestamp=
+[MonthCardWidget] 自动领取执行完成	[MonthCardWidget] Auto-claim completed
+[Wardrobe] 未找到时装ID: %d	[Wardrobe] Costume ID not found: %d
+灵魂残响道具异常消失	Soul Echo item disappeared unexpectedly
