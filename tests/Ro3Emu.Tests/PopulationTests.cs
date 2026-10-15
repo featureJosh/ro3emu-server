@@ -46,6 +46,134 @@ public sealed class PopulationTests : IDisposable
         population = new PopulationService(world, worldData, data, loop, wrapped);
     }
 
+    [Fact]
+    public async Task BotChatOnlyReachesNearbyVisibleReadyMapSubscribersAndHonorsMute()
+    {
+        var player = Player(); await world.JoinAsync(player); await population.UpdateAsync(1000);
+        var bot = world.AllUnits().OfType<PopulationUnit>().First();
+        player.Position = bot.Pos;
+        Assert.Null(ChatService.PopulationChannel(bot, player));
+        player.ChatGroups.Add("4_1"); player.ChatGroups.Add("@TGS#_4_1");
+        Assert.Equal("4_1", ChatService.PopulationChannel(bot, player));
+        player.BotChatMuted = true; Assert.Null(ChatService.PopulationChannel(bot, player)); player.BotChatMuted = false;
+        player.SceneLoading = true; Assert.Null(ChatService.PopulationChannel(bot, player)); player.SceneLoading = false;
+        player.LineNumber = 2; Assert.Null(ChatService.PopulationChannel(bot, player)); player.LineNumber = 1;
+        player.Position = new Vec3 { X = bot.X + 31, Y = bot.Y, Z = bot.Z };
+        Assert.Null(ChatService.PopulationChannel(bot, player)); player.Position = bot.Pos;
+        bot.Viewers.Remove(player); Assert.Null(ChatService.PopulationChannel(bot, player)); bot.Viewers.Add(player);
+        bot.Hp = 0; Assert.Null(ChatService.PopulationChannel(bot, player)); bot.Hp = bot.MaxHp;
+        bot.Removed = true; Assert.Null(ChatService.PopulationChannel(bot, player));
+    }
+
+    [Fact]
+    public async Task BotChatPublisherHonorsBlacklistAndDoesNotReplayNearbyLinesAsHistory()
+    {
+        using var accounts = new AccountStore(Options.Create(options));
+        var friends = new FriendStore(accounts);
+        var chat = new ChatService(null!, null!, null!, friends, NullLogger<ChatService>.Instance);
+        var player = Player(); await world.JoinAsync(player); await population.UpdateAsync(1000);
+        var bot = world.AllUnits().OfType<PopulationUnit>().First();
+        player.Position = bot.Pos; player.ChatGroups.Add("4_1");
+        // Seed a stored preference directly in this temporary fixture: ephemeral bot IDs intentionally
+        // have no durable role lifecycle, so the normal player-to-player friendship write API is inapplicable.
+        using var db = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={accounts.DatabasePath}");
+        db.Open();
+        using var preference = db.CreateCommand();
+        preference.CommandText = "INSERT INTO blacklist(owner,other) VALUES($owner,$other)";
+        preference.Parameters.AddWithValue("$owner", player.Role!.Id);
+        preference.Parameters.AddWithValue("$other", bot.Uid);
+        preference.ExecuteNonQuery();
+        Assert.True(friends.Blocks(player.Role.Id, bot.Uid));
+        // These sessions have no network channel: a forbidden send would fail instead of silently passing.
+        await chat.PublishPopulationAsync(bot, "Taking a breather.");
+        preference.CommandText = "DELETE FROM blacklist WHERE owner=$owner AND other=$other";
+        preference.ExecuteNonQuery(); player.BotChatMuted = true;
+        await chat.PublishPopulationAsync(bot, "Taking a breather.");
+        player.BotChatMuted = false; player.ChatGroups.Clear();
+        await chat.PublishPopulationAsync(bot, "Taking a breather.");
+        var history = typeof(ChatService).GetField("_recent", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        Assert.Empty((System.Collections.IDictionary)history.GetValue(chat)!);
+    }
+
+    [Fact]
+    public async Task BotChatterDelaysArrivalBoundsCadenceAndStopsForCombatDeathOrMute()
+    {
+        var player = Player(); await world.JoinAsync(player); await population.UpdateAsync(1000);
+        var bot = world.AllUnits().OfType<PopulationUnit>().First();
+        player.ChatGroups.Add("4_1"); player.Position = bot.Pos;
+        var chatter = new PopulationChatter(new());
+        Assert.Empty(chatter.Plan([bot], _ => "field", 1000));
+        var line = Assert.Single(chatter.Plan([bot], _ => "field", 51001));
+        Assert.Same(bot, line.Bot); Assert.False(string.IsNullOrWhiteSpace(line.Text));
+        Assert.Empty(chatter.Plan([bot], _ => "field", 51002));
+        Assert.Empty(chatter.Plan([bot], _ => "field", 150000)); // per-bot quiet cooldown even after map cooldown
+        player.BotChatMuted = true; Assert.Empty(chatter.Plan([bot], _ => "field", 1000000)); player.BotChatMuted = false;
+        bot.Hp = 0; Assert.Empty(chatter.Plan([bot], _ => "field", 1000000)); bot.Hp = bot.MaxHp;
+        bot.Target = Monster(); Assert.Empty(chatter.Plan([bot], _ => "field", 1000000)); bot.Target = null;
+        chatter.Mode = "off"; Assert.Empty(chatter.Plan([bot], _ => "field", 1000000));
+        chatter.Mode = "invalid"; Assert.Empty(chatter.Plan([bot], _ => "field", 1000000));
+        chatter.Plan([], _ => "field", 1000001); Assert.Equal(0, chatter.ActiveMaps);
+    }
+
+    [Fact]
+    public async Task BotChatterUsesEditableContextPacksAndAvoidsRecentRepetition()
+    {
+        var player = Player(); await world.JoinAsync(player); await population.UpdateAsync(1000);
+        var bot = world.AllUnits().OfType<PopulationUnit>().First(); bot.VisitingNpc = false;
+        player.Position = bot.Pos; player.ChatGroups.Add("4_1");
+        var options = new PopulationChatOptions { Mode = "chatty" };
+        options.Phrases["hunt"] = Enumerable.Range(0, 12).Select(i => "Custom hunt line " + i).ToArray();
+        var chatter = new PopulationChatter(options);
+        Assert.Empty(chatter.Plan([bot], _ => "field", 0));
+        var recent = new Queue<string>();
+        for (long time = 1000000; time <= 25000000; time += 1000000)
+        {
+            string text = Assert.Single(chatter.Plan([bot], _ => "field", time)).Text;
+            Assert.StartsWith("Custom hunt line ", text); Assert.DoesNotContain(text, recent);
+            recent.Enqueue(text); if (recent.Count > 8) recent.Dequeue();
+        }
+        options.Phrases["hunt"] = ["", "bad\nline", new string('a', 181)];
+        Assert.Empty(chatter.Plan([bot], _ => "field", 30000000));
+        Assert.Equal("town", PopulationChatter.Context(bot, "city"));
+        bot.WalkTo(new MapPoint(bot.X + 10, bot.Y, bot.Z, 0), 40000000);
+        Assert.Equal("travel", PopulationChatter.Context(bot, "city"));
+    }
+
+    [Fact]
+    public void BotPhraseConfigurationReplacesBuiltInPacksRatherThanAppending()
+    {
+        var configured = new ServerOptions();
+        new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Ro3Emu:Population:Chat:Mode"] = "normal",
+            ["Ro3Emu:Population:Chat:Phrases:travel:0"] = "Custom journey.",
+        }).Build().GetSection("Ro3Emu").Bind(configured);
+        Assert.Equal("normal", configured.Population.Chat.Mode);
+        Assert.Equal("Custom journey.", Assert.Single(configured.Population.Chat.Phrases["travel"]));
+        Assert.False(configured.Population.Chat.Phrases.ContainsKey("town"));
+        Assert.True(PopulationChatOptions.DefaultPhrases.ContainsKey("town"));
+        var bot = Fighter(); bot.IdleChatContext = "npc"; bot.ActivityUntilMs = 100;
+        Assert.Equal("npc", PopulationChatter.Context(bot, "field", 50));
+        Assert.Equal("hunt", PopulationChatter.Context(bot, "field", 101));
+    }
+
+    [Fact]
+    public async Task BotChatterSharesMapBudgetAndBoundsServerOutputAcrossLines()
+    {
+        var players = new[] { Player(), Player(2, line: 2), Player(3, line: 3) };
+        foreach (var player in players) { player.ChatGroups.Add("4_1"); await world.JoinAsync(player); }
+        await population.UpdateAsync(1000);
+        var bots = world.AllUnits().OfType<PopulationUnit>().ToArray();
+        foreach (var player in players) player.Position = bots.First(b => b.RuntimeMap == player.RuntimeMap).Pos;
+        var chatter = new PopulationChatter(new());
+        Assert.Empty(chatter.Plan(bots, _ => "field", 1000));
+        var lines = chatter.Plan(bots, _ => "field", 51001);
+        Assert.Equal(2, lines.Count); Assert.Equal(2, lines.Select(l => l.Bot.RuntimeMap).Distinct().Count());
+        var rest = Assert.Single(chatter.Plan(bots, _ => "field", 51002));
+        Assert.DoesNotContain(rest.Bot.RuntimeMap, lines.Select(l => l.Bot.RuntimeMap));
+        Assert.Empty(chatter.Plan(bots, _ => "field", 51003));
+    }
+
     private static GameSession Player(int id = 1, int line = 1, long scene = 1, long instance = 0) => new(null!, null!)
     {
         Role = new Role(id, "test", 1, "Player" + id, 1, 1000, 5, 0, 0, 0, scene, 128, 0, 128, 0),

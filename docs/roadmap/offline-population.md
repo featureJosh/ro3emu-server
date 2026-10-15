@@ -17,7 +17,7 @@ Everything in the core roadmap works offline, with optional features controlled 
 
 The user confirmed the base works in game. The current profile/loadout increment passed Release builds,
 39 focused cases and two real-data/initialization smoke checks. The new appearances need in-game acceptance. LAN behavior and the latest name aesthetics still need acceptance checks. Current settings
-are documented in [the usage guide](../guide/offline-population.md). Current bots do not chat, join parties,
+are documented in [the usage guide](../guide/offline-population.md). Current bots offer nearby flavor chatter but do not join parties,
 complete real quests or populate private dungeons. Those are milestones below.
 
 ## Implemented increment: profiles and believable loadouts (2026-10-14)
@@ -30,9 +30,20 @@ complete real quests or populate private dungeons. Those are milestones below.
 - [x] Beginner-equipment rule: rarity/required-level/compatibility gates, debug-stat exclusion, no automatic
   premium outfits/wings/glows, and equipped base attributes used in actual combat.
 
-Configuration reload, smooth despawning, activity/chat presets, per-view render budgets, complete fashion/color/face
+Configuration reload, smooth despawning, per-profile activity/chat tuning, per-view render budgets, complete fashion/color/face
 variation and private-dungeon populations are still pending. Settings and commands are in the
 [usage guide](../guide/offline-population.md). Server tests cannot establish client model rendering or LAN behavior.
+
+## Implemented increment: nearby flavor chatter (2026-10-14)
+
+- [x] Editable offline phrase packs for travel, NPC/town stops, hunting and rest; original English defaults.
+- [x] Nearby map-chat delivery using bot profile identities, current visibility/range and exact line membership.
+- [x] Startup staggering, per-bot/map cooldowns, eight-line repetition exclusion and bounded server output.
+- [x] Quiet/normal/chatty/off modes, per-session mute, blacklist checks and no old proximity-message replay.
+
+Release builds and 45 focused cases plus two real-data/initialization smoke checks pass.
+In-game chat presentation and LAN delivery still need acceptance. Greeting/heal/revive/level-up reactions,
+localization selection and richer personality/activity roles remain pending; these lines do not react to player events.
 
 ## Recommended sequence
 
@@ -99,14 +110,14 @@ instances remain isolated; lowering a target cleans up gradually; the global lim
   Give towns more social roles and fields more hunters, with varied pauses and routes rather than synchronized loops.
 - [ ] Add editable, localized phrase packs with personality, context, weights and cooldowns. Include casual
   conversation, location comments and brief party-oriented lines. Use the proper bot sender/profile identity.
-- [ ] Support nearby chat first. Respect visibility, mute preferences, per-bot cooldowns and a per-map message budget.
+- [x] Support nearby chat first. Respect visibility, mute preferences, per-bot cooldowns and a per-map message budget.
   Avoid repeating a recent phrase or broadcasting the same event once for every spectator.
 - [ ] React to actual game events: greet a newcomer, thank a player for healing, congratulate a level-up,
   acknowledge being revived, notice a nearby boss, or comment after a shared fight. Start with greetings and
   observable player events; healing/revival reactions activate as bot-friendly targeting and companion support land.
 - [ ] Add waves, sitting, turning to face a speaker and short pauses. Reactions should not interrupt combat
   or movement constantly. Greeting the same player repeatedly should have a long cooldown.
-- [ ] Offer quiet/normal/chatty settings and a complete chat-off switch. Dialogue remains optional flavor.
+- [x] Offer quiet/normal/chatty settings and a complete chat-off switch. Dialogue remains optional flavor.
 
 Example phrases: "Anyone heading to Prontera?", "Thanks for the heal!", "Nice hit!", "Taking a break by the fountain."
 Context packs should contain many alternatives; these examples should not become four endlessly repeated lines.
@@ -195,5 +206,5 @@ bots do not leak private-instance state or consume real-player admission slots.
   visibility, reward attribution and chat cooldowns; perform in-game and two-player LAN acceptance separately.
 - [ ] Keep defaults conservative, provide a clear off switch, and document implemented options as they ship.
 
-Next increments should refine density controls and appearance pools, then add activity roles and bounded nearby chat/reactions. Party companions should be delivered as a complete roster/follow/ownership lifecycle before
+Next increments should refine density controls and appearance pools, then add personality/activity roles and real event reactions to nearby chatter. Party companions should be delivered as a complete roster/follow/ownership lifecycle before
 enabling dense private-dungeon combat.

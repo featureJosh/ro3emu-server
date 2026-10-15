@@ -16,6 +16,8 @@ On the current main server, enter a public map and type in chat:
 - `!bots map 3` / `!bots map off` — override the current map ID across its public lines.
 - `!bots map reset` — remove the current map's runtime override.
 - `!bots status` — show total population/limit and the current map's profile, target, level range and rarity cap.
+- `!bots chat off/quiet/normal/chatty` — set the server-wide chatter cadence.
+- `!bots mute` / `!bots unmute` — hide/restore bot chatter for your current login session.
 - `!bots off` — remove all inhabitants immediately, including maps with runtime overrides.
 - `!bots reset` — restore startup settings and clear all runtime map overrides.
 
@@ -134,10 +136,50 @@ At exceptionally small total limits some maps still cannot receive an actor. Bot
 actors and use the server-unit AOI path; they have their own bounded population and do not use the real-player
 view-limit/rebalancer. Lower profile/map counts or use `!bots 5` if the client renders too many models.
 
-Bots have no accounts or saved progression. They do not accept parties, sell items, chat or support the full
+Bots have no accounts or saved progression. They do not accept parties, sell items or support the full
 player social/inspection workflow. Their profile explicitly disables party invitations. Levels and gear are
 simulated progression based on area difficulty, not saved characters. A restart clears all bots.
 Companions, shops, full quest chains and advanced skill behavior remain future work.
+## Nearby chatter
+
+Enabled bots use **quiet** chatter by default. Messages use the bot's real profile UID over the existing
+Tencent map-chat tunnel (`77011`, notify-text command 4). Recipients must currently see the bot, be within
+30 map units, share its exact runtime map/line, be fully loaded, and have joined a map-chat channel.
+World/guild/private channels receive none. Both legacy `4_…` and prefixed `@TGS#_4_…` spellings are supported;
+a viewer subscribed to both receives only one push. Delivery rechecks scene generation and membership.
+Existing blacklist entries and `!bots mute` suppress delivery. Bots do not yet support the normal durable
+player-to-player block/friend workflow; use `!bots mute` for the supported personal opt-out. These lines have no replay history, so someone
+joining later or far away will not receive old proximity-only conversation.
+
+A new occupied line waits 20–50 seconds before its first possible line. Quiet mode allows at most one line
+per map every 45–67.5 seconds and per bot every 180–270 seconds. Normal mode uses 20–30 / 90–135 seconds;
+chatty uses 8–12 / 45–67.5 seconds. Each pass plans at most two lines across the server and one per map.
+Cooldowns, no nearby eligible listener, combat, death or removal can make actual chatter less frequent.
+The previous eight lines per map are excluded. Small custom packs become quiet when exhausted rather than
+immediately repeating. Removed/empty population maps release their chatter state; shutting bots off clears it.
+
+Original offline phrase packs cover travel, NPC stops, town pauses, hunting and resting. This is flavor,
+not conversation with a language model or evidence that a bot completed a quest. Healing, revival, greeting
+and other real player-event reactions remain planned. Text does not interrupt movement or combat.
+
+Configure packs under `Ro3Emu.Population.Chat` before restart:
+
+```json
+"Chat": {
+  "Mode": "quiet",
+  "Phrases": {
+    "travel": ["Taking the scenic route.", "Onward!"]
+  }
+}
+```
+
+Available keys are `travel`, `npc`, `town`, `hunt`, `rest`. Use at least nine distinct lines per context for
+sustained variation. Each configured context replaces its built-in pack; omitted contexts use the English
+defaults. Blank text, control characters and text over 180 characters are ignored.
+Unknown modes fail quietly with no bot messages. `!bots chat …` changes the mode until restart/reset;
+`!bots reset` restores configured mode and population settings, while personal mute lasts until logout.
+All these commands follow the existing GM account policy. The client's own channel display settings still apply.
+
 ## Protocol evidence and validation
 
 - `src/Ro3Emu.Server/Protos/romsg/MG_Entity.proto`: `EntityBase`, `AoIViewChangeData`.
@@ -157,7 +199,9 @@ Companions, shops, full quest chains and advanced skill behavior remain future w
 line isolation, limits, names and real UserDataService responses, long journeys, obstacle detours, delayed hits,
 monster retaliation, First Aid and the absence of player kill rewards. Further checks cover configuration
 precedence/binding, fair budgets, gradual spawning, area-derived levels, real equipment bonuses, rarity/level/job/sex
-restrictions, debug exclusions, two-handed weapons and stable appearance packets. In-game names/skill animation and LAN
+restrictions, debug exclusions, two-handed weapons and stable appearance packets. Chatter tests cover
+arrival delays, cooldowns, editable packs, repetition, map/server budgets, visible nearby recipients, line isolation,
+blacklists, personal mute, channel subscriptions, combat/death and cleanup without history replay. In-game names/skill animation and LAN
 behavior still require manual verification after each update; a passing server test is not proof of client rendering.
 
 Manual acceptance: restart the main server when convenient, reconnect the regular client and use `!bots on`; compare city/field density, try `!bots map 3`, and check head names,
@@ -165,10 +209,12 @@ follow a bot across a longer journey, observe attacks and job skills near Poring
 confirm the bot yields. Check First Aid/monster retaliation and death/revival. Visit a beginner area with a high-level character: bots
 should remain modest Novices with plain gear. Follow one bot and verify its hairstyle/weapon remain stable;
 compare its world model with its profile. Change line, visit a dungeon,
-and use `!bots off` to verify cleanup. NPC stops should look like questing without changing your own quests.
+and use `!bots off` to verify cleanup. Enable Nearby/map chat, wait up to a minute for quiet chatter,
+verify the sender name matches a visible bot and try `!bots mute`/`!bots unmute` and `!bots chat off`.
+Two LAN players near the same bot should see the same line once; other lines and distant viewers should not. NPC stops should look like questing without changing your own quests.
 
 ## Planned improvements
 
-See the [bot improvement roadmap](../roadmap/offline-population.md) for remaining density/appearance refinements, contextual chat/reactions,
+See the [bot improvement roadmap](../roadmap/offline-population.md) for remaining density/appearance refinements, richer chat/event reactions,
 temporary party companions, dungeon populations and later AI/quest/economy work. All items there are proposals
 unless marked complete; they are not additional settings available in this version.

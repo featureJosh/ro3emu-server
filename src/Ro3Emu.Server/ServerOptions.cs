@@ -189,6 +189,7 @@ public sealed class OpenContentOptions
 /// <summary>Optional ambient players; bounded per occupied public map/line and across the server.</summary>
 public sealed class PopulationOptions
 {
+    public PopulationChatOptions Chat { get; set; } = new();
     public bool Enabled { get; set; }
     public int PerMap { get; set; } = 20;
     public int MaxTotal { get; set; } = 100;
@@ -220,4 +221,29 @@ public sealed class PopulationMapOptions
     public int? MinLevel { get; set; }
     public int? MaxLevel { get; set; }
     public int? MaxEquipmentQuality { get; set; }
+}
+
+/// <summary>Editable offline flavor text; mode and cadence are inferred population policy.</summary>
+public sealed class PopulationChatOptions
+{
+    public string Mode { get; set; } = "quiet";
+    public Dictionary<string, string[]> Phrases { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    internal static readonly IReadOnlyDictionary<string, string[]> DefaultPhrases = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["travel"] = ["Let's see where this path goes.", "Still a little way to go.", "I like taking the scenic route.",
+            "Time to stretch my legs.", "Wonder what's around the next corner.", "Taking a different route today.",
+            "A good day for a walk.", "There's always another place to explore.", "No need to rush.", "Onward!"],
+        ["npc"] = ["I'll stop here for a moment.", "Wonder if anyone has news.", "Just checking what's happening here.",
+            "This seems like a good meeting spot.", "I should look around before heading out.", "A quick stop, then back on the road.",
+            "Always something going on here.", "Taking a look around.", "Maybe I'll stay a little longer.", "Good place to catch my breath."],
+        ["hunt"] = ["Looking for a quiet hunting spot.", "I'll try a different patch of ground.", "Keeping an eye out for monsters.",
+            "Let's not pull too many at once.", "Time for a little practice.", "I'll check the clearing over there.",
+            "Better watch my footing out here.", "A short rest before the next fight.", "I could use a few more supplies.", "Staying alert out here."],
+        ["rest"] = ["Taking a breather.", "A little rest goes a long way.", "How's everyone's day going?", "Nice weather for adventuring.",
+            "Just sorting out my plans.", "I wonder where I'll head next.", "Glad to have a moment to relax.",
+            "Hope everyone's travels are going well.", "Enjoying the view for a bit.", "There's no hurry today."],
+        ["town"] = ["It's good to be back in town.", "Anyone else just passing through?", "I'll wander around a while.",
+            "Time to plan the next trip.", "This place feels lively today.", "Might meet some fellow adventurers here.",
+            "I like this part of town.", "A good spot to rest between journeys.", "Plenty of places to explore nearby.", "Taking it easy today."],
+    };
 }

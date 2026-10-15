@@ -20,6 +20,8 @@ public sealed class PopulationService : IGameTicker
     private readonly SkillService? skills;
     private readonly PopulationPolicy policy;
     private readonly PopulationLoadouts loadouts;
+    private readonly PopulationChatter chatter;
+    private readonly ChatService? chat;
     private readonly Random random = new();
     private readonly List<PopulationUnit> bots = new();
     private readonly SemaphoreSlim gate = new(1, 1);
@@ -31,11 +33,12 @@ public sealed class PopulationService : IGameTicker
     private readonly Dictionary<long, int> mapCounts = new();
     private static readonly int[] Careers = [1000, 1100, 2100, 3100, 4100, 5100, 6100];
 
-    public PopulationService(World world, WorldData worldData, GameData data, GameLoop loop, IOptions<ServerOptions> options, CombatService? combat = null, SkillService? skills = null)
+    public PopulationService(World world, WorldData worldData, GameData data, GameLoop loop, IOptions<ServerOptions> options, CombatService? combat = null, SkillService? skills = null, ChatService? chat = null)
     {
         this.world = world; this.worldData = worldData; this.data = data; this.loop = loop;
         this.options = options.Value.Population; this.combat = combat; this.skills = skills;
         policy = new(data, worldData, this.options); loadouts = new(data);
+        chatter = new(this.options.Chat); this.chat = chat;
         loop.Add(this);
     }
 
@@ -61,10 +64,22 @@ public sealed class PopulationService : IGameTicker
         });
     }
 
-    public void RegisterCommands(GmCommands gm) => gm.Register("bots", "[on|0..100|off|status|reset|map 0..100/off/reset]", async (session, args) =>
+    public void RegisterCommands(GmCommands gm) => gm.Register("bots", "[on|0..100|off|status|reset|map 0..100/off/reset|chat off/quiet/normal/chatty|mute|unmute]", async (session, args) =>
     {
         string arg = args.FirstOrDefault()?.ToLowerInvariant() ?? "status";
-        if (arg == "map")
+        if (arg == "chat")
+        {
+            if (args.Length != 2 || !PopulationChatter.ValidMode(args[1])) throw new ArgumentException();
+            await gate.WaitAsync();
+            try { chatter.Mode = args[1].ToLowerInvariant(); }
+            finally { gate.Release(); }
+        }
+        else if (arg is "mute" or "unmute")
+        {
+            if (args.Length != 1) throw new ArgumentException();
+            session.BotChatMuted = arg == "mute";
+        }
+        else if (arg == "map")
         {
             if (args.Length != 2 || session.SceneEntry <= 0) throw new ArgumentException();
             int? count = args[1].Equals("reset", StringComparison.OrdinalIgnoreCase) ? null
@@ -81,13 +96,13 @@ public sealed class PopulationService : IGameTicker
             await SetCountAsync(count);
         }
         var map = Settings(session.SceneEntry);
-        await GmCommands.ReplyAsync(session, $"Population: {Count}/{Limit} total; map {session.SceneEntry} {map.Profile}, target {map.Count}, levels {map.MinLevel}-{map.MaxLevel}, quality cap {map.MaxQuality}. Changes last until restart.");
+        await GmCommands.ReplyAsync(session, $"Population: {Count}/{Limit} total; map {session.SceneEntry} {map.Profile}, target {map.Count}, levels {map.MinLevel}-{map.MaxLevel}, quality cap {map.MaxQuality}; chat {chatter.Mode}, muted {session.BotChatMuted}. Changes last until restart.");
     });
 
     internal async Task SetCountAsync(int? count)
     {
         await gate.WaitAsync();
-        try { overrideCount = count; enabledOverride = null; if (count == null) mapCounts.Clear(); }
+        try { overrideCount = count; enabledOverride = null; if (count == null) { mapCounts.Clear(); chatter.Mode = options.Chat.Mode.ToLowerInvariant(); } }
         finally { gate.Release(); }
         await UpdateAsync(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
     }
@@ -130,7 +145,7 @@ public sealed class PopulationService : IGameTicker
             foreach (var group in bots.GroupBy(b => b.RuntimeMap).ToArray())
                 foreach (var bot in group.Skip(budgets.GetValueOrDefault(group.Key)).ToArray()) await RemoveAsync(bot);
             foreach (var bot in bots.Skip(Limit).ToArray()) await RemoveAsync(bot);
-            if (!Enabled || Limit == 0) return;
+            if (!Enabled || Limit == 0) { chatter.Clear(); return; }
             int[] careers = Careers.Where(c => data.Row("JobConfig", c) is { } row && GameData.Int(row, "_iUnitB") > 0 && GameData.Int(row, "_iUnitG") > 0).ToArray();
             int spawned = 0, spawnLimit = Math.Clamp(options.MaxSpawnsPerTick, 1, 100);
             foreach (var (runtime, players) in occupied)
@@ -193,6 +208,7 @@ public sealed class PopulationService : IGameTicker
                 if (!bot.Moving && bot.Route.Count == 0 && bot.JourneyActive)
                 {
                     bot.JourneyActive = false;
+                    bot.IdleChatContext = bot.VisitingNpc ? "npc" : "rest";
                     bot.ActivityUntilMs = now + random.Next(5000, 10000);
                     if (bot.VisitingNpc) { bot.HuntKills = 0; bot.VisitingNpc = false; }
                 }
@@ -253,6 +269,9 @@ public sealed class PopulationService : IGameTicker
                     await world.MoveUnitAsync(bot, new MovementChangeNtf { Uid = bot.Uid,
                         TransType = MovementTransitionType.MoveTransNormal, MovementInfo = bot.Movement() });
             }
+            if (chat != null)
+                foreach (var line in chatter.Plan(bots, scene => Settings(scene).Profile, now, chat.HasPopulationAudience))
+                    await chat.PublishPopulationAsync(line.Bot, line.Text);
         }
         finally { gate.Release(); }
     }

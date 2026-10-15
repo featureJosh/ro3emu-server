@@ -11,6 +11,8 @@ public sealed class PopulationUnit : WorldUnit
     public int Level { get; init; } = 1;
     public MapPoint Home { get; init; }
     internal long NextWalkMs;
+    internal long NextChatMs;
+    internal string? IdleChatContext;
     internal long NextAttackMs, SkillReadyMs, RespawnMs, ActivityUntilMs;
     internal readonly Queue<MapPoint> Route = new();
     internal MonsterUnit? Target;
