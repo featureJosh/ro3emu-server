@@ -179,8 +179,22 @@ namespace Ro3Emu.ClientHooks
             return null;
         }
 
-        private static bool Pressed(Gamepad pad, string name) => Button(pad, name, out _)?.wasPressedThisFrame == true;
-        private static bool Released(Gamepad pad, string name) => Button(pad, name, out _)?.wasReleasedThisFrame == true;
+        private static bool Pressed(Gamepad pad, string name) => Edge(Button(pad, name, out _), true);
+        private static bool Released(Gamepad pad, string name) => Edge(Button(pad, name, out _), false);
+
+        // Per control: (frame, held before, held now). wasPressedThisFrame missed short presses here (the client's input
+        // updates do not line up with Update; a scripted press was never seen), so edges are computed once per frame,
+        // the same for every check in that frame.
+        private static readonly Dictionary<InputControl, (int frame, bool before, bool now)> Edges = new Dictionary<InputControl, (int, bool, bool)>();
+
+        /// <summary>The button went down (down = true) or up (down = false) since the frame it was last looked at.</summary>
+        internal static bool Edge(ButtonControl b, bool down)
+        {
+            if (b == null) return false;
+            int frame = Time.frameCount;
+            if (!Edges.TryGetValue(b, out var h) || h.frame != frame) Edges[b] = h = (frame, h.now, b.isPressed);
+            return down ? h.now && !h.before : !h.now && h.before;
+        }
         private static bool Held(Gamepad pad, string name) => Button(pad, name, out _)?.isPressed == true;
 
         /// <summary>A number setting from controller.ini.</summary>

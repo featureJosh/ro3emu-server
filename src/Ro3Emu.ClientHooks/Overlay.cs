@@ -110,7 +110,7 @@ namespace Ro3Emu.ClientHooks
                 _bar.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
             _bar.localScale = new Vector3(scale, scale, 1f);
-            _bar.anchoredPosition = new Vector2(-24 * scale, 20 * scale);
+            _bar.anchoredPosition = new Vector2(-24 * scale, 110 * scale); // above the stock HUD's bottom-right menu buttons
             int n = prompts?.Count ?? 0;
             _bar.gameObject.SetActive(n > 0);
             while (Prompts.Count < n)

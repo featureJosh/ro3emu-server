@@ -33,10 +33,10 @@ namespace Ro3Emu.ClientHooks
             "UI_Com_CastingBarPanel(Clone)", "UI_Com_CursorAttach(Clone)",
         };
 
-        private static readonly List<Selectable> Items = new List<Selectable>();
+        private static readonly List<Component> Items = new List<Component>();
         private static readonly Dictionary<string, string> LastFocus = new Dictionary<string, string>();
         private static Transform _panel;
-        private static Selectable _focus;
+        private static Component _focus;
         private static int _frame;
         private static float _repeatAt;
         private static Vector2 _held;
@@ -53,6 +53,14 @@ namespace Ro3Emu.ClientHooks
             if (!enabled || pad == null) { Close(); return; }
             if (++_frame % 6 == 0) Scan(); // ponytail: FindObjectsOfType<Canvas> every 6th frame; panel open/close events if it costs
             if (_panel == null) { Close(); return; }
+            if (Osk.Open)
+            {
+                HideRing();
+                PromptList.Clear();
+                Osk.Tick(pad, PromptList);
+                Overlay.SetPrompts(PromptList);
+                return;
+            }
             if (_guide != null)
             {
                 var hole = ScreenRect(_guide);
@@ -95,14 +103,16 @@ namespace Ro3Emu.ClientHooks
             }
             Transform top = null;
             int topOrder = int.MinValue;
+            Roots.Clear();
             foreach (var canvas in UnityEngine.Object.FindObjectsOfType<Canvas>())
             {
                 if (!canvas.isActiveAndEnabled) continue;
                 var root = ViewRoot(canvas.transform);
-                if (root == null || Hud.Contains(root.name)) continue;
+                if (root == null || Hud.Contains(root.name) || Roots.Contains(root)) continue;
+                if (!HasItems(root)) continue;
+                Roots.Add(root);
                 int order = canvas.sortingLayerID * 100000 + canvas.sortingOrder;
                 if (order <= topOrder) continue;
-                if (!HasItems(root)) continue;
                 top = root;
                 topOrder = order;
             }
@@ -115,8 +125,42 @@ namespace Ro3Emu.ClientHooks
             }
             Items.Clear();
             if (_panel == null) return;
+            Collect(_panel, Items);
+            if (Modal(_panel)) return;
+            // Side-by-side windows (Equip + Backpack) share one focus space; a modal popup keeps it to itself.
+            foreach (var root in Roots) if (root != _panel) Collect(root, Items);
+        }
+
+        private static readonly List<Transform> Roots = new List<Transform>();
+        private static readonly List<MonoBehaviour> Behaviours = new List<MonoBehaviour>();
+
+        /// <summary>The panel's focus targets: Selectables, and other click handlers on a raycast graphic (item cells are
+        /// UIDragButton, many links are ClickEvent; neither is a Selectable).
+        /// ponytail: full GetComponentsInChildren every 6th frame; cache per panel if it shows in a profile.</summary>
+        private static void Collect(Transform root, List<Component> into)
+        {
             foreach (var s in Selectable.allSelectablesArray)
-                if (s.transform.IsChildOf(_panel) && Usable(s)) Items.Add(s);
+                if (s.transform.IsChildOf(root) && Usable(s)) into.Add(s);
+            root.GetComponentsInChildren(false, Behaviours);
+            foreach (var mb in Behaviours)
+            {
+                if (!(mb is IPointerClickHandler) || mb is Selectable || mb.GetComponent<Selectable>() != null) continue;
+                var r = ScreenRect(mb);
+                if (r.width > Screen.width * 0.4f || r.height > Screen.height * 0.4f) continue; // backgrounds, drag areas
+                if (Usable(mb)) into.Add(mb);
+            }
+        }
+
+        /// <summary>A panel with a click-blocking graphic over (nearly) the whole screen is a modal popup.</summary>
+        private static bool Modal(Transform root)
+        {
+            foreach (var g in root.GetComponentsInChildren<Graphic>(false))
+            {
+                if (!g.raycastTarget || !g.isActiveAndEnabled) continue;
+                var r = ScreenRect(g);
+                if (r.width >= Screen.width * 0.9f && r.height >= Screen.height * 0.9f) return true;
+            }
+            return false;
         }
 
         private const string GuidePanel = "UI_Sys_GuidePanel(Clone)";
@@ -165,16 +209,34 @@ namespace Ro3Emu.ClientHooks
             return root;
         }
 
+        private static readonly List<Component> Probe = new List<Component>();
+
         private static bool HasItems(Transform root)
         {
-            foreach (var s in Selectable.allSelectablesArray)
-                if (s.transform.IsChildOf(root) && Usable(s)) return true;
-            return false;
+            Probe.Clear();
+            Collect(root, Probe);
+            return Probe.Count > 0;
         }
 
         private static readonly Vector3[] Corners = new Vector3[4];
 
-        private static bool Usable(Selectable s)
+        private static bool Usable(Component c)
+        {
+            if (c is Selectable s) return UsableSelectable(s);
+            if (!(c is Behaviour b) || b == null || !b.isActiveAndEnabled) return false;
+            var graphic = c.GetComponent<Graphic>();
+            if (graphic == null || !graphic.raycastTarget || graphic.canvasRenderer.GetInheritedAlpha() < 0.05f) return false;
+            for (var p = c.transform; p != null; p = p.parent)
+            {
+                var group = p.GetComponent<CanvasGroup>();
+                if (group != null && (!group.blocksRaycasts || !group.interactable)) return false;
+                if (group != null && group.ignoreParentGroups) break;
+            }
+            var rect = ScreenRect(c);
+            return rect.width > 4 && rect.height > 4 && rect.xMax > 0 && rect.yMax > 0 && rect.xMin < Screen.width && rect.yMin < Screen.height;
+        }
+
+        private static bool UsableSelectable(Selectable s)
         {
             if (s == null || !s.isActiveAndEnabled || !s.IsInteractable()) return false;
             var g = s.targetGraphic;
@@ -194,8 +256,19 @@ namespace Ro3Emu.ClientHooks
             return Rect.MinMaxRect(Math.Min(a.x, b.x), Math.Min(a.y, b.y), Math.Max(a.x, b.x), Math.Max(a.y, b.y));
         }
 
+        /// <summary>The panel the focus is in (several windows can be open side by side), else the top panel.</summary>
+        private static Transform FocusPanel => (_focus != null ? ViewRoot(_focus.transform) : null) ?? _panel;
+
+        /// <summary>Developer "select &lt;name&gt;": focus the open menu's item with that object name.</summary>
+        internal static void Select(string name)
+        {
+            foreach (var s in Items)
+                if (s.name == name) { _focus = s; Debug.Log("[Ro3Emu.UiNav] select " + name); return; }
+            Debug.Log("[Ro3Emu.UiNav] select " + name + ": not in the open menu");
+        }
+
         /// <summary>The panel's remembered focus, else a confirm-like button, else the top-left item (reading order).</summary>
-        private static Selectable DefaultFocus()
+        private static Component DefaultFocus()
         {
             if (Items.Count == 0) return null;
             if (LastFocus.TryGetValue(_panel.name, out var name))
@@ -203,9 +276,9 @@ namespace Ro3Emu.ClientHooks
             foreach (var s in Items)
             {
                 string n = s.name.ToLowerInvariant();
-                if (n.Contains("confirm") || n.Contains("sure") || n.Contains("define") || n.Contains("_ok")) return s;
+                if (n.Contains("confirm") || n.Contains("sure") || n.Contains("define") || n.Contains("_ok") || n.StartsWith("enter_") || n.StartsWith("login_")) return s;
             }
-            Selectable best = null;
+            Component best = null;
             float bestScore = float.MaxValue;
             foreach (var s in Items)
             {
@@ -255,7 +328,7 @@ namespace Ro3Emu.ClientHooks
         private static bool Pressed(Gamepad pad, string action, string fallback)
         {
             string path = Controller.FirstBinding(action) ?? "<Gamepad>/" + fallback;
-            return pad.TryGetChildControl(path.Substring(path.IndexOf('/') + 1)) is ButtonControl b && b.wasPressedThisFrame;
+            return Controller.Edge(pad.TryGetChildControl(path.Substring(path.IndexOf('/') + 1)) as ButtonControl, true);
         }
 
         internal static string Control(string action, string fallback) => Controller.FirstBinding(action) ?? "<Gamepad>/" + fallback;
@@ -265,7 +338,7 @@ namespace Ro3Emu.ClientHooks
         {
             if (_focus == null) { _focus = DefaultFocus(); return; }
             var from = ScreenRect(_focus).center;
-            Selectable best = null;
+            Component best = null;
             float bestScore = float.MaxValue;
             foreach (var s in Items)
             {
@@ -280,6 +353,7 @@ namespace Ro3Emu.ClientHooks
             if (best == null) return;
             _focus = best;
             KeepInView(best);
+            if (Diagnostics.Verbose) Debug.Log("[Ro3Emu.UiNav] focus " + best.name);
         }
 
         private static void Nudge(Slider slider, float sign)
@@ -288,9 +362,10 @@ namespace Ro3Emu.ClientHooks
             slider.value = Mathf.Clamp(slider.value + sign * step, slider.minValue, slider.maxValue);
         }
 
-        private static void Click(Selectable s)
+        private static void Click(Component s)
         {
             if (s == null || EventSystem.current == null) return;
+            if (s is TMPro.TMP_InputField field) { Osk.Show(field); return; } // typing needs the on-screen keyboard
             var data = new PointerEventData(EventSystem.current)
             {
                 button = PointerEventData.InputButton.Left,
@@ -328,7 +403,7 @@ namespace Ro3Emu.ClientHooks
             ToggleGroup bar = null;
             float barY = float.MinValue;
             var tabs = new List<Toggle>();
-            foreach (var group in _panel.GetComponentsInChildren<ToggleGroup>(false))
+            foreach (var group in FocusPanel.GetComponentsInChildren<ToggleGroup>(false))
             {
                 var mine = new List<Toggle>();
                 foreach (var s in Items) if (s is Toggle t && t.group == group) mine.Add(t);
@@ -344,13 +419,14 @@ namespace Ro3Emu.ClientHooks
             Click(next);
         }
 
-        private static ScrollRect ScrollFor(Selectable s)
+        private static ScrollRect ScrollFor(Component s)
         {
             var sr = s != null ? s.GetComponentInParent<ScrollRect>() : null;
-            if (sr != null && sr.transform.IsChildOf(_panel)) return sr;
+            var panel = FocusPanel;
+            if (sr != null && sr.transform.IsChildOf(panel)) return sr;
             ScrollRect biggest = null;
             float area = 0;
-            foreach (var r in _panel.GetComponentsInChildren<ScrollRect>(false))
+            foreach (var r in panel.GetComponentsInChildren<ScrollRect>(false))
             {
                 var rect = ScreenRect(r);
                 if (rect.width * rect.height > area) { biggest = r; area = rect.width * rect.height; }
@@ -376,7 +452,7 @@ namespace Ro3Emu.ClientHooks
         }
 
         /// <summary>Scrolls the focus's scroll view so the focus is inside the viewport.</summary>
-        private static void KeepInView(Selectable s)
+        private static void KeepInView(Component s)
         {
             var sr = s.GetComponentInParent<ScrollRect>();
             if (sr == null || sr.content == null || !s.transform.IsChildOf(sr.content)) return;
@@ -434,9 +510,9 @@ namespace Ro3Emu.ClientHooks
         private static void Prompts()
         {
             PromptList.Clear();
-            PromptList.Add((Control("MenuConfirm", "buttonSouth"), _focus is Slider ? "Adjust" : "Select"));
+            PromptList.Add((Control("MenuConfirm", "buttonSouth"), _focus is Slider ? "Adjust" : _focus is TMPro.TMP_InputField ? "Type" : "Select"));
             PromptList.Add((Control("MenuBack", "buttonEast"), "Back"));
-            foreach (var group in _panel.GetComponentsInChildren<ToggleGroup>(false))
+            foreach (var group in FocusPanel.GetComponentsInChildren<ToggleGroup>(false))
             {
                 int n = 0;
                 foreach (var s in Items) if (s is Toggle t && t.group == group) n++;

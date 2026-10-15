@@ -48,6 +48,12 @@ namespace Ro3Emu.ClientHooks
                     case "actions":
                         Debug.Log("[Ro3Emu.Diag] actions: " + Controller.DescribeActions());
                         break;
+                    case "select":
+                        if (parts.Length > 1) UiNav.Select(parts[1]);
+                        break;
+                    case "verbose":
+                        Verbose = parts.Length < 2 || parts[1] != "off";
+                        break;
                     case "wait":
                         _wait = parts.Length > 1 && int.TryParse(parts[1], out int frames) ? frames : 30;
                         break;
@@ -111,6 +117,9 @@ namespace Ro3Emu.ClientHooks
         /// <summary>Developer "focus ignore": controller input is handled while the window is in the background.</summary>
         public static bool IgnoreFocus;
 
+        /// <summary>Developer "verbose": controller UI logs every move and press (for scripted test runs).</summary>
+        public static bool Verbose;
+
         public static void PollCommandFile()
         {
             if (_release != null && --_releaseIn <= 0) { var r = _release; _release = null; r(); }
@@ -132,7 +141,7 @@ namespace Ro3Emu.ClientHooks
         private static UnityEngine.InputSystem.Gamepad _testPad;
 
         /// <summary>"pad &lt;GamepadButton&gt;" (South, East, DpadUp, LeftShoulder, Start...) / "key &lt;Key&gt;" (Escape, B...):
-        /// pressed for 3 frames through the Input System, as if from the device.</summary>
+        /// pressed for 8 frames through the Input System, as if from the device.</summary>
         private static void Press(bool pad, string name)
         {
             if (pad)
@@ -152,7 +161,7 @@ namespace Ro3Emu.ClientHooks
                 UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.KeyboardState(key));
                 _release = () => UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.KeyboardState());
             }
-            _releaseIn = 3;
+            _releaseIn = 8;
             Debug.Log("[Ro3Emu.Diag] " + (pad ? "pad " : "key ") + name);
         }
 
