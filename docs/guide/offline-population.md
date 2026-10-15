@@ -1,7 +1,8 @@
 # Offline population
 
-The optional population service fills occupied public maps with ambient player characters. They have names,
-Novice/first-job models and male/female appearances, stand around and walk on the exported navigation grid.
+The optional population service fills occupied public maps with simulated player characters. They have names,
+Novice/first-job models and male/female appearances, travel between activity spots, hunt ordinary monsters
+and use job skills on the exported navigation grid.
 They are server actors, with no client connection, account, saved character, inventory or rewards.
 This is an original RO3 implementation inspired by the population feature in
 [Flux159/ragnarokoffline.app](https://github.com/Flux159/ragnarokoffline.app#filling-the-world); no code was copied.
@@ -10,7 +11,7 @@ This is an original RO3 implementation inspired by the population feature in
 
 On a server built from `feature/offline-population`, enter a public map and type in chat:
 
-- `!bots 20` — enable up to 20 inhabitants per occupied public map/line.
+- `!bots 20` — enable up to 20 simulated players per occupied public map/line.
 - `!bots status` — show actual population, per-map target and total limit.
 - `!bots 5` — reduce each map to five.
 - `!bots off` — remove all inhabitants immediately.
@@ -42,22 +43,44 @@ may hold fewer actors. Missing navigation means that map gets none. No external 
 
 ## Behavior and limits
 
-The service checks once per second. Characters spawn 4–24 map units around real players, roam locally, and are
-removed within the next update after the last player leaves. When players travel more than 100 units away,
-old characters are reclaimed and replaced near the players. In a shared map, new placement alternates between
-players. Public lines have independent populations; private dungeons and event instances receive none. Reconnect
-grace still counts as presence until the server removes the real player from World.
+The simulation advances every 250 ms. Characters initially spawn 4–24 map units around real players. They
+plan journeys to nearby NPCs or monster spawn points (25–140 units away), with 35–100-unit exploration routes
+as a fallback. Routes use bounded A* on the exported grid to detour around walls and are simplified into
+continuous walking segments of at most 12 units at 5 units/second. A bot pauses at activity destinations;
+it does not pause after every segment. Route planning is limited to one bot per pass and 3,000 nodes per search.
+Failed paths are retried later. Navigation is local to one map; bots do not cross portals.
+
+The activity loop simulates questing: visit an NPC, travel to hunting grounds, fight a few monsters, return
+and pause. **This does not accept or complete real quests**, alter quest NPC state or award quest rewards.
+No dialogue windows are opened for the human player. Names come from a deterministic local handle generator
+(e.g. Ariwyn, Brifall); no username API or internet access is needed. UserDataService supplies the bot's
+Name/Level/Base/Online fields, as the client obtains player head names from that cache rather than EntityBase.Name.
+
+Bots use each job's configured normal attack and a small selection of level-appropriate, hostile single-target
+skills from SkillTreeConfig, SkillConfig and visual target selectors. Low-health bots can use Novice First Aid.
+The normal combat damage formula and 31100/31101 skill packets are reused. Ordinary, unclaimed public spawn-group
+monsters near the bot (within five levels above it and below 10,000 HP) can retaliate; bots can die and revive after 30 seconds. Attribute progression is inferred
+(HP 200+50×level, attack/magic attack 12+4×level). This is a small combat simulation, not full character builds:
+AoE, buffs/debuffs, equipment bonuses, SP/cost accounting and complex skill scripts are not implemented for bots.
+
+Real players take priority: bots skip damaged, player-targeted or reward-reserved monsters and other bots' targets.
+A delayed bot hit checks for intervening player damage and yields rather than finishing that hit. Field MVPs
+and independent/single spawns are excluded. Bot kills use normal corpse/respawn handling but grant no player
+EXP, loot or quest credit, and never invoke player reward settlement callbacks.
+
+Bots disappear when their public map/line becomes empty. Actors more than 220 units from every real player
+are reclaimed and replaced near the players. Placement alternates between players sharing a map. Private dungeons
+and event instances receive none. Reconnect grace counts as presence until the player leaves World.
 
 The total budget is allocated in scene/line order, so maps later in that order can get fewer characters when
 several friends spread out. Bots do not consume account slots or public-line admission capacity. They are WorldUnit
 actors and use the server-unit AOI path; they have their own bounded population and do not use the real-player
 view-limit/rebalancer. Lower `PerMap` if the client renders too many models.
 
-These are **ambient inhabitants**, not combat companions. They do not fight, heal, accept parties, sell items,
-chat, complete quests, or support normal player social interactions. Displayed levels match the spawning player's
-level for atmosphere and do not imply functional combat stats. No character data is written. A restart clears
-all bots. Combat, companions and interactive shops are future work.
-
+Bots have no accounts or saved progression. They do not accept parties, sell items, chat or support the full
+player social/inspection workflow. Their profile explicitly disables party invitations. Displayed levels match
+the spawning player's level and are simulated progression, not saved characters. A restart clears all bots.
+Companions, shops, full quest chains and advanced skill behavior remain future work.
 ## Protocol evidence and validation
 
 - `src/Ro3Emu.Server/Protos/romsg/MG_Entity.proto`: `EntityBase`, `AoIViewChangeData`.
@@ -68,16 +91,17 @@ all bots. Combat, companions and interactive shops are future work.
 - Existing `GameAoiSink` uses 31037 to enter/leave and 31081 to move units; PopulationService reuses World and
   these messages. Late viewers receive the current walk segment with remaining duration.
 - `Maps/NavGrid.cs`: half-metre segment checks with terrain heights. Both spawning and roaming require a
-  walkable straight segment and a nearby height layer. This is bounded local roaming, not full pathfinding.
+  walkable straight segment and a nearby height layer. PopulationNavigation adds bounded A* and validates each walking segment.
 - Spawn policy, crowd limits, names, job distribution and roaming are **inferred offline-server behavior**;
   they do not reconstruct official RO3 bot behavior. UIDs use the separate 2^50 range, below the client's
   exact double-integer limit of 2^53.
 
-`PopulationTests` uses synthetic config/navigation and the real World visibility path to cover creation,
-late joins, disappearance, map/line isolation, global limits, disabled/missing/blocked navigation, runtime
-changes, relocation, walking and late-view movement. In-game rendering, selection and LAN behavior still require
-manual verification; a passing server test is not proof that all client models render correctly.
+`PopulationTests` uses synthetic config/navigation and the real World visibility path to cover lifecycle,
+line isolation, limits, names and real UserDataService responses, long journeys, obstacle detours, delayed hits,
+monster retaliation, First Aid and the absence of player kill rewards. In-game names/skill animation and LAN
+behavior still require manual verification after each update; a passing server test is not proof of client rendering.
 
-Manual acceptance: on a public map run `!bots 20`; check names, male/female job models and walking; invite a LAN
-friend and compare inhabitants; move apart, change line and enter/leave a dungeon; run `!bots off` and verify
-all ambient actors disappear. Check the server log for errors. Normal combat and quests should remain usable.
+Manual acceptance: restart only the bot server, reconnect the bot client and use `!bots 20`; check head names,
+follow a bot across a longer journey, observe attacks and job skills near Porings, then attack its target and
+confirm the bot yields. Check First Aid/monster retaliation and death/revival. Change line, visit a dungeon,
+and use `!bots off` to verify cleanup. NPC stops should look like questing without changing your own quests.

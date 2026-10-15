@@ -2,7 +2,7 @@ using Romsg;
 
 namespace Ro3Emu.Server.Maps;
 
-/// <summary>An ephemeral ambient player. It has no account, inventory, combat target or persistence.</summary>
+/// <summary>An ephemeral simulated player, with no account or persistent inventory.</summary>
 public sealed class PopulationUnit : WorldUnit
 {
     public required string Name { get; init; }
@@ -11,10 +11,29 @@ public sealed class PopulationUnit : WorldUnit
     public int Level { get; init; } = 1;
     public MapPoint Home { get; init; }
     internal long NextWalkMs;
+    internal long NextAttackMs, SkillReadyMs, RespawnMs, ActivityUntilMs;
+    internal readonly Queue<MapPoint> Route = new();
+    internal MonsterUnit? Target;
+    internal long TargetExpectedHp;
+    internal bool VisitingNpc, JourneyActive;
+    internal int HuntKills;
+    public long MaxHp => 200 + Level * 50L;
+    public long Hp { get; set; } = 250;
+    public bool Dead => Hp <= 0;
+    internal int NormalSkill = 1000001;
+    internal int HealSkill;
+    internal int[] ActiveSkills = [];
+    internal float AttackRange = 2;
+    internal bool InCombat => Target is { Dead: false, Hp: > 0 };
+    internal MapPoint Current => new(X, Y, Z, Face);
+    internal void Stop(long now)
+    {
+        Advance(now); endMs = startMs = 0;
+    }
     private long startMs, endMs, currentMs;
     private MapPoint from, to;
     public bool Moving => endMs > currentMs;
-    public const float WalkSpeed = 2.5f;
+    public const float WalkSpeed = 5f;
 
     internal void Advance(long now)
     {
@@ -48,11 +67,11 @@ public sealed class PopulationUnit : WorldUnit
         var entity = new EntityBase
         {
             Uuid = (ulong)Uid, EntityTemplateID = (ulong)Career, EntityType = 3,
-            Name = Name, Gender = Gender, EntityCamp = 1, State = EntityState.Alive,
+            Name = Name, Gender = Gender, EntityCamp = 1, State = Dead ? EntityState.Dead : EntityState.Alive,
             Face = Face, MovementInfo = Movement(), NotifyType = EntityBase.Types.NotifyType.All,
         };
         foreach (var (id, value) in new (long, long)[]
-            { (101, 100), (2000, 100), (102, 50), (2001, 50), (2002, Level), (113, 250), (115, 100) })
+            { (101, MaxHp), (2000, Hp), (102, 50), (2001, 50), (2002, Level), (113, 500), (115, 100) })
             entity.Property.Add(new AoIProperty { Idx = id, Data = value, BaseData = value });
         entity.EquipInfo.Add(new long[7]);
         return entity;

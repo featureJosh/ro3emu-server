@@ -281,5 +281,5 @@ Online is a trademark of Gravity Co., Ltd.
 
 ## Offline population
 
-Optional ambient fake players: `!bots 20` in game, `!bots off` to remove them. Disabled by default; see
+Optional simulated players with longer travel, hunting and job skills: `!bots 20` in game, `!bots off` to remove them. Disabled by default; see
 [configuration, behavior and validation limits](docs/guide/offline-population.md).

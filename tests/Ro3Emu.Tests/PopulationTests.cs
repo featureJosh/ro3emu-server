@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Romsg;
+using Ro3Emu.Server.Micro;
 using Ro3Emu.Server;
 using Ro3Emu.Server.Accounts;
 using Ro3Emu.Server.Data;
@@ -18,6 +19,8 @@ public sealed class PopulationTests : IDisposable
     private readonly World world;
     private readonly PopulationService population;
     private readonly ServerOptions options;
+    private readonly GameData data;
+    private readonly WorldData worldData;
 
     public PopulationTests()
     {
@@ -36,9 +39,10 @@ public sealed class PopulationTests : IDisposable
         File.WriteAllBytes(Path.Combine(root, "nav", "test_dynamicmapdata.bytes"), grid);
         options = new ServerOptions { DataDir = root, Population = new() { Enabled = true, PerMap = 6, MaxTotal = 10 } };
         var wrapped = Options.Create(options);
-        var data = new GameData(wrapped, NullLogger<GameData>.Instance);
+        data = new GameData(wrapped, NullLogger<GameData>.Instance);
         world = new World(sink, loop, NullLogger<World>.Instance);
-        population = new PopulationService(world, new WorldData(wrapped, data, NullLogger<WorldData>.Instance), data, loop, wrapped);
+        worldData = new WorldData(wrapped, data, NullLogger<WorldData>.Instance);
+        population = new PopulationService(world, worldData, data, loop, wrapped);
     }
 
     private static GameSession Player(int id = 1, int line = 1, long scene = 1, long instance = 0) => new(null!, null!)
@@ -140,9 +144,13 @@ public sealed class PopulationTests : IDisposable
     {
         var player = Player(); await world.JoinAsync(player); await population.UpdateAsync(1000);
         var oldIds = world.AllUnits().Select(u => u.Uid).ToHashSet();
-        player.Position = new Vec3 { X = 20, Z = 20 };
+        player.Position = new Vec3 { X = 500, Z = 500 };
         await world.MoveAsync(player, new WalkReq { Pos = player.Position });
         await population.UpdateAsync(2000);
+        Assert.Equal(0, population.Count);
+        player.Position = new Vec3 { X = 128, Z = 128 };
+        await world.MoveAsync(player, new WalkReq { Pos = player.Position });
+        await population.UpdateAsync(3000);
         Assert.Equal(6, population.Count);
         Assert.All(world.AllUnits(), u => Assert.DoesNotContain(u.Uid, oldIds));
         Assert.Equal(6, player.VisibleUnits.Count);
@@ -162,13 +170,13 @@ public sealed class PopulationTests : IDisposable
     public void LateViewerReceivesRemainingWalkAndExactStop()
     {
         var bot = new PopulationUnit { Uid = 1L << 50, Name = "Test", X = 10, Z = 10 };
-        bot.WalkTo(new MapPoint(15, 0, 10, 0), 1000);
+        bot.WalkTo(new MapPoint(20, 0, 10, 0), 1000);
         bot.Advance(2000);
         var entity = bot.Entity();
-        Assert.Equal(12.5f, entity.MovementInfo.Pos.X);
+        Assert.Equal(15f, entity.MovementInfo.Pos.X);
         Assert.Equal(1000, entity.MovementInfo.MoveDuration);
         bot.Advance(3000);
-        Assert.False(bot.Moving); Assert.Equal(15, bot.X);
+        Assert.False(bot.Moving); Assert.Equal(20, bot.X);
         Assert.Equal(MovementType.MoveTypeNone, bot.Entity().MovementInfo.MoveType);
     }
 
@@ -179,6 +187,215 @@ public sealed class PopulationTests : IDisposable
     {
         options.Population.PerMap = perMap; options.Population.MaxTotal = total;
         Assert.Equal(expectedMap, population.PerMap); Assert.Equal(expectedTotal, population.Limit);
+    }
+
+    [Fact]
+    public void OfflineHandlesAreUniqueAndReadable()
+    {
+        var names = Enumerable.Range(1, 10000).Select(i => PopulationNames.ForSerial(i)).ToArray();
+        Assert.Equal(names.Length, names.Distinct().Count());
+        Assert.All(names, name => { Assert.InRange(name.Length, 4, 16); Assert.All(name, c => Assert.True(char.IsLetterOrDigit(c))); });
+    }
+
+    [Fact]
+    public async Task ProfileServiceSuppliesHeadNamesWithoutCreatingAccounts()
+    {
+        await world.JoinAsync(Player()); await population.UpdateAsync(1000);
+        var bot = (PopulationUnit)world.AllUnits().First();
+        var profile = population.Profile(bot.Uid, 123, 7)!;
+        var fields = (Dictionary<string, object?>)profile["Data"]!;
+        Assert.Equal(bot.Name, fields["Name"]); Assert.Equal(true, fields["Online"]);
+        Assert.Equal(7, fields["ClusterId"]);
+        var info = RoleAdditionBaseInfo.Parser.ParseFrom((byte[])fields["Base"]!);
+        Assert.Equal(bot.Career, info.Career); Assert.True(info.CantBeInvited);
+        await population.SetCountAsync(0); Assert.Null(population.Profile(bot.Uid, 124, 7));
+    }
+
+    [Fact]
+    public async Task RealUserDataServiceReturnsBotProfilesWithoutDatabaseReads()
+    {
+        await world.JoinAsync(Player()); await population.UpdateAsync(1000);
+        var bot = (PopulationUnit)world.AllUnits().First();
+        var service = new UserDataService(null!, null!, loop, null!, null!, Options.Create(options),
+            NullLogger<UserDataService>.Instance, population);
+        var args = new Dictionary<object, object?> { ["UidFieldVersions"] = new Dictionary<object, object?>
+            { [bot.Uid.ToString()] = new Dictionary<object, object?> { ["Name"] = 0L, ["Base"] = 0L } } };
+        await loop.StartAsync(default);
+        try
+        {
+            var response = (Dictionary<string, object?>)(await service.InvokeAsync(null!, "getAttributeBatchByVersion", args))!;
+            var profile = (Dictionary<string, object?>)Assert.Single((object[])response["Results"]!);
+            Assert.Equal(bot.Name, ((Dictionary<string, object?>)profile["Data"]!)["Name"]);
+        }
+        finally { await loop.StopAsync(default); }
+    }
+
+    [Fact]
+    public async Task JourneysCoverLongDistancesWithoutIdleGapsBetweenSegments()
+    {
+        options.Population.PerMap = 1;
+        await world.JoinAsync(Player()); await population.UpdateAsync(1000);
+        var bot = (PopulationUnit)world.AllUnits().Single();
+        var start = bot.Current;
+        float maximumDistance = 0;
+        for (long now = 1250; now < 45000; now += 250)
+        {
+            await population.UpdateAsync(now);
+            maximumDistance = Math.Max(maximumDistance, MonsterService.Distance(start.X, start.Z, bot.X, bot.Z));
+            Assert.True(worldData.Map(1)!.Nav!.IsWalkable(bot.X, bot.Y, bot.Z));
+        }
+        Assert.True(maximumDistance > 25, $"Only travelled {maximumDistance}m");
+        Assert.Contains(sink.Moves, m => m.MovementInfo.MoveDuration > 1500);
+    }
+
+    [Fact]
+    public async Task HuntingArrivalKeepsHuntingAndNpcVisitResetsKillCount()
+    {
+        await world.JoinAsync(Player()); await population.UpdateAsync(1000);
+        var bot = (PopulationUnit)world.AllUnits().First();
+        bot.Stop(1000); bot.Route.Clear(); bot.JourneyActive = true; bot.VisitingNpc = false;
+        await population.UpdateAsync(1250);
+        Assert.False(bot.VisitingNpc); Assert.True(bot.ActivityUntilMs > 1250);
+        bot.JourneyActive = true; bot.VisitingNpc = true; bot.HuntKills = 3;
+        await population.UpdateAsync(1500);
+        Assert.False(bot.VisitingNpc); Assert.Equal(0, bot.HuntKills);
+    }
+
+    [Fact]
+    public void RouteDetoursAroundWallsAndRejectsDisconnectedGoals()
+    {
+        string path = Path.Combine(root, "nav", "test_dynamicmapdata.bytes");
+        var grid = File.ReadAllBytes(path);
+        for (int z = 0; z < 35; z++) grid[64 + (z * 256 + 20) * 4] = 0;
+        File.WriteAllBytes(path, grid);
+        var nav = NavGrid.Load(path);
+        var start = new MapPoint(10.5f, 0, 20.5f, 0); var goal = new MapPoint(30.5f, 0, 20.5f, 0);
+        var route = PopulationNavigation.Route(nav, start, goal);
+        Assert.NotEmpty(route); Assert.Contains(route, p => p.Z >= 35);
+        foreach (var next in route) { Assert.True(nav.CanWalk(start.X, start.Y, start.Z, next.X, next.Z)); start = next; }
+        Assert.Equal(goal, route.Last());
+        for (int z = 0; z < 256; z++) grid[64 + (z * 256 + 20) * 4] = 0;
+        File.WriteAllBytes(path, grid);
+        Assert.Empty(PopulationNavigation.Route(NavGrid.Load(path), new(10.5f, 0, 20.5f, 0), goal, 100));
+    }
+
+    private (CombatService Combat, MonsterService Monsters) CombatServices()
+    {
+        var character = new CharacterService(null!, null!, data, world, NullLogger<CharacterService>.Instance);
+        var skills = new SkillService(data, character, null!, NullLogger<SkillService>.Instance);
+        var sessions = new SessionRegistry(NullLogger<SessionRegistry>.Instance);
+        var buffs = new BuffService(data, world, sessions, character, loop, NullLogger<BuffService>.Instance);
+        var monsters = new MonsterService(world, worldData, data, loop, NullLogger<MonsterService>.Instance);
+        var scene = new SceneService(Options.Create(options), world, worldData, monsters, buffs, data,
+            NullLogger<SceneService>.Instance, new PublicLineManager(data, world), TimeProvider.System);
+        return (new CombatService(world, monsters, character, skills, scene, buffs, worldData, sessions, data, loop,
+            NullLogger<CombatService>.Instance), monsters);
+    }
+
+    private static MonsterUnit Monster(long hp = 100) => new()
+    {
+        Uid = 1L << 41, SceneEntry = 1, X = 128, Z = 128, Hp = hp,
+        Template = new MonsterTemplate(1, 1, hp, 0, 10, 10, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2,
+            false, 0, 1000, 10, 30, 1000001, 300, 0.05f, 2000, 2, 100),
+        Home = new SpawnPoint(1, 128, 0, 128, 0, 1), Group = new SpawnGroup(1, false, 1, 10, [], []),
+    };
+
+    private static PopulationUnit Fighter() => new()
+        { Uid = 1L << 50, Name = "Test", SceneEntry = 1, X = 128, Z = 128, Level = 5, Hp = 100 };
+
+    [Fact]
+    public void BotsYieldToPlayerTargetsDamageAndOtherBots()
+    {
+        var bot = Fighter(); var m = Monster();
+        Assert.True(PopulationService.PopulationCanHunt(bot, m));
+        m.PopulationTarget = Fighter(); Assert.False(PopulationService.PopulationCanHunt(bot, m));
+        m.PopulationTarget = bot; bot.TargetExpectedHp = m.Hp;
+        Assert.True(PopulationService.PopulationCanHunt(bot, m));
+        m.Hp--; Assert.False(PopulationService.PopulationCanHunt(bot, m));
+        m.Hp++; m.Target = Player(); Assert.False(PopulationService.PopulationCanHunt(bot, m));
+        m.Target = null; m.RewardRecipient = 1; Assert.False(PopulationService.PopulationCanHunt(bot, m));
+    }
+
+    [Fact]
+    public async Task BotKillsUseCombatWithoutPlayerRewardCallbacks()
+    {
+        File.WriteAllText(Path.Combine(root, "config", "SkillConfig.json"), """{"1000001":{"_iActionTime":300,"_iDistanceMax":300,"_iSkillHit":10000,"_iDmgType":1,"_kDamageParam1":[10000]}}""");
+        var (combat, _) = CombatServices();
+        int rewards = 0;
+        combat.BeforeKilled.Add((_, _) => { rewards++; return Task.CompletedTask; });
+        combat.Killed.Add((_, _) => { rewards++; return Task.CompletedTask; });
+        var bot = Fighter(); var monster = Monster(10); bot.Target = monster; bot.TargetExpectedHp = 10;
+        await loop.StartAsync(default);
+        try
+        {
+            await loop.InvokeAsync(async () => { await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
+                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs); });
+            await WaitFor(() => monster.Dead);
+            Assert.Equal(0, monster.Hp); Assert.Equal(1, bot.HuntKills); Assert.Equal(0, rewards);
+            Assert.Null(monster.RewardCommit); Assert.False(monster.DeathDurable);
+        }
+        finally { await loop.StopAsync(default); }
+    }
+
+    [Fact]
+    public async Task PlayerDamageBeforeHitCancelsBotDamage()
+    {
+        File.WriteAllText(Path.Combine(root, "config", "SkillConfig.json"), """{"1000001":{"_iActionTime":300,"_iDistanceMax":300,"_iSkillHit":10000}}""");
+        var (combat, _) = CombatServices();
+        var bot = Fighter(); var monster = Monster(); bot.Target = monster; bot.TargetExpectedHp = 100;
+        await loop.StartAsync(default);
+        try
+        {
+            await loop.InvokeAsync(async () => { await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
+                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs); monster.Hp = 99; });
+            await Task.Delay(300);
+            Assert.Equal(99, await loop.InvokeAsync(() => Task.FromResult(monster.Hp)));
+        }
+        finally { await loop.StopAsync(default); }
+    }
+
+    [Fact]
+    public async Task RemovingBotBeforeHitCancelsDamage()
+    {
+        File.WriteAllText(Path.Combine(root, "config", "SkillConfig.json"), """{"1000001":{"_iActionTime":300,"_iDistanceMax":300,"_iSkillHit":10000}}""");
+        var (combat, _) = CombatServices();
+        var bot = Fighter(); var monster = Monster(); bot.Target = monster; bot.TargetExpectedHp = 100;
+        await loop.StartAsync(default);
+        try
+        {
+            await loop.InvokeAsync(async () => { await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
+                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs); await world.RemoveUnitAsync(bot); });
+            await Task.Delay(300);
+            Assert.Equal(100, await loop.InvokeAsync(() => Task.FromResult(monster.Hp)));
+        }
+        finally { await loop.StopAsync(default); }
+    }
+
+    [Fact]
+    public async Task MonsterRetaliationAndFirstAidChangeBotHp()
+    {
+        File.WriteAllText(Path.Combine(root, "config", "SkillConfig.json"), """{"1000001":{"_iActionTime":300,"_iDistanceMax":300,"_iSkillHit":10000,"_iDmgType":1,"_kDamageParam1":[10000]},"1000301":{"_iActionTime":300,"_iCD":10000,"_kDamageParam2":[150]}}""");
+        var (combat, monsters) = CombatServices();
+        var bot = Fighter(); var monster = Monster(); bot.Target = monster; bot.TargetExpectedHp = 100; bot.HealSkill = 1000301;
+        await loop.StartAsync(default);
+        try
+        {
+            await loop.InvokeAsync(async () => { await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
+                monsters.Engage(monster, bot); await monsters.AttackPopulation!(monster, bot); });
+            await WaitFor(() => bot.Hp < 100);
+            long damaged = await loop.InvokeAsync(() => Task.FromResult(bot.Hp));
+            await loop.InvokeAsync(() => combat.PopulationHealAsync(bot, MonsterService.NowMs));
+            await WaitFor(() => bot.Hp > damaged);
+            Assert.True(bot.SkillReadyMs > MonsterService.NowMs);
+            Assert.InRange(bot.Hp, damaged + 1, bot.MaxHp);
+        }
+        finally { await loop.StopAsync(default); }
+    }
+
+    private async Task WaitFor(Func<bool> condition)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        while (!await loop.InvokeAsync(() => Task.FromResult(condition()))) await Task.Delay(10, timeout.Token);
     }
 
     public void Dispose() { loop.Dispose(); Directory.Delete(root, true); }
