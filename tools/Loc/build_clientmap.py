@@ -2,12 +2,15 @@
 """Builds the client override <client>/ro3emu/loc_en.tsv without data/loc or re/loc (build_locmap.js needs both).
    1. every zh_CN / zh_TW Localization string whose key has English in Localization_en;
    2. src/Ro3Emu.Loc/translations/*.tsv (ours, win over 1);
-   3. the existing client loc_en.tsv (runtime batches, win over 2);
+   3. with --merge-existing only: the file already at <out> (wins over 2). Off by default: every runtime batch now
+      lives in translations/, and merging an installed file would undo fixes made there;
    4. job-select button: 选择职业 -> Choose This Job.
-   usage: python3 tools/Loc/build_clientmap.py <client>/ro3emu/loc_en.tsv   (needs re/clientB/lua-src)"""
+   usage: python3 tools/Loc/build_clientmap.py <out>/loc_en.tsv [--merge-existing]   (needs re/clientB/lua-src)
+   then copy <out>/loc_en.tsv to <client>/ro3emu/loc_en.tsv."""
 import re, sys, glob, os
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-out = sys.argv[1]
+args = [a for a in sys.argv[1:] if not a.startswith('--')]
+out = args[0]
 CJK = re.compile('[\u2e80-\u2fdf\u3040-\u9fff\uf900-\ufaff]')
 esc = lambda s: s.replace('\\', '\\\\').replace('\t', '\\t').replace('\r', '\\r').replace('\n', '\\n')
 
@@ -37,7 +40,8 @@ def merge(path):
         l = l.rstrip('\n')
         if '\t' in l: a, b = l.split('\t', 1); m[a] = b
 for f in sorted(glob.glob(f'{root}/src/Ro3Emu.Loc/translations/*.tsv')): merge(f)
-if os.path.exists(out): merge(out)
+if '--merge-existing' in sys.argv and os.path.exists(out): merge(out)
+os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
 m['选择职业'] = 'Choose This Job'
 with open(out, 'w', encoding='utf8') as o:
     o.writelines(f'{k}\t{v}\n' for k, v in m.items())

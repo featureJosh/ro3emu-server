@@ -1,7 +1,7 @@
 名字版-名字	Nameplate - Name
 名字版-NpcStall	Nameplate - NpcStall
 技能名	Skill Name
-本次登陆不再显示	Don't show again this login
+本次登陆不再显示	Don't show again this session
 无	None
 当前	Current
 卡片	Card
@@ -21,7 +21,7 @@
 灵魂残响	Soul Echo
 神术图腾	Divine Totem
 属性	Stats
-每日5：00更新当日数据	Updates daily data at 5:00 every day
+每日5：00更新当日数据	Data updates daily at 5:00
 总评分	Total Score
 怪物掉落：	Monster Drops:
 前往魔物处	Go to Monster
@@ -50,11 +50,11 @@
 全服奖励	Server-wide Rewards
 造成伤害:	Damage Dealt:
 排名	Rank
-弃权	Abstain
-亲爱的同学,恭喜您被选中参与答题盛典参与答题盛典将会获得诸多奖励快来参与吧!!亲爱的同学,恭喜您被选中参与答题盛典参与答题盛典	Dear student, congratulations on being chosen for the Quiz Gala! Taking part earns many rewards. Come and join in!
+弃权	Forfeit
+亲爱的同学,恭喜您被选中参与答题盛典参与答题盛典将会获得诸多奖励快来参与吧!!亲爱的同学,恭喜您被选中参与答题盛典参与答题盛典	Dear adventurer, congratulations on being chosen for the Quiz Gala! Join in to earn plenty of rewards!
 奖励预览	Reward Preview
 你被选中啦！	You've been chosen!
-Ro天才幸运星	Ro Genius Lucky Star
+Ro天才幸运星	RO Genius Lucky Star
 击杀	Kills
 积分	Points
 助攻	Assists
@@ -73,7 +73,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 创建	Create
 前往结义	Go to Sworn Brotherhood
 已完成	Completed
-尚未加入冒险团	You haven't joined an Adventurer Party yet
+尚未加入冒险团	You haven't joined an Adventure Guild yet
 删除	Delete
 合计:	Total:
 暂无符合条件的搜索结果	No results match your search
@@ -98,7 +98,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 点击标点可前往寻路	Tap a marker to auto-travel there
 选择要替换的羁绊(点击或拖动)	Select the Bond to replace (tap or drag)
 没有羁绊	No Bonds
-二级按钮	Second-tier Button
+二级按钮	Secondary Button
 (未上阵)	(Not equipped)
 效果	Effect
 暂无上阵羁绊	No Bonds equipped
@@ -115,7 +115,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 未选中任何卡片	No card selected
 以筛选最低单价	Filter by lowest unit price
 已筛选最低单价	Filtering by lowest unit price
-提交奖励	Submit Reward
+提交奖励	Submission Reward
 帮助装载货物	Help load cargo
 帮助提交	Help Submit
 装载	Load
@@ -147,16 +147,16 @@ Ro天才幸运星	Ro Genius Lucky Star
 清除记录	Clear History
 踢出频道	Kick from Channel
 被禁言的玩家，将无法开麦，无法在房间内发送消息。	Muted players cannot use the mic or send messages in the room.
-举报名称：	Report Name:
+举报名称：	Reported Name:
 穿戴	Equip
 职业:	Job:
 拒绝	Decline
 不显示时间	Don't show time
-等级以下的生生人私聊	Private chat from players below this level
+等级以下的生生人私聊	Private chats from strangers below this level
 拒绝 ：	Decline:
 确认选择	Confirm Selection
 段位	Rank
-最高当局伤害	Highest Damage Dealt
+最高当局伤害	Highest Damage in a Match
 请选择流派	Select a Build
 领取奖励	Claim Rewards
 本周任务	Weekly Quests
@@ -171,7 +171,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 吃鸡币累计	Winner-Takes-All Coin Accumulated
 单打独斗描述巴拉巴拉单打独斗描述巴拉巴拉单打独斗描述巴拉巴拉	Solo battle description placeholder
 最高生存时长：	Longest Survival:
-第一次数：	First Attempts:
+第一次数：	Times in 1st:
 流派名称	Build Name
 最高单局伤害：	Highest Damage in One Match:
 建新角色	Create New Character
@@ -183,8 +183,8 @@ Ro天才幸运星	Ro Genius Lucky Star
 已通关	Cleared
 通关一层后\n次日开启扫荡奖励	Clear a floor to unlock\nsweep rewards the next day
 获得Zeny	Obtain Zeny
-消耗圣迹水晶	Consume Sacred Crystal
-不在提示	Don't remind again
+消耗圣迹水晶	Consume Sacred Relic Crystal
+不在提示	Don't show again
 伤害	Damage
 放弃	Give Up
 货币累计	Currency Accumulated
@@ -241,7 +241,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 空状态	Empty
 被替换的流派方案	Build to be replaced
 剩余点数	Remaining Points
-敏剑加点	AGI Sword Points
+敏剑加点	AGI Swordsman Build
 他人建议列表为空	Others' suggestion list is empty
 出生等级说明	Starting Level Info
 头衔奖励预览	Title Reward Preview
@@ -286,10 +286,10 @@ Ro天才幸运星	Ro Genius Lucky Star
 公会人数:	Guild Members:
 自动同意	Auto-approve
 取消创建	Cancel Creation
-24小时内响应人数满3人即可响应成功，响应成功后，响应成员自动任职为理事	Once 3 members respond within 24 hours the call succeeds, and responding members automatically become Councilors
+24小时内响应人数满3人即可响应成功，响应成功后，响应成员自动任职为理事	Once 3 members respond within 24 hours, the call succeeds and responding members automatically become Officers
 当前未搜索到公会信息	No guild found
 点击空白处关闭	Tap the blank area to close
-您是公会精英,推荐进入主战场	You are a guild elite, joining the main battlefield is recommended
+您是公会精英,推荐进入主战场	You're a guild elite. The main battlefield is recommended.
 暂无荣耀记录文本描述	No Glory records (description placeholder)
 结果	Result
 历史战绩	Match History
@@ -316,7 +316,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 立即开启	Start Now
 制作人歼灭战	Producer Annihilation Battle
 下次刷新	Next Refresh
-在危机四伏的地图上，与其它冒险者同台竞争，最终击败yu的团队，将获得如下奖励：	On this perilous map, compete with other adventurers and defeat the team to earn these rewards:
+在危机四伏的地图上，与其它冒险者同台竞争，最终击败yu的团队，将获得如下奖励：	On this perilous map, compete with other adventurers. The team that lands the final blow earns these rewards:
 点击首领图标前往争夺！	Tap the boss icon to go contest it!
 自带技能最多为	Innate skills up to
 研究进度	Research Progress
@@ -327,7 +327,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 卡牌属性	Card Stats
 点击搜索	Tap to search
 地区	Region
-图鉴点:	Compendium Points:
+图鉴点:	Collection Points:
 各职业职称与等级独立，来回转职各等级不受影响	Job titles and levels are independent per job; switching jobs does not affect levels
 暂无	None yet
 请选择替换的技能	Select a skill to replace
@@ -335,18 +335,18 @@ Ro天才幸运星	Ro Genius Lucky Star
 主要产出：	Main Output:
 每周次数：	Weekly Attempts:
 暂时无公告	No announcements for now
-新	Game Announcements
-游戏公告	New
+新	New
+游戏公告	Game Announcements
 更改地区	Change Region
 下载中...	Downloading...
-如果退出，需重新进行排队，请谨慎选择	If you quit you will have to queue again, choose carefully
-点击勾选动作后可加入收藏，长按动作可预览。	Tick an action to add it to Favorites, hold to preview.
+如果退出，需重新进行排队，请谨慎选择	If you quit, you will have to queue again. Choose carefully.
+点击勾选动作后可加入收藏，长按动作可预览。	Tick an action to add it to Favorites; hold to preview.
 请选择一个动作,设置成为待机动作	Select an action to set as your idle action
 退出观看	Stop Watching
 锁定快捷栏技能	Lock Hotbar Skills
 协助	Assist
 筹备奖励	Preparation Rewards
-晚会祝福	Party Blessing
+晚会祝福	Gala Blessing
 收听（仅收听不发言）	Listen (listen only, no speaking)
 发言（自由语音交流）	Speak (free voice chat)
 静音（关闭语音播放）	Mute (turn off voice playback)
@@ -371,7 +371,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 剩余奖励次数	Reward Attempts Left
 最高累计24小时	Max 24 hours stored
 队友共享击杀数：	Teammate shared kills:
-最高可标记4个魔物，请选择替换	Mark up to 4 monsters, choose one to replace
+最高可标记4个魔物，请选择替换	Mark up to 4 monsters. Choose one to replace.
 开启1个	Open 1
 当前周期内加长宝箱是	Extended chests this cycle are
 开启全部	Open All
@@ -382,10 +382,10 @@ Ro天才幸运星	Ro Genius Lucky Star
 巅峰点	Peak Points
 这个人很懒，什么什么什么什什么也没留森岛帆高玩儿	This person is lazy and left nothing
 请输入签名	Enter signature
-前置星盘点数不足，本组巅峰等级已失效	Not enough prerequisite Star Chart points, this Peak level group is inactive
+前置星盘点数不足，本组巅峰等级已失效	Not enough prerequisite Star Chart points. This Peak level group is inactive.
 巅峰等级及天赋数据将在跨赛季时重置	Peak levels and talent data reset when the season changes
 右键镶嵌	Right-click to socket
-突破已满，剩余碎片可分解	Breakthrough is full, remaining shards can be dismantled
+突破已满，剩余碎片可分解	Breakthrough maxed. Remaining shards can be dismantled.
 未获得	Not obtained
 左键长按指针，拖动鼠标设置温度	Hold left click on the pointer and drag to set the temperature
 协力属性	Synergy Stats
@@ -397,12 +397,12 @@ Ro天才幸运星	Ro Genius Lucky Star
 概率占比	Probability Share
 炼金房升级	Alchemy Room Upgrade
 炼金概率说明	Alchemy Probability Info
-在炼金系统中,玩家可通过消耗指定材料进行炼金抽取,有概率获得不不同品质的宠物。抽取结果由基础概率与炼金\n房等级加成共同决定\n在不考虑任何额外加成的情况下,各品质宠物的基础获取概率如下:\n·普通品质:60%\n·稀有品质:30%\n·史诗品质:9%\n·传说品质:1%\n实际抽取时,系统将根据炼金房等级对上述概率进行动态调整。	In the Alchemy system, players spend specified materials to draw for pets of various quality with some probability. The result is determined by the base probability together with the Alchemy Room level bonus.\nWith no extra bonuses, the base chances by quality are:\n- Common: 60%\n- Rare: 30%\n- Epic: 9%\n- Legendary: 1%\nWhen drawing, the system adjusts these chances dynamically according to the Alchemy Room level.
+在炼金系统中,玩家可通过消耗指定材料进行炼金抽取,有概率获得不不同品质的宠物。抽取结果由基础概率与炼金\n房等级加成共同决定\n在不考虑任何额外加成的情况下,各品质宠物的基础获取概率如下:\n·普通品质:60%\n·稀有品质:30%\n·史诗品质:9%\n·传说品质:1%\n实际抽取时,系统将根据炼金房等级对上述概率进行动态调整。	In the Alchemy system, players spend specified materials to draw pets of various qualities.\nThe result is determined by the base probability together with the Alchemy Room level bonus.\nWith no extra bonuses, the base chances by quality are:\n- Common: 60%\n- Rare: 30%\n- Epic: 9%\n- Legendary: 1%\nWhen drawing, the system adjusts these chances dynamically according to the Alchemy Room level.
 全部可能出现的宠物	All Possible Pets
 全部可能出现的物品	All Possible Items
 时间（UTC+8）	Time (UTC+8)
 炼金历史记录	Alchemy History
-可查询90日内的寻访记录,查询结果约有30分钟左右延迟。以下时间仅针对管理员所在服务器时区显示。	Records can be viewed for the past 90 days, with about a 30-minute delay. Times are shown in the server time zone of the administrator.
+可查询90日内的寻访记录,查询结果约有30分钟左右延迟。以下时间仅针对管理员所在服务器时区显示。	Draw records from the past 90 days can be viewed, with about a 30-minute delay. Times are shown in the administrator's server time zone.
 炼金	Alchemy
 升级完成	Upgrade Complete
 兑换商城	Exchange Shop
@@ -423,7 +423,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 未开放	Not Available
 生活技能	Life Skills
 力量	STR
-<color=#faab5e> 最终</color>占领王城的公会获得问鼎奖励	<color=#faab5e> The final</color> guild to occupy the Royal City earns the Pinnacle reward\n
+<color=#faab5e> 最终</color>占领王城的公会获得问鼎奖励	<color=#faab5e> The final</color> guild to occupy the Royal City earns the Pinnacle reward
 所有任务进度将在<color=#c26b47> 赛季结束时</color>进行结算	All quest progress will be settled <color=#c26b47>at season end</color>
 赛季成就结算	Season Achievement Settlement
 征战者结算	Conqueror Settlement
@@ -436,7 +436,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 女神的序曲II	Goddess's Prelude II
 活动描述文本活动描述文本。有可能超过两行。\n\r活动期间完成任务，可获得奖励！	Event description placeholder, may exceed two lines.\nComplete quests during the event to earn rewards!
 查看排行榜	View Leaderboard
-根据<color=#c06a46> 荣誉值排行</color>发放个人奖励	Personal rewards are given by <color=#c06a46>Honor ranking</color>\n
+根据<color=#c06a46> 荣誉值排行</color>发放个人奖励	Personal rewards are given by <color=#c06a46>Honor ranking</color>
 累计挖宝	Treasure Dug
 你还未加入公会	You haven't joined a guild
 奖励档位预测	Reward Tier Preview
@@ -444,7 +444,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 奖励道具	Reward Items
 公会排名/状态霸业名额	Guild Rank / Status Supremacy Slots
 公会排名奖励	Guild Rank Rewards
-<color=#c26b47> 先结算者</color>根据公会占领积分排名获得逐鹿奖励\n<color=#c26b47> 先霸业者</color>根据先结算占领积分排名获得逐鹿奖励	<color=#c26b47> Earlier settlers</color> receive Contest rewards by guild occupation score ranking\n<color=#c26b47> Earlier supremacy winners</color> receive Contest rewards by early-settlement occupation score ranking\n
+<color=#c26b47> 先结算者</color>根据公会占领积分排名获得逐鹿奖励\n<color=#c26b47> 先霸业者</color>根据先结算占领积分排名获得逐鹿奖励	<color=#c26b47> Earlier settlers</color> receive Contest rewards by guild occupation score ranking\n<color=#c26b47> Earlier supremacy winners</color> receive Contest rewards by early-settlement occupation score ranking
 逐鹿奖励	Contest Rewards
 <color=#c26b47> 先结算者</color>根据公会占领积分排名获得逐鹿奖励\n<color=#c26b47> 先霸业者</color>根据先结算占领积分排名获得逐鹿奖励	<color=#c26b47> Earlier settlers</color> receive Contest rewards by guild occupation score ranking\n<color=#c26b47> Earlier supremacy winners</color> receive Contest rewards by early-settlement occupation score ranking
 贡献排名	Contribution Rank
@@ -502,7 +502,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 残响共振预览	Echo Resonance Preview
 欢迎光临小店\n商品任意挑选哦!	Welcome to the shop\nPick anything you like!
 仅保存当次交易记录	Only the current transaction record is saved
-前往查看>>	Go to view>>
+前往查看>>	View Now>>
 确认附魔	Confirm Enchant
 暂时没有可用附魔卷轴	No enchant scrolls available
 没有合适装备	No suitable equipment
@@ -510,7 +510,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 时间限制：1天	Time limit: 1 day
 复活中...	Reviving...
 队伍数量:	Party Count:
-目前还没有找到当事人	No party found yet
+目前还没有找到当事人	No one found yet
 目标：	Goal:
 活动结束时，未领取奖励将自动发放至邮箱	Unclaimed rewards are sent to your mailbox when the event ends
 普通物资车	Standard Supply Cart
@@ -550,7 +550,7 @@ Ro天才幸运星	Ro Genius Lucky Star
 物品上架	List Item
 1.道具上架时收取7%摊位费\n2.最低10铜币\n3.最高5,000,000铜币	1. A 7% stall fee is charged when listing\n2. Minimum 10 Copper\n3. Maximum 5,000,000 Copper
 摊位费说明	Stall Fee Info
-1.这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里\n\n2.是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍\n\n3.卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这\n\n4.里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容	1. Auction description placeholder text.\n\n2. Auction description placeholder text.
+1.这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里\n\n2.是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍\n\n3.卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这\n\n4.里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容	1. Auction rules placeholder.\n\n2. Auction rules placeholder.\n\n3. Auction rules placeholder.\n\n4. Auction rules placeholder.
 挑战等级	Challenge Level
 穿戴中	Equipped
 上马	Mount

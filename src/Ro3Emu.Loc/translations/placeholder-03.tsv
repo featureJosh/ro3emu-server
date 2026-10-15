@@ -2,7 +2,7 @@
 玩法名称玩法名称	Mode Name Mode Name
 强玩法提示最多12个中文	Mode tip, max 12 chars
 每周一5:00刷新3次奖励次数可以有两行吧次要描述性文字	Resets 3 reward attempts every Monday 5:00; this secondary text can wrap to two lines
-玄月挑战者 III	Crescent Challenger III
+玄月挑战者 III	Dark Moon Challenger III
 再次输入你的模版​	Re-enter your template
 攻击力+6% 	ATK +6%
 职业限制：剑士、魔法师、商人	Job: Swordsman, Mage, Merchant
@@ -108,7 +108,7 @@ XX小时XX分XX秒停止演奏	Performance stops in XXh XXm XXs
 波数0/6	Wave 0/6
 深渊巨龙<#fbe475>[boom!]	Abyss Dragon<#fbe475>[boom!]
 惊惧之鼓惊惧之鼓	Drum of Dread Drum of Dread
-伊尔玛塔是"永恒之地"(Undying Lands)的创世主神,本质是纯粹的自然意志集合体。它既非善也非恶,而是遵循某种混沌的恶之分,但过度扩张的创造欲望会吞噬其他世界的平衡过精神体的和声与乐章,不断编织新世界。 它的行为逻辑类似于宇宙法则:无善。	Ilmatar is the creator god of the "Undying Lands", in essence a pure collective of nature's will. Neither good nor evil, it follows a kind of chaos, yet its overgrown urge to create devours the balance of other worlds. Through the harmonies and movements of spirits it keeps weaving new worlds. It acts like a law of the cosmos: no good.
+伊尔玛塔是"永恒之地"(Undying Lands)的创世主神,本质是纯粹的自然意志集合体。它既非善也非恶,而是遵循某种混沌的恶之分,但过度扩张的创造欲望会吞噬其他世界的平衡过精神体的和声与乐章,不断编织新世界。 它的行为逻辑类似于宇宙法则:无善。	Ilmatar is the creator god of the "Undying Lands", in essence a pure collective of nature's will. Neither good nor evil, it follows a kind of chaos, yet its overgrown urge to create devours the balance of other worlds. Through the harmonies and movements of spirits it keeps weaving new worlds. It acts like a law of the cosmos: amoral.
 演奏即将开始	Performance starting soon
 “结束倒计时”	“End Countdown”
 困本·困难·高空神殿	Raid · Hard · Sky Temple
@@ -177,7 +177,7 @@ II   :  阶段名称	II   :  Phase Name
 普隆普普隆普普隆普隆普普隆普普隆	Prontera Pronte Pron
 普隆普隆德德德	Prontera
 普普隆普拉	Prontera
-资源暂未下载完成，本次需要下载大约2MB 数据， 请耐心等待。	Resources are not fully downloaded. About 2MB of data must be downloaded, please wait.
+资源暂未下载完成，本次需要下载大约2MB 数据， 请耐心等待。	Resources are not fully downloaded. About 2MB of data needs to be downloaded. Please wait.
 您排在第 <#76c233>30</color>位	Queue position: <#76c233>30</color>
 预计等待时间：<#76c233>10h59m</color>	Est. wait: <#76c233>10h59m</color>
 预计等待时间：<#fdab5b>10h59m</color>	Est. wait: <#fdab5b>10h59m</color>
@@ -248,7 +248,7 @@ II   :  阶段名称	II   :  Phase Name
 奖励次数:<#76c233>2</color>次	Rewards Left: <#76c233>2</color>
 这里是玩法说明这里是文案玩法玩法 这里是玩法说明这里是文案玩法玩法 这里是玩法说明 	Mode description here, copy text here. Mode description here, copy text here. Mode description here
 周三10点	Wed 10:00
-距离上次查看挂机收益已超过<color=#FE993F>23:59:59</color>,在此期间获得了以下奖励	Over <color=#FE993F>23:59:59</color> since you last checked Auto Mode earnings. You received these rewards meanwhile
+距离上次查看挂机收益已超过<color=#FE993F>23:59:59</color>,在此期间获得了以下奖励	Over <color=#FE993F>23:59:59</color> since you last checked Auto Mode earnings. Rewards earned in that time:
 3月24日星期日	Sunday, March 24
 远征时长	Expedition Time
 累计开箱奖励	Cumulative Chest Rewards
@@ -273,8 +273,8 @@ II   :  阶段名称	II   :  Phase Name
 达成<color=#cc762a>3</color>个传说段位	Reach Legend rank <color=#cc762a>3</color> times
 赛季勋章名称	Season Medal Name
 获得于<color=#cc762a>2025.02.08</color>【自然女神的乐章】	Obtained <color=#cc762a>2025.02.08</color> [Melody of the Goddess of Nature]
-前置技能特手无情前置技能特手无情前置技能特手无情前置技能特手无情前置技能特手	Prerequisite skill: Ruthless Hands. Prerequisite skill: Ruthless Hands. Prerequisite skill
-佩戴中	Wearing
+前置技能特手无情前置技能特手无情前置技能特手无情前置技能特手无情前置技能特手	Prerequisite skill: Ruthless Strike. Prerequisite skill: Ruthless Strike. Prerequisite skill
+佩戴中	Equipped
 卡片数量：<color=#f3faff>2</color>/2	Cards: <color=#f3faff>2</color>/2
 玩家名字某某某的卡	Player Name's Cards
 荣誉数量：<color=#fdab5b>34</color>/80	Honors: <color=#fdab5b>34</color>/80
