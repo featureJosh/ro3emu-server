@@ -21,6 +21,9 @@ javac -cp unluac.jar -d tools/unluac-batch tools/unluac-batch/BatchUnluac.java
 java -cp "unluac.jar:tools/unluac-batch" BatchUnluac re/clientB/luac re/clientB/lua-src
 dotnet run --project tools/ConfigExport -c Release -- re/clientB/luac data/config
 dotnet run --project tools/ConfigExport -c Release -- re/clientB/luac data/sceneeditor 'Config\SceneEditor'
+# Not in the main README, but the server needs both: skill templates (targeting, range, hit timing) and English text
+dotnet run --project tools/ConfigExport -c Release -- re/clientB/luac data/skills 'Config\Skill'
+dotnet run --project tools/ConfigExport -c Release -- re/clientB/luac data/config Localization_en.luac
 node tools/WorldData/navexport.js data/nav
 node tools/msgtable.js re/clientB/lua-src data/msgtable.tsv
 

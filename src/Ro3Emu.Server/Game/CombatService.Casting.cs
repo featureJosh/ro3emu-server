@@ -80,12 +80,23 @@ public sealed partial class CombatService
             else if (req.IsExtraSkill && owned == null && GameData.Int(row.Value, "_iExtraType") == 0) error = ErrorCodes.SkillRequirements;
         }
         var origin = owned?.Pos ?? s.Position;
+        if (error == 0 && owned == null && GameData.Int(row!.Value, "_iIfAutoAtk") == 2 && s.Attack is { } running
+            && running.SkillId == req.SkillId && running.Target.Uid == req.TargetId && CanHitMonster(s, running.Target))
+        {
+            // Clicking the monster already being auto-attacked keeps the running loop instead of cancelling the
+            // swing and starting over, which restarted the animation on every click (player report; inferred).
+            await s.SendGameAsync(UseSkill, new CastSkillRsp { SessionId = s.SkillCast?.Id ?? 0, IsAutoCast = req.IsAutoCast });
+            return;
+        }
         if (error == 0)
         {
             int group = (int)GameData.Int(row!.Value, "_iSkillID"), mode = (int)GameData.Int(row.Value, "_iMode");
             if (Math.Max(s.SkillCds.GetValueOrDefault(group), s.SkillModeCds.GetValueOrDefault((group, mode))) > Now) error = ErrorCodes.SkillCooldown;
             // Preserve the established cooldown refusal for a repeated cast, including during its action tail.
+            // A normal-attack swing never blocks: the auto-attack loop starts one every cycle, so treating it as busy
+            // refused every skill while auto-attacking (player report). Skills interrupt the swing (inferred).
             else if (s.SkillCast is { Cancelled: false } active && Now < active.StartMs + active.ChantMs + active.ActionMs
+                && GameData.Int(active.Row, "_iIsNormalAtk") != 1
                 && GameData.Int(row.Value, "_bCancelCast") == 0) error = ErrorCodes.SkillBusy;
             else error = ValidateTarget(s, row.Value, req, origin, owned == null ? WalkSlack(s) : 0);
         }
@@ -124,6 +135,10 @@ public sealed partial class CombatService
                 NextSwingMs = Now + SkillMs(s, row.Value) + Math.Max(0, GameData.Int(row.Value, "_iChantFix") + GameData.Int(row.Value, "_iChantVar")) + 1,
                 StartX = s.Position.X, StartZ = s.Position.Z };
         }
+        else if (owned == null && s.Attack is { } attack && attack.Target.Uid == req.TargetId && CanHitMonster(s, attack.Target))
+            // A skill on the auto-attacked monster pauses the loop; normal attacks resume after it (inferred).
+            attack.NextSwingMs = Math.Max(attack.NextSwingMs, Now + SkillMs(s, row.Value)
+                + Math.Max(0, GameData.Int(row.Value, "_iChantFix") + GameData.Int(row.Value, "_iChantVar")) + 1);
         else s.Attack = null;
         if (GameData.Int(row.Value, "_iIfAutoAtk") == 2 && owned == null && playerTarget != null)
             eventAttacks[s] = new EventAttack(playerTarget, req.SkillId,
