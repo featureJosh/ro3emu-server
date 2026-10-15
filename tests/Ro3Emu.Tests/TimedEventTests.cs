@@ -109,7 +109,7 @@ public sealed class TimedEventTests : IAsyncLifetime
     /// <summary>
     /// Unix second <paramref name="minutes"/> after the exported opening of activity <paramref name="todo"/> on the
     /// given November 2026 day, in the test clock's civil zone. Derived from DailyActivityConfig so the fixtures
-    /// follow the export instead of a hard-coded UTC time (the Asia export opens these at 18:30, not 17:00).
+    /// follow the export instead of a hard-coded UTC time (the Asia export opens these at 18:30 local; the old fixture used 16:05 UTC).
     /// </summary>
     private long WindowSecond(int todo, int day, int minutes)
     {
