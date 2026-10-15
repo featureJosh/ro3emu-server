@@ -31,6 +31,7 @@ public sealed class CharacterTests : IAsyncLifetime
             o.HttpPort = httpPort;
             o.MicroGatePort = microPort;
             o.GameGatePort = gamePort;
+            o.RequirePasswords = true; // appsettings turns it off for single-player; these tests cover passwords
         });
         await _app.StartAsync();
         _http = $"http://127.0.0.1:{httpPort}";
@@ -545,6 +546,14 @@ public sealed class CharacterTests : IAsyncLifetime
         Assert.Equal(12, bash.SkillPoints[2].All);
         Assert.All(learned.SkillAssignPlans.Inc.Value.Skip(1), other => Assert.DoesNotContain(11001, other.SkillAssigns.Keys));
         Assert.Equal(0, (await Next(alice, SkillService.PlanUpdate, SkillGrowthSkillPlanUpdateResp.Parser)).Result);
+    }
+
+    [Fact]
+    public async Task PopupImagesAreAnsweredWithNone()
+    {
+        await using var alice = await InWorld("Alice");
+        await alice.SendGameAsync(83271, new PopupImageReq { Language = "en", Channel = "pc" });
+        Assert.Empty((await Next(alice, 83271, PopupImageRes.Parser)).Images);
     }
 
     [Fact]
