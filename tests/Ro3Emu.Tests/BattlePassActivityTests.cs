@@ -90,7 +90,7 @@ public sealed class BattlePassActivityTests : IAsyncLifetime
     public async Task PassRequiresEarnedLevelAndPremiumEntitlementAndPersistsClaims()
     {
         var alice = await InWorld("Alice");
-        await Gm(alice, "!lvl 10");
+        await Gm(alice, "!lvl 30");
         await Reconcile(alice);
         var premature = await Common(alice, new CommonActivityReq
         {
@@ -182,7 +182,7 @@ public sealed class BattlePassActivityTests : IAsyncLifetime
     public async Task MonthCardClaimsEachOwnedCardOncePerLocalDayAndExpires()
     {
         var alice = await InWorld("Alice");
-        await Gm(alice, "!lvl 20");
+        await Gm(alice, "!lvl 99");
         await Reconcile(alice);
         Assert.Equal(ErrorCodes.MonthCardNotOwned, (await Common(alice, new CommonActivityReq
         {
