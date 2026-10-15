@@ -154,6 +154,20 @@ public sealed class GameData(IOptions<ServerOptions> options, ILogger<GameData> 
     public static long Int(JsonElement row, string field) =>
         row.TryGetProperty(field, out var v) && v.ValueKind == JsonValueKind.Number ? (long)v.GetDouble() : 0;
 
+    /// <summary>
+    /// The rows of a grouped entry (one id, several rows: DropGroupConfig, DialogueConfig). The export writes a group
+    /// as an array, but a sparse Lua group (e.g. Asia DropGroupConfig 121121, serials 1-7 and 9) comes out as an object
+    /// keyed by serial; its rows are returned in key order. A plain row yields itself.
+    /// </summary>
+    public static IEnumerable<JsonElement> GroupRows(JsonElement entry) => entry.ValueKind switch
+    {
+        JsonValueKind.Array => entry.EnumerateArray(),
+        JsonValueKind.Object when entry.EnumerateObject().Any() && entry.EnumerateObject().All(p =>
+                p.Value.ValueKind == JsonValueKind.Object && long.TryParse(p.Name, out _))
+            => entry.EnumerateObject().OrderBy(p => long.Parse(p.Name)).Select(p => p.Value),
+        _ => [entry],
+    };
+
     /// <summary>A field holding [[id, value, ...], ...] (attribute lists): (id, first value) pairs.</summary>
     public static IEnumerable<(long Id, double Value)> Pairs(JsonElement row, string field)
     {

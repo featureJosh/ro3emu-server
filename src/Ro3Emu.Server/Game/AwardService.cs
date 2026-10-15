@@ -133,10 +133,10 @@ public sealed class AwardService(GameData data)
 
     private List<JsonElement> EligibleRows(long groupId, RoleProgress? progress)
     {
-        if (data.Row("DropGroupConfig", groupId) is not { ValueKind: JsonValueKind.Array } rows)
+        if (data.Row("DropGroupConfig", groupId) is not { } rows)
             throw Fail($"missing DropGroupConfig {groupId}");
         var eligible = new List<JsonElement>();
-        foreach (var row in rows.EnumerateArray())
+        foreach (var row in GameData.GroupRows(rows))
         {
             long weight = GameData.Int(row, "_iWeights");
             if (weight <= 0) continue;
