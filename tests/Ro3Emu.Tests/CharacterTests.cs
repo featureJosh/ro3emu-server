@@ -549,6 +549,21 @@ public sealed class CharacterTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task MissingCareerNormalAttackUsesAnExistingNormalSkillRow()
+    {
+        await using var alice = await InWorld("Alice");
+        await Next(alice, SkillService.SkillDataSync, DBSkillDataIncrement.Parser);
+
+        // Asia JobConfig[2100] says 1200001, which is absent from SkillConfig. 1299901 is the
+        // actual Mage normal-attack row, so it must reach the client in both attack-id fields.
+        await Gm("alice", "!job 2100");
+        var skills = await Next(alice, SkillService.SkillDataSync, DBSkillDataIncrement.Parser,
+            m => m.HasCurrentAtkSkillId);
+        Assert.Equal(1299901, skills.CurrentAtkSkillId);
+        Assert.Equal(1299901, skills.SkillWheel.All.AtkSkillId);
+    }
+
+    [Fact]
     public async Task PopupImagesAreAnsweredWithNone()
     {
         await using var alice = await InWorld("Alice");
