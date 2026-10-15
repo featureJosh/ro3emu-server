@@ -130,12 +130,40 @@ namespace Ro3Emu.ClientHooks
                 changed++;
             }
             _synced = on;
+            if (on && !_reportedMissing)
+            {
+                // Configured game actions with no enabled action of that name (typo, or a map we do not bind into).
+                _reportedMissing = true;
+                var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var a in Actions) names.Add(a.name);
+                var missing = new List<string>();
+                foreach (var name in Binds.Keys) if (!names.Contains(name) && !Pseudo.Contains(name)) missing.Add(name);
+                if (missing.Count > 0) Debug.LogWarning("[Ro3Emu.Controller] bound in controller.ini but not an enabled game action: " + string.Join(", ", missing));
+            }
             if (changed > 0) Debug.Log("[Ro3Emu.Controller] gamepad bindings updated on " + changed + " action(s)" + (_cursor ? " (cursor mode)" : _menu ? " (menu)" : ""));
         }
 
         /// <summary>The first gamepad control bound to a game or controller action, or null.</summary>
         public static string FirstBinding(string action) =>
             !string.IsNullOrEmpty(action) && Binds.TryGetValue(action, out var list) && list.Count > 0 ? list[0] : null;
+
+        private static bool _reportedMissing;
+        private static readonly HashSet<string> Pseudo = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight" };
+
+        /// <summary>Every enabled Input System action: map, name, bindings (dev command "actions").</summary>
+        internal static string DescribeActions()
+        {
+            var list = new List<InputAction>();
+            InputSystem.ListEnabledActions(list);
+            var sb = new System.Text.StringBuilder();
+            foreach (var a in list)
+            {
+                sb.Append("\n  ").Append(a.actionMap?.name ?? "-").Append('/').Append(a.name).Append(" [").Append(a.type).Append("]");
+                foreach (var b in a.bindings) sb.Append(' ').Append(b.isComposite ? "{" + b.path + "}" : b.path);
+            }
+            return list.Count + " enabled action(s)" + sb;
+        }
 
         private static bool CursorOwns(string path) =>
             path.StartsWith(Pad + "leftStick/") || Uses("LeftClick", path) || Uses("RightClick", path);

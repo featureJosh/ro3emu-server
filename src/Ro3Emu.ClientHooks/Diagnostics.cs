@@ -45,6 +45,9 @@ namespace Ro3Emu.ClientHooks
                             : UnityEngine.InputSystem.InputSettings.BackgroundBehavior.ResetAndDisableNonBackgroundDevices;
                         Debug.Log("[Ro3Emu.Diag] focus " + (IgnoreFocus ? "ignored" : "normal"));
                         break;
+                    case "actions":
+                        Debug.Log("[Ro3Emu.Diag] actions: " + Controller.DescribeActions());
+                        break;
                     case "wait":
                         _wait = parts.Length > 1 && int.TryParse(parts[1], out int frames) ? frames : 30;
                         break;
