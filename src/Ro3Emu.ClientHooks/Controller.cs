@@ -272,8 +272,25 @@ namespace Ro3Emu.ClientHooks
             _save.Obf_HuA(self);
         }
 
+        /// <summary>The Mobile column is drawn locked and its card never gets the click, so the column itself becomes a
+        /// button that does what the card would: SelectMode(Mobile) on the open mode widget.</summary>
+        internal static void MakeColumnSelectable(GameObject column)
+        {
+            if (column.GetComponent<UnityEngine.UI.Button>() != null) return;
+            if (column.GetComponent<UnityEngine.UI.Graphic>() == null)
+                column.AddComponent<UnityEngine.UI.Image>().color = new Color(0f, 0f, 0f, 0f); // invisible click target
+            column.AddComponent<UnityEngine.UI.Button>().onClick.AddListener(() =>
+            {
+                if (_widget != null && _select != null) _select.Obf_HuA(_widget, _mobile);
+                Debug.Log("[Ro3Emu.Controller] Controller column clicked" + (_widget == null ? " (no mode widget yet)" : ""));
+            });
+        }
+
+        private static Obf_R.Obf_ff _widget;
+
         private static void Setup(Obf_R.Obf_ff self, object record, object mode, object initMode, object layer, object panel)
         {
+            _widget = self;
             _setup.Obf_HuA(self, record, mode, initMode, layer, panel);
             if (Enabled && (mode == null || Same(mode, _fashion))) _select.Obf_HuA(self, _mobile);
         }

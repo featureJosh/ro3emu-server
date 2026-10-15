@@ -91,6 +91,8 @@ namespace Ro3Emu.ClientHooks
                 if (text.name == "PCModel_TTxt") title = text.transform;
                 if (text.name == "Txt_Null") overlay = text.transform.parent;
             }
+            // Walk up to the dark lock panel (Unlock_RImg/Pic_UnlockBg/Pan_Null_Dark/NullEmpty_GraphicSwitchG/...).
+            for (var p = overlay; p != null && p != mobile; p = p.parent) if (p.name == "Pan_Null_Dark") { overlay = p; break; }
             if (overlay != null)
             {
                 Debug.Log("[Ro3Emu.UiTweaks] mode select overlay: " + Describe(overlay, mobile));
@@ -106,6 +108,11 @@ namespace Ro3Emu.ClientHooks
                 group.blocksRaycasts = true;
             }
             foreach (var selectable in mobile.GetComponentsInChildren<UnityEngine.UI.Selectable>(true)) selectable.interactable = true;
+            if (set > 0)
+            {
+                Debug.Log("[Ro3Emu.UiTweaks] mode select column: " + Describe(mobile, mobile));
+                Controller.MakeColumnSelectable(mobile.gameObject);
+            }
             if (set > 0) Debug.Log("[Ro3Emu.UiTweaks] mode select: Mobile column relabelled Controller (" + set + " text(s))");
             return set > 0;
         }
