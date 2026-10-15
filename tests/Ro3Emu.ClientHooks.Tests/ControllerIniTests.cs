@@ -7,7 +7,7 @@ public class ControllerIniTests
     {
         "MoveForward", "MoveBackward", "MoveLeft", "MoveRight", "OpenMap", "Interactive_1", "FastPickUp", "SwitchTarget",
         "NormalSkill_01", "NormalSkill_02", "NormalSkill_03", "NormalSkill_04", "NormalSkill_05", "Direction_Up",
-        "Direction_Down", "ShortCut_1", "ShortCut_2", "Esc", "CursorMode", "LeftClick", "RightClick", "CameraZoom",
+        "Direction_Down", "ShortCut_1", "ShortCut_2", "Esc", "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight",
     };
 
     [Fact]
@@ -16,7 +16,7 @@ public class ControllerIniTests
         var binds = new Dictionary<string, List<string>>();
         var tune = new Dictionary<string, float>();
         ControllerIni.Parse(ControllerIni.Defaults.Split('\n'), binds, tune);
-        Assert.Equal(22, binds.Count);
+        Assert.Equal(26, binds.Count);
         foreach (var (action, paths) in binds)
         {
             Assert.Contains(action, Known);
@@ -24,7 +24,7 @@ public class ControllerIniTests
         }
         Assert.Equal(["<Gamepad>/buttonSouth"], binds["Interactive_1"]);
         Assert.Equal(0.2f, tune["Deadzone"]);
-        Assert.Equal(5, tune.Count);
+        Assert.Equal(6, tune.Count);
     }
 
     [Fact]

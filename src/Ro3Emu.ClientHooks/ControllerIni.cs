@@ -20,9 +20,10 @@ namespace Ro3Emu.ClientHooks
 # ActionPageRight NormalSkill_01..06 ExpandSkill_1..6 GamePlaySkill_01..03 Interactive_1..3 ShortCut_1..6
 # SwitchTarget FastPickUp FastPickUpAll Esc.
 # Controller actions: CursorMode (toggle the menu cursor), LeftClick / RightClick (in cursor mode),
-# CameraZoom (hold, then right stick up/down).
+# CameraZoom (hold, then right stick up/down). In menus: MenuConfirm, MenuBack, MenuTabLeft, MenuTabRight
+# (D-pad / left stick move the focus, right stick scrolls).
 # Tuning: CameraSpeedX / CameraSpeedY (negative inverts), CursorSpeed (pixels per second), Deadzone (0-1),
-# GlyphScale (button glyph size relative to the key label it replaces).
+# GlyphScale (button glyph size relative to the key label it replaces), UiScale (size of our controller UI).
 
 MoveForward = <Gamepad>/leftStick/up
 MoveBackward = <Gamepad>/leftStick/down
@@ -46,12 +47,17 @@ CameraZoom = <Gamepad>/rightStickPress
 CursorMode = <Gamepad>/select
 LeftClick = <Gamepad>/buttonSouth
 RightClick = <Gamepad>/buttonEast
+MenuConfirm = <Gamepad>/buttonSouth
+MenuBack = <Gamepad>/buttonEast
+MenuTabLeft = <Gamepad>/leftShoulder
+MenuTabRight = <Gamepad>/rightShoulder
 
 CameraSpeedX = 700
 CameraSpeedY = 400
 CursorSpeed = 1200
 Deadzone = 0.2
 GlyphScale = 2.4
+UiScale = 1
 ";
 
         /// <summary>"Action = &lt;Gamepad&gt;/control" lines go to binds, "Name = number" lines to tune.</summary>

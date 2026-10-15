@@ -35,8 +35,16 @@ namespace Ro3Emu.ClientHooks
                     case "luacall":
                         Lua(parts[0] == "luacall", parts.Length > 1 ? parts[1] : "");
                         break;
+                    case "wait":
+                        _wait = parts.Length > 1 && int.TryParse(parts[1], out int frames) ? frames : 30;
+                        break;
+                    case "pad":
+                    case "key":
+                        if (parts.Length > 1) Press(parts[0] == "pad", parts[1]);
+                        break;
                     case "shot":
                         string shot = System.IO.Path.Combine(Dir(), "shot.png");
+                        if (parts.Length > 1) shot = System.IO.Path.Combine(Dir(), "shot-" + parts[1] + ".png");
                         ScreenCapture.CaptureScreenshot(shot);
                         Debug.Log("[Ro3Emu.Diag] screenshot -> " + shot);
                         break;
@@ -89,16 +97,44 @@ namespace Ro3Emu.ClientHooks
         /// </summary>
         public static void PollCommandFile()
         {
+            if (_release != null && --_releaseIn <= 0) { var r = _release; _release = null; r(); }
+            if (_wait > 0) _wait--;
+            else if (Queue.Count > 0) Run(Queue.Dequeue());
             if (++_pollFrame % 60 != 0) return;
             string file = System.IO.Path.Combine(Dir(), "cmd.txt");
             if (!File.Exists(file)) return;
             string[] lines;
             try { lines = File.ReadAllLines(file); File.Delete(file); }
             catch (IOException) { return; } // still being written
-            foreach (var line in lines) if (line.Trim().Length > 0) Run(line.Trim());
+            foreach (var line in lines) if (line.Trim().Length > 0) Queue.Enqueue(line.Trim());
         }
 
-        private static int _pollFrame;
+        // cmd.txt lines run one per frame; "wait <frames>" pauses the queue.
+        private static readonly System.Collections.Generic.Queue<string> Queue = new System.Collections.Generic.Queue<string>();
+        private static int _pollFrame, _wait, _releaseIn;
+        private static Action _release;
+
+        /// <summary>"pad &lt;GamepadButton&gt;" (South, East, DpadUp, LeftShoulder, Start...) / "key &lt;Key&gt;" (Escape, B...):
+        /// pressed for 3 frames through the Input System, as if from the device.</summary>
+        private static void Press(bool pad, string name)
+        {
+            if (pad)
+            {
+                var device = UnityEngine.InputSystem.Gamepad.current;
+                if (device == null || !Enum.TryParse(name, true, out UnityEngine.InputSystem.LowLevel.GamepadButton button)) { Debug.Log("[Ro3Emu.Diag] pad " + name + ": no pad or unknown button"); return; }
+                UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.GamepadState().WithButton(button));
+                _release = () => UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.GamepadState());
+            }
+            else
+            {
+                var device = UnityEngine.InputSystem.Keyboard.current;
+                if (device == null || !Enum.TryParse(name, true, out UnityEngine.InputSystem.Key key)) { Debug.Log("[Ro3Emu.Diag] key " + name + ": no keyboard or unknown key"); return; }
+                UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.KeyboardState(key));
+                _release = () => UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.KeyboardState());
+            }
+            _releaseIn = 3;
+            Debug.Log("[Ro3Emu.Diag] " + (pad ? "pad " : "key ") + name);
+        }
 
         /// <summary>"lua a.b.c": a Lua global path's value; "luacall a.b.c [self]": calls it, with the table a.b as self
         /// when the word self follows (a:c()).</summary>

@@ -36,7 +36,7 @@ namespace Ro3Emu.ClientHooks
         private static DateTime _loaded;
         private static int _frame;
         private static bool? _enabled;
-        private static bool _cursor, _dragging, _zooming, _synced;
+        private static bool _cursor, _dragging, _zooming, _synced, _menu;
         private static float _zoomLast, _scroll;
         private static Vector2 _cursorRest;
 
@@ -68,7 +68,7 @@ namespace Ro3Emu.ClientHooks
                     Glyphs.Refresh(on);
                 }
                 var pad = Gamepad.current;
-                if (!on || pad == null || !Application.isFocused) { EndCamera(); return; }
+                if (!on || pad == null || !Application.isFocused) { EndCamera(); UiNav.Tick(null, false); return; }
                 if (Pressed(pad, "CursorMode"))
                 {
                     _cursor = !_cursor;
@@ -76,7 +76,10 @@ namespace Ro3Emu.ClientHooks
                     Sync(true);
                     Debug.Log("[Ro3Emu.Controller] cursor mode " + (_cursor ? "on" : "off"));
                 }
-                if (_cursor) Cursor(pad); else Camera(pad);
+                UiNav.Tick(pad, !_cursor);
+                if (UiNav.Active != _menu) { _menu = UiNav.Active; EndCamera(); Sync(true); }
+                if (_cursor) Cursor(pad);
+                else if (!_menu) Camera(pad);
             }
             catch (Exception e)
             {
@@ -116,7 +119,8 @@ namespace Ro3Emu.ClientHooks
                 if (map != "RO3Current" && map != "RO3_Fixed") continue;
                 var want = new List<string>();
                 if (on && Binds.TryGetValue(action.name, out var paths))
-                    foreach (var p in paths) if (!(_cursor && CursorOwns(p))) want.Add(p);
+                    foreach (var p in paths)
+                        if (!(_cursor && CursorOwns(p)) && !(_menu && action.name != "Esc")) want.Add(p); // menus: UiNav has the pad
                 var have = new List<string>();
                 foreach (var b in action.bindings) if (b.path != null && b.path.StartsWith(Pad)) have.Add(b.path);
                 if (have.Count == want.Count && have.TrueForAll(want.Contains)) continue;
@@ -126,7 +130,7 @@ namespace Ro3Emu.ClientHooks
                 changed++;
             }
             _synced = on;
-            if (changed > 0) Debug.Log("[Ro3Emu.Controller] gamepad bindings updated on " + changed + " action(s)" + (_cursor ? " (cursor mode)" : ""));
+            if (changed > 0) Debug.Log("[Ro3Emu.Controller] gamepad bindings updated on " + changed + " action(s)" + (_cursor ? " (cursor mode)" : _menu ? " (menu)" : ""));
         }
 
         /// <summary>The first gamepad control bound to a game or controller action, or null.</summary>
