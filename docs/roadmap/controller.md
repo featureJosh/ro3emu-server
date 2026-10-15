@@ -44,6 +44,12 @@ not started, `❓` needs investigation. Tick an item only after it works in game
 - [x] Login, character select and world entry with the pad only (player, 2026-10-14; `353bc6f`).
 - [ ] 🔄 Navigation core: focus scan of the top panel (stock buttons, toggles, sliders, dropdowns, input fields, scroll
   views), spatial moves, focus ring, ✕ click / ○ back / L1 R1 tabs / R-stick scroll, hold-to-repeat.
+- [x] Glyph size readable on the skill bar (`36ca586`, player: "bigger now, too big"); tune size later.
+- [x] Start / ✕ interact bound: the ini must use Input System action names (`ClosePanel`, `InteractiveSkill_01`,
+  `ExpandSkill_01`), not Lua `enum_InputKey` keys (`Esc`, `Interactive_1`); `actions` dev command lists them.
+- [ ] 🔄 Tutorial guide: its mask only passes clicks inside the highlighted hole, so it soft-locks a pad player and
+  blocks Esc ("ESC action blocked by: Guide") and panel keys. Guide mode: ring on the hole, ✕ clicks through.
+- [ ] Glyphs too large in places now (player); per-context size.
 - [ ] Prompt bar on every screen (✕ Select, ○ Back, △/□ per screen), built from what the focused screen supports.
 - [ ] Device detection: controller connected / disconnected, "press any button" wake, keyboard and mouse still work
   side by side; glyphs switch to keyboard when the keyboard is used.
