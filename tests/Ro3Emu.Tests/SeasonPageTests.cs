@@ -95,7 +95,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
     public async Task AuthoritativeDungeonScoreEventsAreDeduplicatedAndReachTheWire()
     {
         await using var bot = await InWorld("ScoreAlice");
-        await Gm(bot, "!lvl 50");
+        await Gm(bot, "!lvl 99");
         var page = Service<SeasonPageService>();
         Assert.False(await Service<GameLoop>().InvokeAsync(() => page.RecordDungeonScoreAsync(Session(bot), 0, "room-1")));
         Assert.True(await Service<GameLoop>().InvokeAsync(() => page.RecordDungeonScoreAsync(Session(bot), 100, "room-1")));
@@ -111,7 +111,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
     public async Task OwnedCommemorativeMedalEntersHonorWallAndCanBeWorn()
     {
         await using var bot = await InWorld("HonorAlice");
-        await Gm(bot, "!lvl 50");
+        await Gm(bot, "!lvl 99");
         await Gm(bot, "!item 1300046 1");
         await Page(bot);
         Assert.True(Session(bot).SeasonPage!.HonorBadgeData.ContainsKey(1300046));
@@ -126,7 +126,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
     public async Task BadgeAndBreakSnapshotWritesDoNotChangeMemoryBeforeCommit()
     {
         await using var bot = await InWorld("CommitAlice");
-        await Gm(bot, "!lvl 50");
+        await Gm(bot, "!lvl 99");
         await Gm(bot, "!item 1300046 1");
         var session = Session(bot);
         FixtureSql.Execute(Service<AccountStore>(),
@@ -154,7 +154,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
     public async Task ExplicitCycleArchivesScoresAndReissuesUnclaimedRankOnce()
     {
         var bot = await InWorld("CycleAlice");
-        await Gm(bot, "!lvl 50");
+        await Gm(bot, "!lvl 99");
         await Gm(bot, "!item 11 200");
         Assert.Equal(200, (await Page(bot)).RankScore[17]);
         var oldId = Session(bot).Role!.Id;
@@ -212,7 +212,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
     public async Task RolloverMailboxFailureRollsBackPageAndRetriesOnce()
     {
         await using var bot = await InWorld("RollbackAlice");
-        await Gm(bot, "!lvl 50");
+        await Gm(bot, "!lvl 99");
         await Gm(bot, "!item 11 200");
         var session = Session(bot);
         long role = session.Role!.Id;
@@ -300,7 +300,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
             await Service<SeasonService>().ReconcileAsync(Session(bot));
             Assert.Equal(version, Session(bot).SyncVersions[SeasonService.SeasonSync]);
         });
-        await Gm(bot, "!lvl 50");
+        await Gm(bot, "!lvl 99");
         Assert.Equal(101002, (await Page(bot)).StageID);
     }
 
@@ -321,13 +321,13 @@ public sealed class SeasonPageTests : IAsyncLifetime
     public async Task GmPlaybookChangesApplyAtLoginWhileExistingSeasonKeepsAdvancing()
     {
         await using var alice = await InWorld("Alice");
-        await Gm(alice, "!lvl 50"); await Gm(alice, "!item 11 100");
+        await Gm(alice, "!lvl 99"); await Gm(alice, "!item 11 100");
         var times = await Next(alice, SeasonService.TimeInfoNotify, SeasonTimeInfoNotify.Parser);
         await Gm(alice, "!season 102");
         Assert.Equal(0, (await Page(alice)).Result);
         Assert.Equal(0, (await Claim(alice, (2, 17))).Result);
         await using var bob = await InWorld("Bob");
-        await Gm(bob, "!lvl 50");
+        await Gm(bob, "!lvl 99");
         var login = await Next(bob, SeasonService.SeasonSync, DBSeasonInfoIncrement.Parser);
         Assert.Equal(102, login.Current.All.PlayBookId);
         Assert.Equal(ErrorCodes.FeatureUnavailable, (await Page(bob)).Result);
@@ -358,9 +358,9 @@ public sealed class SeasonPageTests : IAsyncLifetime
     {
         await using var bot = await InWorld("Alice");
         Assert.Equal(ErrorCodes.FunctionLocked, (await Page(bot)).Result);
-        await Gm(bot, "!lvl 49");
+        await Gm(bot, "!lvl 98");
         Assert.Equal(ErrorCodes.FunctionLocked, (await Page(bot)).Result);
-        await Gm(bot, "!lvl 50");
+        await Gm(bot, "!lvl 99");
         var open = await Next(bot, FunctionService.FunctionOpenSync, FunctionOpenInfoIncrement.Parser,
             x => x.FunctionOpenInfos.TryGetValue(69, out var f) && f.All);
         Assert.True(open.FunctionOpenInfos[69].All);
@@ -386,7 +386,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
         {
             roleId = (long)bot.Self!.Uuid;
             Assert.Equal(ErrorCodes.FunctionLocked, (await Claim(bot, (2, 17))).Result);
-            await Gm(bot, "!lvl 50");
+            await Gm(bot, "!lvl 99");
             Assert.Equal(ErrorCodes.SeasonRankReward, (await Claim(bot, (2, 17))).Result);
             await Gm(bot, "!item 11 200");
             Assert.Equal(ErrorCodes.Parameter, (await Claim(bot)).Result);
@@ -417,7 +417,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
     public async Task SuspendedRankClaimKeepsRewardPrivateAndDefersSameRoleGm()
     {
         await using var bot = await InWorld("HeldRank");
-        await Gm(bot, "!lvl 50");
+        await Gm(bot, "!lvl 99");
         await Gm(bot, "!item 11 100");
         var session = Session(bot);
         var catalog = EconomyCatalog.Load(Path.Combine(RepoRoot(), "data"));
@@ -475,7 +475,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
     public async Task LostRankClaimAcknowledgementResolvesOneRewardAndOneSource()
     {
         await using var bot = await InWorld("AckRank");
-        await Gm(bot, "!lvl 50");
+        await Gm(bot, "!lvl 99");
         await Gm(bot, "!item 11 100");
         var catalog = EconomyCatalog.Load(Path.Combine(RepoRoot(), "data"));
         var before = S3EconomyReader.Read(dataDir, catalog);
@@ -494,7 +494,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
     public async Task ClaimsShareThreeFunctionLimitAndRejectMixedInvalidBatchesAtomically()
     {
         await using var bot = await InWorld("Alice");
-        await Gm(bot, "!lvl 50");
+        await Gm(bot, "!lvl 99");
         foreach (int currency in new[] { 11, 12, 13, 14 }) await Gm(bot, $"!item {currency} 200");
         Assert.Equal(ErrorCodes.SeasonRankReward, (await Claim(bot, (2, 17), (3, 23))).Result);
         Assert.Empty(Session(bot).SeasonPage!.RankRewardReceiveInfo);
@@ -521,7 +521,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
         }
         await using (var bot = await InWorld("Alice", page: state))
         {
-            await Gm(bot, "!lvl 50");
+            await Gm(bot, "!lvl 99");
             Assert.Equal(ErrorCodes.ItemMissing, await Wear(bot, 999, true));
             Assert.Equal(0, await Wear(bot, 1300046, true));
             var updated = await Next(bot, SeasonPageService.PageSync, DBSeasonPageIncrement.Parser, m => !m.SyncAllMark);
@@ -544,7 +544,7 @@ public sealed class SeasonPageTests : IAsyncLifetime
     public async Task ClaimStorageFailureRollsBackRewardsAndAllowsOneRetry()
     {
         await using var bot = await InWorld("Alice");
-        await Gm(bot, "!lvl 50"); await Gm(bot, "!item 11 100");
+        await Gm(bot, "!lvl 99"); await Gm(bot, "!item 11 100");
         long role = (long)bot.Self!.Uuid;
         var before = Service<ItemStore>().Load(role).Select(i => (i.Guid, i.Entry, i.Stack)).OrderBy(x => x.Guid).ToArray();
         FixtureSql.Execute(Service<AccountStore>(),
