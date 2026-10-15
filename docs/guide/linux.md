@@ -27,6 +27,9 @@ dotnet run --project tools/ConfigExport -c Release -- re/clientB/luac data/confi
 node tools/WorldData/navexport.js data/nav
 node tools/msgtable.js re/clientB/lua-src data/msgtable.tsv
 
+# data/config exported before server commit de3c105 lacks grouped-table defaults (kills give 0 EXP): re-run the
+# two data/config exports above.
+
 dotnet run --project src/Ro3Emu.Server -c Release          # first start writes data/gate_rsa_public.pem
 
 dotnet build src/Ro3Emu.ClientHooks && dotnet build src/Ro3Emu.Loc

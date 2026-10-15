@@ -92,6 +92,7 @@ namespace Ro3Emu.ClientHooks
                     Module(manager, global, "lc_settinghelper"));
                 Controller.InstallModeSelect(global, Module(manager, global, "ui_sys_setmodewidgetctrl"));
                 if (ClickProbe.Enabled) ClickProbe.Install(global, Module(manager, global, "lc_actor_controlmove"));
+                ClickAttackTrace.Install(global, Module(manager, global, "lc_actor_controlmove"));
                 PatchCountdowns(manager, global);
                 var functionHelper = Module(manager, global, "lc_functionhelper");
                 FeedbackButton.Install(global, functionHelper);
