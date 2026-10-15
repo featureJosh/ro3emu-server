@@ -62,6 +62,12 @@ public sealed class ServerOptions
     public int StallNameMaxLength { get; set; } = 24;
 
     /// <summary>
+    /// Whether an existing account's password must match (the first login registers it). Off in our appsettings: for
+    /// single-player offline play any password, including none, opens the account; turn it on to share a server on a LAN.
+    /// </summary>
+    public bool RequirePasswords { get; set; } = true;
+
+    /// <summary>
     /// The live season playbook (SeasonService). 101 is the only one this client has season content for; a value
     /// set in game with "!season" overrides it.
     /// </summary>

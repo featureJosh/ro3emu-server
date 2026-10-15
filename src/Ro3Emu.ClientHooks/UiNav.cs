@@ -51,7 +51,7 @@ namespace Ro3Emu.ClientHooks
         {
             if (_escDown) { ReleaseEscape(); }
             if (!enabled || pad == null) { Close(); return; }
-            if (++_frame % 6 == 0) Scan(); // ponytail: FindObjectsOfType<Canvas> every 6th frame; panel open/close events if it costs
+            if (++_frame % 10 == 0) Scan(); // ponytail: FindObjectsOfType<Canvas> every 10th frame; panel open/close events if it costs
             if (_panel == null) { Close(); return; }
             if (Osk.Open)
             {
@@ -106,7 +106,7 @@ namespace Ro3Emu.ClientHooks
             Roots.Clear();
             foreach (var canvas in UnityEngine.Object.FindObjectsOfType<Canvas>())
             {
-                if (!canvas.isActiveAndEnabled) continue;
+                if (!canvas.isActiveAndEnabled || !canvas.isRootCanvas) continue; // one root canvas per opened view
                 var root = ViewRoot(canvas.transform);
                 if (root == null || Hud.Contains(root.name) || Roots.Contains(root)) continue;
                 if (!HasItems(root)) continue;
@@ -145,9 +145,7 @@ namespace Ro3Emu.ClientHooks
             foreach (var mb in Behaviours)
             {
                 if (!(mb is IPointerClickHandler) || mb is Selectable || mb.GetComponent<Selectable>() != null) continue;
-                var r = ScreenRect(mb);
-                if (r.width > Screen.width * 0.4f || r.height > Screen.height * 0.4f) continue; // backgrounds, drag areas
-                if (Usable(mb)) into.Add(mb);
+                if (Small(mb) && Usable(mb)) into.Add(mb);
             }
         }
 
@@ -209,13 +207,21 @@ namespace Ro3Emu.ClientHooks
             return root;
         }
 
-        private static readonly List<Component> Probe = new List<Component>();
-
+        /// <summary>Has something to press (stops at the first one).</summary>
         private static bool HasItems(Transform root)
         {
-            Probe.Clear();
-            Collect(root, Probe);
-            return Probe.Count > 0;
+            foreach (var s in Selectable.allSelectablesArray)
+                if (s.transform.IsChildOf(root) && Usable(s)) return true;
+            root.GetComponentsInChildren(false, Behaviours);
+            foreach (var mb in Behaviours)
+                if (mb is IPointerClickHandler && !(mb is Selectable) && Usable(mb) && Small(mb)) return true;
+            return false;
+        }
+
+        private static bool Small(Component c)
+        {
+            var r = ScreenRect(c);
+            return r.width <= Screen.width * 0.4f && r.height <= Screen.height * 0.4f; // not backgrounds or drag areas
         }
 
         private static readonly Vector3[] Corners = new Vector3[4];

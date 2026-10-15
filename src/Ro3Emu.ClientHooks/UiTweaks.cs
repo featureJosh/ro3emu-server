@@ -10,6 +10,7 @@ namespace Ro3Emu.ClientHooks
     /// <list type="bullet">
     /// <item>Mode selection ("Select Mode", first world entry and Settings → PC Mode): the Mobile column (in development
     /// in this build) becomes "Controller" (see Controller).</item>
+    /// <item>Login: no password row (single-player; HidePassword).</item>
     /// </list>
     /// </summary>
     public static class UiTweaks
@@ -41,6 +42,8 @@ namespace Ro3Emu.ClientHooks
                     var window = GameObject.Find(name);
                     if (window != null && Done.Add(window.GetInstanceID())) WidenStallName(window.transform);
                 }
+                var login = GameObject.Find(LoginPanel);
+                if (login != null) HidePassword(login.transform);
                 if (Done.Count > 64) Done.Clear();
                 QuitButton.Tick();
                 LuaPatches.Tick();
@@ -48,6 +51,30 @@ namespace Ro3Emu.ClientHooks
             catch (Exception e)
             {
                 Debug.LogError("[Ro3Emu.UiTweaks] " + e);
+            }
+        }
+
+        private const string LoginPanel = "UI_Sys_LoginPanel(Clone)";
+        private const string NoPassword = "offline";
+
+        /// <summary>
+        /// Single-player: the server opens an account with any password (ServerOptions.RequirePasswords false in our
+        /// appsettings), but the client refuses an empty one ("Enter password"). The password row is hidden and its field
+        /// filled, so login is account + Start Game, also with a controller. Kept up every pump: the client can reset it.
+        /// ponytail: always hidden; a LAN server with RequirePasswords on needs this off (a client setting) when that comes.
+        /// </summary>
+        private static void HidePassword(Transform login)
+        {
+            foreach (var field in login.GetComponentsInChildren<TMPro.TMP_InputField>(true))
+            {
+                if (field.name != "Password_TInputField") continue;
+                if (string.IsNullOrEmpty(field.text)) field.text = NoPassword;
+                var row = field.transform.parent;
+                if (row != null && row.name == "Password_Img" && row.gameObject.activeSelf)
+                {
+                    row.gameObject.SetActive(false);
+                    Debug.Log("[Ro3Emu.UiTweaks] login: password row hidden (single-player)");
+                }
             }
         }
 
