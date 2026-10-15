@@ -108,6 +108,15 @@ public sealed class AwardTests : IAsyncLifetime
     }
 
     [Fact]
+    public void SparseDropGroupStillResolves()
+    {
+        // Task 10101210's award pool uses DropGroupConfig 121121, exported as an object (serials 1-7, 9 - no 8).
+        var awards = new AwardService(_app.Services.GetRequiredService<GameData>());
+        var grants = awards.ResolveForProgress(new RoleProgress { Level = 10, Career = 1100 }, 31121).Grants;
+        Assert.Contains(grants, g => g.Entry is 2020120 or 2030120 or 2050120 or 2500120);
+    }
+
+    [Fact]
     public void FixedPlaybookEmptyAndUnresolvedPolicies()
     {
         var awards = new AwardService(_app.Services.GetRequiredService<GameData>());

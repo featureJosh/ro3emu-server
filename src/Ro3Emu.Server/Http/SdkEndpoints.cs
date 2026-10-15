@@ -13,6 +13,8 @@ public static class SdkEndpoints
 {
     public const string LoginPath = "/sdk/login";
     public const string ServerListPath = "/serverlist/v2/168/serverlist.json";
+    /// <summary>Asia login notice board (ClientPatch points NoticeOrigin here).</summary>
+    public const string NoticeListPath = "/notice-list";
 
     /// <summary>Plain-JSON marker understood by Lua_UT_Utils.Decrypt (otherwise it expects base64 AES).</summary>
     private const string RecoveryJsonPrefix = "RO3_RECOVERY_JSON:";
@@ -77,5 +79,15 @@ public static class SdkEndpoints
             };
             return Results.Text(RecoveryJsonPrefix + JsonSerializer.Serialize(body), "text/plain");
         });
+
+        // GMT.VersionNoticeUtil: NoticeList{code, message, current_time, data{notice_list}}; code 200 with an empty
+        // list means "no notices" (the client then skips the board instead of retrying).
+        app.MapGet(NoticeListPath, () => Results.Json(new
+        {
+            code = 200,
+            message = "",
+            current_time = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            data = new { notice_list = Array.Empty<object>() },
+        }));
     }
 }

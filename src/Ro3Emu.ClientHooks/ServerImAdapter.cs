@@ -14,6 +14,10 @@ namespace Ro3Emu.ClientHooks
     /// (GM_Chat.proto) with a command id, and this adapter tunnels those bytes through the game connection instead of
     /// Tencent's cloud. Frames both ways: uint32 LE cmd ‖ int32 LE errorCode ‖ protobuf.
     /// Up: game message 77010; down: game message 77011.
+    /// The Asia proto descriptor names 77010-77013 TT_MANAGED_CHAT_* (bootstrap, credential refresh, send, channel
+    /// state), but no client code uses them: the Lua message table (NW_Helper_PBDefine) and the decompiled assemblies
+    /// have no entry, so the ids stay free for this tunnel, Diagnostics (77012) and FeedbackButton (77013).
+    /// Revisit if a client update starts registering them.
     /// </summary>
     public sealed class ServerImAdapter : Obf_ci
     {

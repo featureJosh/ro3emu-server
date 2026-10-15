@@ -295,9 +295,9 @@ public sealed class RewardService
 
     private void PickFromGroup(long group, RoleProgress progress, List<(int, int)> drops, List<(int Entry, int Count, int Bind)>? bound = null)
     {
-        if (data.Row("DropGroupConfig", group) is not { ValueKind: JsonValueKind.Array } rows) return;
+        if (data.Row("DropGroupConfig", group) is not { } rows) return;
         var p = progress;
-        var candidates = rows.EnumerateArray().Where(r =>
+        var candidates = GameData.GroupRows(rows).Where(r =>
         {
             if (GameData.Int(r, "_iWeights") <= 0 || GameData.Int(r, "_iQuestLimit") != 0 || GameData.Int(r, "_iActivityid") != 0) return false;
             long min = GameData.Int(r, "_iMinLevelLimit"), max = GameData.Int(r, "_iMaxLevelLimit");

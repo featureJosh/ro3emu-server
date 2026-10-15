@@ -91,7 +91,7 @@ public sealed partial class TaskService
 
     /// <summary>Every DialogueConfig row with its _iEXECAction slots (a dialogue id holds an array of rows).</summary>
     private List<(long Id, string[][] Actions)> DialogueRows() => _dialogueRows ??= data.Table("DialogueConfig")
-        .SelectMany(kv => kv.Value.ValueKind == JsonValueKind.Array ? kv.Value.EnumerateArray() : Enumerable.Repeat(kv.Value, 1))
+        .SelectMany(kv => GameData.GroupRows(kv.Value))
         .Select(r => ((long)GameData.Int(r, "_iID"), Actions(r, "_iEXECAction"))).Where(r => r.Item2.Length > 0).ToList();
 
     /// <summary>32709 exits state only. It never completes a plot objective.</summary>
