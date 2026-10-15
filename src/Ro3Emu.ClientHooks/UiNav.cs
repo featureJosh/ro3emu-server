@@ -36,7 +36,7 @@ namespace Ro3Emu.ClientHooks
         private static readonly List<Component> Items = new List<Component>();
         private static readonly Dictionary<string, string> LastFocus = new Dictionary<string, string>();
         private static Transform _panel;
-        private static Component _focus;
+        private static Component _focus, _beforeChange, _restore;
         private static int _frame;
         private static float _repeatAt;
         private static Vector2 _held;
@@ -122,6 +122,9 @@ namespace Ro3Emu.ClientHooks
             if (top != _panel)
             {
                 if (_panel != null && _focus != null) LastFocus[_panel.name] = _focus.name;
+                // A popup over a window (item tips over the Backpack) and back: the focus returns to where it was.
+                _restore = _beforeChange;
+                _beforeChange = _focus;
                 _panel = top;
                 _focus = null;
                 if (top != null) Debug.Log("[Ro3Emu.UiNav] menu: " + top.name);
@@ -129,9 +132,10 @@ namespace Ro3Emu.ClientHooks
             Items.Clear();
             if (_panel == null) return;
             Collect(_panel, Items);
-            if (Modal(_panel)) return;
             // Side-by-side windows (Equip + Backpack) share one focus space; a modal popup keeps it to itself.
-            foreach (var root in Roots) if (root != _panel) Collect(root, Items);
+            if (!Modal(_panel)) foreach (var root in Roots) if (root != _panel) Collect(root, Items);
+            if (_restore != null && Items.Contains(_restore)) _focus = _restore;
+            _restore = null;
         }
 
         private static readonly List<Transform> Roots = new List<Transform>();
@@ -148,6 +152,7 @@ namespace Ro3Emu.ClientHooks
             foreach (var mb in Behaviours)
             {
                 if (!(mb is IPointerClickHandler) || mb is Selectable || mb.GetComponent<Selectable>() != null) continue;
+                if (mb.GetComponent<TMPro.TMP_Text>() != null) continue; // text with links (item tips title), not a control
                 if (Small(mb) && Usable(mb)) into.Add(mb);
             }
         }
@@ -217,7 +222,7 @@ namespace Ro3Emu.ClientHooks
                 if (s.transform.IsChildOf(root) && Usable(s)) return true;
             root.GetComponentsInChildren(false, Behaviours);
             foreach (var mb in Behaviours)
-                if (mb is IPointerClickHandler && !(mb is Selectable) && Usable(mb) && Small(mb)) return true;
+                if (mb is IPointerClickHandler && !(mb is Selectable) && mb.GetComponent<TMPro.TMP_Text>() == null && Usable(mb) && Small(mb)) return true;
             return false;
         }
 
@@ -280,16 +285,21 @@ namespace Ro3Emu.ClientHooks
         private static Component DefaultFocus()
         {
             if (Items.Count == 0) return null;
+            // A newly opened top panel (item tips over the Backpack) gets the focus before side-by-side windows.
+            var top = Items.FindAll(c => c.transform.IsChildOf(_panel));
+            var pool = top.Count > 0 ? top : Items;
+            var buttons = pool.FindAll(c => c is Selectable); // real buttons before other clickables (cells, links)
+            if (buttons.Count > 0 && !LastFocus.ContainsKey(_panel.name)) pool = buttons;
             if (LastFocus.TryGetValue(_panel.name, out var name))
-                foreach (var s in Items) if (s.name == name) return s;
-            foreach (var s in Items)
+                foreach (var s in pool) if (s.name == name) return s;
+            foreach (var s in pool)
             {
                 string n = s.name.ToLowerInvariant();
                 if (n.Contains("confirm") || n.Contains("sure") || n.Contains("define") || n.Contains("_ok") || n.StartsWith("enter_") || n.StartsWith("login_")) return s;
             }
             Component best = null;
             float bestScore = float.MaxValue;
-            foreach (var s in Items)
+            foreach (var s in pool)
             {
                 var r = ScreenRect(s);
                 float score = (Screen.height - r.center.y) * 4f + r.center.x; // rows first, then left to right
