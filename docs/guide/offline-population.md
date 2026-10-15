@@ -159,26 +159,57 @@ The previous eight lines per map are excluded. Small custom packs become quiet w
 immediately repeating. Removed/empty population maps release their chatter state; shutting bots off clears it.
 
 Original offline phrase packs cover travel, NPC stops, town pauses, hunting and resting. This is flavor,
-not conversation with a language model or evidence that a bot completed a quest. Healing, revival, greeting
-and other real player-event reactions remain planned. Text does not interrupt movement or combat.
+not conversation with a language model or evidence that a bot completed a quest. Nearby greetings and observed
+base-level gains also produce bounded reactions (below). Healing/revival reactions remain planned.
+Text does not interrupt movement or combat.
 
 Configure packs under `Ro3Emu.Population.Chat` before restart:
 
 ```json
 "Chat": {
   "Mode": "quiet",
+  "GreetingsEnabled": true,
+  "LevelUpReactionsEnabled": true,
+  "GreetingCooldownSeconds": 600,
   "Phrases": {
     "travel": ["Taking the scenic route.", "Onward!"]
   }
 }
 ```
 
-Available keys are `travel`, `npc`, `town`, `hunt`, `rest`. Use at least nine distinct lines per context for
+Available keys are `travel`, `npc`, `town`, `hunt`, `rest`, `greeting`, `levelup`.
+Reaction packs can use `{player}` and `{level}` placeholders; names are reduced to plain text. Use at least nine distinct lines per context for
 sustained variation. Each configured context replaces its built-in pack; omitted contexts use the English
 defaults. Blank text, control characters and text over 180 characters are ignored.
 Unknown modes fail quietly with no bot messages. `!bots chat …` changes the mode until restart/reset;
 `!bots reset` restores configured mode and population settings, while personal mute lasts until logout.
 All these commands follow the existing GM account policy. The client's own channel display settings still apply.
+
+### Greetings and observed level gains
+
+With reactions enabled (the default), a bot within 12 units can greet a newly encountered nearby player by name.
+One shared observation per player prevents every bot in a crowd from greeting them. A greeting can repeat only
+after the player leaves and returns and the default ten-minute player cooldown expires; this cooldown follows
+the player across public maps/lines while the population remains enabled. `GreetingCooldownSeconds` clamps to
+60–3600. Welcome lines share the normal per-bot, map and server budgets, including initial map staggering.
+
+Bots also notice base-level increases in the authoritative `GameSession.Progress` snapshot while a player remains
+continuously nearby and eligible to hear chat. Initial login, a return from elsewhere or unmuting establishes a
+baseline rather than replaying previous gains. GM level increases also count; this is observation of level state,
+not proof of a particular reward source. One bot can congratulate the player, at most once per two minutes.
+Repeated gains are coalesced rather than queued individually.
+
+Reactions wait at least five seconds, expire after 90 seconds and are dropped when the subject leaves audible
+proximity, becomes muted/ineligible, or moves between map/line generations. A bot in combat or on its own chat
+cooldown may miss the opportunity. Player-event flavor is therefore best effort, not guaranteed acknowledgment.
+Messages are normal nearby chat: other eligible viewers around the same bot see the same response once.
+Delivery rechecks the subject's role ID, generation, eligibility and 12-unit range before each send.
+
+Use `GreetingsEnabled=false` or `LevelUpReactionsEnabled=false` to disable individual reaction types in startup
+configuration. `!bots chat off` and personal `!bots mute` also suppress reactions. No human quest, EXP, party or
+combat state is changed. Short-lived observations store IDs/levels rather than player-session references, retain
+at most 2,048 visitors and expire after the greeting cooldown plus two minutes away; turning the population off clears
+them. Saved identities and durable per-player preferences remain future work.
 
 ## Protocol evidence and validation
 
@@ -201,7 +232,9 @@ monster retaliation, First Aid and the absence of player kill rewards. Further c
 precedence/binding, fair budgets, gradual spawning, area-derived levels, real equipment bonuses, rarity/level/job/sex
 restrictions, debug exclusions, two-handed weapons and stable appearance packets. Chatter tests cover
 arrival delays, cooldowns, editable packs, repetition, map/server budgets, visible nearby recipients, line isolation,
-blacklists, personal mute, channel subscriptions, combat/death and cleanup without history replay. In-game names/skill animation and LAN
+blacklists, personal mute, channel subscriptions, combat/death and cleanup without history replay. Reaction
+checks cover shared crowd responses, map-spanning greeting cooldowns, authoritative level gains, suppressed/offline
+baselines, delayed/expired events, subject generation changes, plain-text placeholders and lifecycle cleanup. In-game names/skill animation and LAN
 behavior still require manual verification after each update; a passing server test is not proof of client rendering.
 
 Manual acceptance: restart the main server when convenient, reconnect the regular client and use `!bots on`; compare city/field density, try `!bots map 3`, and check head names,
@@ -211,7 +244,10 @@ should remain modest Novices with plain gear. Follow one bot and verify its hair
 compare its world model with its profile. Change line, visit a dungeon,
 and use `!bots off` to verify cleanup. Enable Nearby/map chat, wait up to a minute for quiet chatter,
 verify the sender name matches a visible bot and try `!bots mute`/`!bots unmute` and `!bots chat off`.
-Two LAN players near the same bot should see the same line once; other lines and distant viewers should not. NPC stops should look like questing without changing your own quests.
+Two LAN players near the same bot should see the same line once; other lines and distant viewers should not.
+Stand within 12 units until one named welcome appears, then leave/return and verify no immediate repeated welcome.
+Gain a base level while nearby (a GM level increase can exercise this too); expect at most one congratulations
+within the normal chat budget, and confirm off/mute suppresses it. NPC stops should look like questing without changing your own quests.
 
 ## Planned improvements
 

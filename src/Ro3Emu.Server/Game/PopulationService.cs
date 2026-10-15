@@ -270,8 +270,8 @@ public sealed class PopulationService : IGameTicker
                         TransType = MovementTransitionType.MoveTransNormal, MovementInfo = bot.Movement() });
             }
             if (chat != null)
-                foreach (var line in chatter.Plan(bots, scene => Settings(scene).Profile, now, chat.HasPopulationAudience))
-                    await chat.PublishPopulationAsync(line.Bot, line.Text);
+                foreach (var line in chatter.Plan(bots, scene => Settings(scene).Profile, now, chat.PopulationAudience))
+                    await chat.PublishPopulationAsync(line.Bot, line.Text, line.Subject, line.SubjectGeneration, line.SubjectRole, line.SubjectLevel);
         }
         finally { gate.Release(); }
     }

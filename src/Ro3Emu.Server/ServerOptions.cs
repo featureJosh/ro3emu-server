@@ -227,9 +227,19 @@ public sealed class PopulationMapOptions
 public sealed class PopulationChatOptions
 {
     public string Mode { get; set; } = "quiet";
+    public bool GreetingsEnabled { get; set; } = true;
+    public bool LevelUpReactionsEnabled { get; set; } = true;
+    public int GreetingCooldownSeconds { get; set; } = 600;
     public Dictionary<string, string[]> Phrases { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     internal static readonly IReadOnlyDictionary<string, string[]> DefaultPhrases = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
     {
+        ["greeting"] = ["Hello, {player}!", "Hey {player}, good to see you!", "Safe travels, {player}!",
+            "Welcome, {player}!", "How's it going, {player}?", "Happy adventuring, {player}!", "Nice to meet you, {player}!",
+            "Hey {player}, enjoy your time here!", "Good day, {player}!", "See you on the road, {player}!"],
+        ["levelup"] = ["Congratulations on level {level}, {player}!", "Nice work, {player}! Level {level}!",
+            "Another level! Well done, {player}.", "Looking stronger, {player}!", "Keep it up, {player}!",
+            "Level {level} already? Nice, {player}!", "Great progress, {player}!", "Way to go, {player}!",
+            "Happy level-up, {player}!", "Well earned, {player}!"],
         ["travel"] = ["Let's see where this path goes.", "Still a little way to go.", "I like taking the scenic route.",
             "Time to stretch my legs.", "Wonder what's around the next corner.", "Taking a different route today.",
             "A good day for a walk.", "There's always another place to explore.", "No need to rush.", "Onward!"],

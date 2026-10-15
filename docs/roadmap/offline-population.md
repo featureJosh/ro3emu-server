@@ -42,8 +42,19 @@ variation and private-dungeon populations are still pending. Settings and comman
 - [x] Quiet/normal/chatty/off modes, per-session mute, blacklist checks and no old proximity-message replay.
 
 Release builds and 45 focused cases plus two real-data/initialization smoke checks pass.
-In-game chat presentation and LAN delivery still need acceptance. Greeting/heal/revive/level-up reactions,
-localization selection and richer personality/activity roles remain pending; these lines do not react to player events.
+In-game chat presentation and LAN delivery still need acceptance. Healing/revival reactions, localization
+selection and richer personality/activity roles remain pending. Greetings/level gains are the next implemented increment below.
+
+## Implemented increment: greetings and observed level gains (2026-10-14)
+
+- [x] One named welcome for a nearby newcomer, with a shared ten-minute player cooldown across bots/maps.
+- [x] Congratulations for base-level increases observed while continuously nearby; initial/offline/hidden gains are not replayed.
+- [x] Shared chat budgets, five-second reaction delay, 90-second expiry, per-player level reaction cooldown and opt-outs.
+- [x] Subject role/generation/range checks at delivery; bounded temporary observations and editable placeholder packs.
+
+Release builds and 53 focused cases plus two real-data/initialization smoke checks pass (55 total).
+These are best-effort nearby flavor responses. Client presentation and two-player LAN still need acceptance;
+healing, resurrection, shared combat, boss reactions, emotes and party integration remain planned.
 
 ## Recommended sequence
 
@@ -112,9 +123,9 @@ instances remain isolated; lowering a target cleans up gradually; the global lim
   conversation, location comments and brief party-oriented lines. Use the proper bot sender/profile identity.
 - [x] Support nearby chat first. Respect visibility, mute preferences, per-bot cooldowns and a per-map message budget.
   Avoid repeating a recent phrase or broadcasting the same event once for every spectator.
-- [ ] React to actual game events: greet a newcomer, thank a player for healing, congratulate a level-up,
-  acknowledge being revived, notice a nearby boss, or comment after a shared fight. Start with greetings and
-  observable player events; healing/revival reactions activate as bot-friendly targeting and companion support land.
+- [x] Greet nearby newcomers and congratulate observed level gains, with shared player cooldowns and no catch-up queue.
+- [ ] Expand actual-event reactions: thank a player for healing,
+  acknowledge being revived, notice a nearby boss, or comment after a shared fight. Continue with further observable player events; healing/revival reactions activate as bot-friendly targeting and companion support land.
 - [ ] Add waves, sitting, turning to face a speaker and short pauses. Reactions should not interrupt combat
   or movement constantly. Greeting the same player repeatedly should have a long cooldown.
 - [x] Offer quiet/normal/chatty settings and a complete chat-off switch. Dialogue remains optional flavor.
@@ -206,5 +217,5 @@ bots do not leak private-instance state or consume real-player admission slots.
   visibility, reward attribution and chat cooldowns; perform in-game and two-player LAN acceptance separately.
 - [ ] Keep defaults conservative, provide a clear off switch, and document implemented options as they ship.
 
-Next increments should refine density controls and appearance pools, then add personality/activity roles and real event reactions to nearby chatter. Party companions should be delivered as a complete roster/follow/ownership lifecycle before
+Next increments should refine density controls and appearance pools, then add personality/activity roles and further player-event reactions to nearby chatter. Party companions should be delivered as a complete roster/follow/ownership lifecycle before
 enabling dense private-dungeon combat.

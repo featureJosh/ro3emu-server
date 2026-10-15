@@ -121,7 +121,7 @@ public sealed class PopulationTests : IDisposable
         var player = Player(); await world.JoinAsync(player); await population.UpdateAsync(1000);
         var bot = world.AllUnits().OfType<PopulationUnit>().First(); bot.VisitingNpc = false;
         player.Position = bot.Pos; player.ChatGroups.Add("4_1");
-        var options = new PopulationChatOptions { Mode = "chatty" };
+        var options = new PopulationChatOptions { Mode = "chatty", GreetingsEnabled = false };
         options.Phrases["hunt"] = Enumerable.Range(0, 12).Select(i => "Custom hunt line " + i).ToArray();
         var chatter = new PopulationChatter(options);
         Assert.Empty(chatter.Plan([bot], _ => "field", 0));
@@ -172,6 +172,179 @@ public sealed class PopulationTests : IDisposable
         var rest = Assert.Single(chatter.Plan(bots, _ => "field", 51002));
         Assert.DoesNotContain(rest.Bot.RuntimeMap, lines.Select(l => l.Bot.RuntimeMap));
         Assert.Empty(chatter.Plan(bots, _ => "field", 51003));
+    }
+
+    [Fact]
+    public async Task BotGreetingsProduceOneNamedReactionAcrossCrowdAndShareChatBudgets()
+    {
+        var player = Player(); await world.JoinAsync(player); await population.UpdateAsync(1000);
+        var bots = world.AllUnits().OfType<PopulationUnit>().ToArray();
+        foreach (var bot in bots) { bot.X = 128; bot.Z = 128; }
+        player.ChatGroups.Add("4_1");
+        var options = new PopulationChatOptions { Mode = "chatty" };
+        options.Phrases["greeting"] = ["Welcome, {player}!"];
+        var chatter = new PopulationChatter(options);
+        Assert.Empty(chatter.Plan(bots, _ => "city", 0));
+        IReadOnlyList<PopulationChatter.Line> lines = [];
+        for (long now = 1000; now <= 51000; now += 1000)
+        {
+            var batch = chatter.Plan(bots, _ => "city", now);
+            if (batch.Any(l => l.Subject != null)) lines = batch;
+        }
+        var greeting = Assert.Single(lines);
+        Assert.Equal("Welcome, Player1!", greeting.Text); Assert.Same(player, greeting.Subject);
+        Assert.Equal(player.SceneGeneration, greeting.SubjectGeneration); Assert.Equal(player.Role!.Id, greeting.SubjectRole);
+        Assert.Empty(chatter.Plan(bots, _ => "city", 51001)); // map budget also covers reactions
+        for (long now = 52000; now <= 150000; now += 1000)
+            Assert.DoesNotContain(chatter.Plan(bots, _ => "city", now), line => line.Subject != null);
+    }
+
+    [Fact]
+    public void BotGreetingCooldownSurvivesOtherBotsMapChangesAndShortAbsences()
+    {
+        var bot = Fighter(); var player = Player(); player.Position = bot.Pos;
+        var reactions = new PopulationReactions(new() { GreetingCooldownSeconds = 600 });
+        var audience = new Dictionary<PopulationUnit, GameSession[]> { [bot] = [player] };
+        reactions.Observe(audience, 0, true);
+        for (long now = 1000; now <= 5000; now += 1000) reactions.Observe(audience, now, true);
+        var greeting = reactions.Find(bot, [player], 5000)!; Assert.NotNull(greeting);
+        Assert.Equal("greeting", greeting.Context); reactions.Consume(greeting, 5000);
+        reactions.Observe(new Dictionary<PopulationUnit, GameSession[]>(), 6000, true);
+        var other = Fighter(); other.SceneEntry = 2; player.SceneEntry = 2;
+        audience = new() { [other] = [player] };
+        for (long now = 7000; now <= 20000; now += 1000) reactions.Observe(audience, now, true);
+        Assert.Null(reactions.Find(other, [player], 20000));
+        reactions.Observe(new Dictionary<PopulationUnit, GameSession[]>(), 606000, true);
+        for (long now = 607000; now <= 612000; now += 1000) reactions.Observe(audience, now, true);
+        Assert.Equal("greeting", reactions.Find(other, [player], 612000)!.Context);
+        reactions.Clear(); Assert.Equal(0, reactions.Count);
+    }
+
+    [Fact]
+    public void BotLevelReactionsObserveActualNearbyGainsAndLimitRapidLeveling()
+    {
+        var bot = Fighter(); var player = Player(); player.Position = bot.Pos;
+        player.Progress = new RoleProgress { Level = 5 };
+        var options = new PopulationChatOptions { GreetingsEnabled = false };
+        var reactions = new PopulationReactions(options);
+        var audience = new Dictionary<PopulationUnit, GameSession[]> { [bot] = [player] };
+        reactions.Observe(audience, 0, true);
+        Assert.Null(reactions.Find(bot, [player], 0)); // initial snapshot is not a level-up
+        player.Progress.Level = 6; reactions.Observe(audience, 1000, true);
+        for (long now = 2000; now <= 6000; now += 1000) reactions.Observe(audience, now, true);
+        var reaction = reactions.Find(bot, [player], 6000)!;
+        Assert.Equal("levelup", reaction.Context);
+        Assert.Equal("Player1 reached 6", PopulationReactions.Expand("{player} reached {level}", player));
+        reactions.Consume(reaction, 6000);
+        player.Progress.Level = 7; reactions.Observe(audience, 7000, true);
+        Assert.Null(reactions.Find(bot, [player], 13000)); // no queued chorus for consecutive gains
+        reactions.Observe(audience, 126000, true); player.Progress.Level = 8;
+        reactions.Observe(audience, 127000, true);
+        for (long now = 128000; now <= 132000; now += 1000) reactions.Observe(audience, now, true);
+        Assert.Equal("levelup", reactions.Find(bot, [player], 132000)!.Context);
+    }
+
+    [Fact]
+    public void BotReactionsDropAbsentDisabledDeadFarawayAndExpiredEvents()
+    {
+        var bot = Fighter(); var player = Player(); player.Position = bot.Pos;
+        player.Progress = new RoleProgress { Level = 5 };
+        var options = new PopulationChatOptions { GreetingsEnabled = false };
+        var reactions = new PopulationReactions(options);
+        var audience = new Dictionary<PopulationUnit, GameSession[]> { [bot] = [player] };
+        reactions.Observe(audience, 0, false); player.Progress.Level = 6;
+        reactions.Observe(audience, 1000, false); reactions.Observe(audience, 2000, true);
+        Assert.Null(reactions.Find(bot, [player], 10000)); // enabling does not replay hidden gains
+        reactions.Observe(new Dictionary<PopulationUnit, GameSession[]>(), 3000, true);
+        player.Progress.Level = 7; reactions.Observe(audience, 4000, true);
+        Assert.Null(reactions.Find(bot, [player], 10000)); // returning/unmuting establishes a fresh baseline
+        player.Progress.Level = 8; reactions.Observe(audience, 5000, true);
+        player.Dead = true; Assert.Null(reactions.Find(bot, [player], 11000)); player.Dead = false;
+        player.Position = new Vec3 { X = bot.X + 13, Z = bot.Z };
+        Assert.Null(reactions.Find(bot, [player], 11000)); player.Position = bot.Pos;
+        Assert.Null(reactions.Find(bot, [player], 96000)); // stale pending event expires
+        options.LevelUpReactionsEnabled = false; reactions.Observe(audience, 6000, true);
+        Assert.Null(reactions.Find(bot, [player], 11000));
+        reactions.Observe(new Dictionary<PopulationUnit, GameSession[]>(), 1000000, true);
+        Assert.Equal(0, reactions.Count);
+    }
+
+    [Fact]
+    public async Task BotReactionDeliveryRejectsSubjectHandoffsGenerationChangesAndMarkupNames()
+    {
+        var player = Player(); await world.JoinAsync(player); await population.UpdateAsync(1000);
+        var bot = world.AllUnits().OfType<PopulationUnit>().First();
+        player.Position = bot.Pos; player.ChatGroups.Add("4_1");
+        Assert.True(ChatService.PopulationReactionStillValid(bot, player, 0, player.Role!.Id));
+        player.SceneGeneration++;
+        Assert.False(ChatService.PopulationReactionStillValid(bot, player, 0, player.Role.Id));
+        Assert.False(ChatService.PopulationReactionStillValid(bot, player, 1, 999));
+        player.SceneLoading = true; Assert.False(ChatService.PopulationReactionStillValid(bot, player, 1, player.Role.Id));
+        player.SceneLoading = false; player.BotChatMuted = true;
+        Assert.False(ChatService.PopulationReactionStillValid(bot, player, 1, player.Role.Id));
+        player.Role = player.Role with { Name = "<b>Hero</b>\n" };
+        string text = PopulationReactions.Expand("Hello {player}!", player);
+        Assert.DoesNotContain("<", text); Assert.DoesNotContain(">", text); Assert.DoesNotContain("\n", text);
+    }
+
+    [Fact]
+    public void BotQueuedLevelReactionsRejectSceneGenerationChangesAndLevelDrops()
+    {
+        var bot = Fighter(); var player = Player(); player.Position = bot.Pos;
+        player.Progress = new RoleProgress { Level = 5 };
+        var reactions = new PopulationReactions(new() { GreetingsEnabled = false });
+        var audience = new Dictionary<PopulationUnit, GameSession[]> { [bot] = [player] };
+        reactions.Observe(audience, 0, true);
+        player.Progress.Level = 6; reactions.Observe(audience, 1000, true);
+        player.SceneGeneration++;
+        Assert.Null(reactions.Find(bot, [player], 6000));
+        reactions.Observe(audience, 2000, true); Assert.Null(reactions.Find(bot, [player], 7000));
+        player.Progress.Level = 7; reactions.Observe(audience, 3000, true);
+        player.Progress.Level = 6; reactions.Observe(audience, 4000, true);
+        Assert.Null(reactions.Find(bot, [player], 9000));
+    }
+
+    [Fact]
+    public void BotReactionObservationsHaveABoundedLifetimeAndCapacity()
+    {
+        var bot = Fighter();
+        var players = Enumerable.Range(1, 2050).Select(id => { var p = Player(id); p.Position = bot.Pos; return p; }).ToArray();
+        var reactions = new PopulationReactions(new());
+        reactions.Observe(new Dictionary<PopulationUnit, GameSession[]> { [bot] = players }, 0, true);
+        Assert.Equal(2048, reactions.Count);
+        reactions.Observe(new Dictionary<PopulationUnit, GameSession[]>(), 1000000, true);
+        Assert.Equal(0, reactions.Count);
+    }
+
+    [Fact]
+    public async Task BotLevelCongratulationsUseNormalChatPlannerAndEmptyGreetingPacksAllowAmbientLines()
+    {
+        var player = Player(); player.Progress = new RoleProgress { Level = 5 };
+        await world.JoinAsync(player); await population.UpdateAsync(1000);
+        var bots = world.AllUnits().OfType<PopulationUnit>().ToArray();
+        foreach (var bot in bots) { bot.X = 128; bot.Z = 128; }
+        player.ChatGroups.Add("4_1");
+        var options = new PopulationChatOptions { Mode = "chatty" };
+        options.Phrases["greeting"] = [];
+        options.Phrases["levelup"] = ["Level {level}, {player}!"];
+        var chatter = new PopulationChatter(options);
+        int ambient = 0;
+        for (long now = 0; now <= 51000; now += 1000)
+        {
+            var lines = chatter.Plan(bots, _ => "field", now);
+            Assert.DoesNotContain(lines, line => line.Subject != null); ambient += lines.Count;
+        }
+        Assert.True(ambient > 0);
+        player.Progress.Level = 6;
+        var reactions = new List<PopulationChatter.Line>();
+        for (long now = 52000; now <= 150000; now += 1000)
+            reactions.AddRange(chatter.Plan(bots, _ => "field", now).Where(l => l.Subject != null));
+        var congratulation = Assert.Single(reactions);
+        Assert.Equal("Level 6, Player1!", congratulation.Text); Assert.Equal(6, congratulation.SubjectLevel);
+        var botSender = congratulation.Bot;
+        Assert.True(ChatService.PopulationReactionStillValid(botSender, player, player.SceneGeneration, player.Role!.Id, 6));
+        player.Progress.Level = 5;
+        Assert.False(ChatService.PopulationReactionStillValid(botSender, player, player.SceneGeneration, player.Role.Id, 6));
     }
 
     private static GameSession Player(int id = 1, int line = 1, long scene = 1, long instance = 0) => new(null!, null!)

@@ -96,7 +96,7 @@ public sealed class ChatService(GmCommands gm, FeedbackService feedback, GuildSt
 
     /// <summary>Nearby ambient text uses normal Tencent pushes and the bot's UserDataService identity.
     /// No history is retained: a later/faraway viewer must not replay proximity-only messages.</summary>
-    public async Task PublishPopulationAsync(Maps.PopulationUnit bot, string content)
+    public async Task PublishPopulationAsync(Maps.PopulationUnit bot, string content, GameSession? subject = null, long subjectGeneration = 0, long subjectRole = 0, int subjectLevel = 0)
     {
         if (string.IsNullOrWhiteSpace(content) || content.Length > 180 || content.Any(char.IsControl)) return;
         (GameSession Session, string? Group, long Generation)[] recipients;
@@ -107,7 +107,8 @@ public sealed class ChatService(GmCommands gm, FeedbackService feedback, GuildSt
         foreach (var (session, group, generation) in recipients)
         {
             lock (_sync)
-                if (bot.Removed || bot.Dead || session.SceneGeneration != generation || PopulationChannel(bot, session) != group) continue;
+                if (bot.Removed || bot.Dead || session.SceneGeneration != generation || PopulationChannel(bot, session) != group
+                    || subject != null && !PopulationReactionStillValid(bot, subject, subjectGeneration, subjectRole, subjectLevel)) continue;
             if (friends.Blocks(session.Role!.Id, bot.Uid)) continue;
             var message = new TextChatMessage
             {
@@ -119,10 +120,14 @@ public sealed class ChatService(GmCommands gm, FeedbackService feedback, GuildSt
         }
     }
 
-    internal bool HasPopulationAudience(Maps.PopulationUnit bot)
+    internal GameSession[] PopulationAudience(Maps.PopulationUnit bot)
     {
-        lock (_sync) return bot.Viewers.Any(p => PopulationChannel(bot, p) != null);
+        lock (_sync) return bot.Viewers.Where(p => PopulationChannel(bot, p) != null).ToArray();
     }
+
+    internal static bool PopulationReactionStillValid(Maps.PopulationUnit bot, GameSession subject, long generation, long role, int minimumLevel = 0) =>
+        subject.SceneGeneration == generation && subject.Role?.Id == role && PopulationChannel(bot, subject) != null
+        && PopulationReactions.Nearby(bot, subject) && (subject.Progress?.Level ?? subject.Role!.Level) >= minimumLevel;
 
     // Caller holds the chat membership lock; pure helper also supports focused isolation tests.
     internal static string? PopulationChannel(Maps.PopulationUnit bot, GameSession viewer)
