@@ -601,12 +601,6 @@ public sealed partial class GameMessageHandler(RoleStore roles, MsgCatalog catal
                 for (uint tag; (tag = input.ReadTag()) != 0;)
                     if (tag == 18) stored.MergeFrom(input.ReadBytes()); // SaveSettingReq.dbSettingInfo, field 2
                     else input.SkipLastField();
-            if (ForceClickToAttack(stored))
-            {
-                // The client's first mode pick saved "off": send the corrected value back so it applies right away.
-                settings.MarkDirty(session, urgent: false);
-                await session.SendGameAsync(MsgId.AutoSyncSettings, SettingsSync(stored));
-            }
             if (req.Type.Contains(SettingType.WildAfk) && stored.WildAFKInfo != null)
             {
                 // AFK accounting follows this preference: durable now, together with its reconciliation.
@@ -626,29 +620,19 @@ public sealed partial class GameMessageHandler(RoleStore roles, MsgCatalog catal
         settings.WildAFKInfo ??= new SettingWildAFKInfo(); // OnHook's setting editor requires a real object.
         if (!settings.ClientSetting.ContainsKey((int)SettingType.BaseBattle))
             settings.ClientSetting[(int)SettingType.BaseBattle] = DefaultBaseBattle.ToByteString();
-        ForceClickToAttack(settings);
+        // A role that never saved click-to-attack starts with it on; a saved value is the player's choice (the LOG tab's
+        // "attack after selecting a target"). The client's first mode pick saves 2 (off) for the action mode, which
+        // ClientHooks' CombatSettings turns back on. Official servers attacked on click in both modes (player report;
+        // inferred). Clicking an enemy attacks only when it is 1 (LC_Actor_ControlMove.HandleColliderBase).
+        settings.ClientSetting.TryAdd(ClickToAttackSetting, ClickToAttackOn);
         return settings;
     }
 
     /// <summary>enum_SettingItemType.ContinuousAttackAfterTargetSelected (Config/Define/Lua_GameDefine.lua:17193).</summary>
     private const int ClickToAttackSetting = 403001;
 
-    /// <summary>The stored value: a message whose field 1 is 1 (on); the client saved off as 08 02.</summary>
+    /// <summary>The stored value: a message whose field 1 is the value, 1 = on (the client saves off as 08 02).</summary>
     private static readonly ByteString ClickToAttackOn = ByteString.CopyFrom(0x08, 0x01);
-
-    /// <summary>
-    /// Clicking an enemy attacks it only when ContinuousAttackAfterTargetSelected is 1
-    /// (LC_Actor_ControlMove.HandleColliderBase). This build has no settings toggle for it; its only writer is the
-    /// first-time mode pick (UI_Sys_SetModeWidgetCtrl), which saves 2 (off) for the action mode, so an action-mode
-    /// player could never click-attack, while the official servers attacked on click in both modes (player report;
-    /// inferred). The server keeps it on. Verified by the ClickProbe: clicks reached the gate with the value 2.
-    /// </summary>
-    private static bool ForceClickToAttack(DBSettingInfo settings)
-    {
-        if (settings.ClientSetting.TryGetValue(ClickToAttackSetting, out var value) && value.Equals(ClickToAttackOn)) return false;
-        settings.ClientSetting[ClickToAttackSetting] = ClickToAttackOn;
-        return true;
-    }
 
     /// <summary>
     /// A role without saved battle settings gets the client's own defaults (LC_DAL_Setting._processBaseBattleInfo),

@@ -3,72 +3,49 @@ using UnityEngine;
 namespace Ro3Emu.ClientHooks
 {
     /// <summary>
-    /// LC_DAL_Setting._processBaseBattleInfo loads BaseBattleSetting, but the reconstructed client's
-    /// LC_SettingProcessFunc.ContinuousAttackAfterTargetSelected.GetValue reads a separate flat asset.
-    /// Use the loaded platform preference until the player's settings setter supplies the flat value.
-    /// Evidence: Logic/Asset/LC_DAL_Setting.lua and Logic/Setting/LC_SettingProcessFunc.lua:942-1005.
+    /// Clicking an enemy attacks it only when ContinuousAttackAfterTargetSelected (setting 403001, the LOG tab's
+    /// "attack after selecting a target") is 1 (LC_Actor_ControlMove.HandleColliderBase). A character's first mode
+    /// pick, UI_Sys_SetModeWidgetCtrl._saveGameModeSettingReal while m_bPcPlatformRecord is false, sets it to 1 for the
+    /// classic mode and 2 (off) for the action mode, so a new action-mode character could not click-attack. Official
+    /// servers attacked on click in both modes (player report; inferred), so after that first pick the setting is set to
+    /// 1 through the same lc_settinghelper.SetValue the LOG tab uses (it saves to the server too). Later mode changes and
+    /// the LOG-tab toggle are left alone. Evidence: UI/Setup/Controllers/UI_Sys_SetModeWidgetCtrl.lua:448-470,
+    /// docs/research/click-attack-setting.md.
     /// </summary>
     internal static class CombatSettings
     {
-        // xLua keeps delegate references weakly; retain the wrapper for the lifetime of the process.
-        public delegate long ReadSetting();
-        private static readonly ReadSetting Wrapper = Read;
-        private static Obf_R.Obf_Ef _original, _getValue, _getBattleSetting;
-        private static object _chaseLogic;
-        private static bool _reportedFallback;
-        private static int _readTrace;
+        /// <summary>A Lua method called as self:Method().</summary>
+        public delegate void SaveMode(Obf_R.Obf_ff self);
 
-        internal static void Install(Obf_R.Obf_ff global, Obf_R.Obf_ff process, Obf_R.Obf_ff helper)
+        // xLua keeps delegate references weakly; retain the wrapper for the lifetime of the process.
+        private static readonly SaveMode Wrapper = SaveGameModeSettingReal;
+        private static Obf_R.Obf_Ef _original, _setValue;
+        private static object _attackSetting;
+
+        internal static void Install(Obf_R.Obf_ff global, Obf_R.Obf_ff modeWidget, Obf_R.Obf_ff helper)
         {
-            var types = global?.Obf_RuA<Obf_R.Obf_ff>("enum_SettingItemType");
-            var attack = types?.Obf_RuA<object>("ContinuousAttackAfterTargetSelected");
-            var chase = types?.Obf_RuA<object>("ChaseLogic");
-            var definition = attack == null ? null : process?.Obf_ruA<object, Obf_R.Obf_ff>(attack);
-            var setting = definition?.Obf_RuA<Obf_R.Obf_ff>("ValueSetting");
-            var original = setting?.Obf_RuA<Obf_R.Obf_Ef>("GetValue");
-            var getValue = helper?.Obf_RuA<Obf_R.Obf_Ef>("GetValue");
-            var battle = global?.Obf_RuA<Obf_R.Obf_ff>("G_ClientCfg")?.Obf_RuA<Obf_R.Obf_Ef>("getBattleSetting");
-            if (original == null || getValue == null || battle == null || chase == null)
+            var attack = global?.Obf_RuA<Obf_R.Obf_ff>("enum_SettingItemType")?.Obf_RuA<object>("ContinuousAttackAfterTargetSelected");
+            var original = modeWidget?.Obf_RuA<Obf_R.Obf_Ef>("_saveGameModeSettingReal");
+            var setValue = helper?.Obf_RuA<Obf_R.Obf_Ef>("SetValue");
+            if (attack == null || original == null || setValue == null)
             {
-                Debug.LogWarning("[Ro3Emu.CombatSettings] setting functions not found; click-to-attack fallback not installed");
+                Debug.LogWarning("[Ro3Emu.CombatSettings] mode-pick functions not found; first mode pick keeps the client's click-to-attack default");
                 return;
             }
             _original = original;
-            _getValue = getValue;
-            _getBattleSetting = battle;
-            _chaseLogic = chase;
-            _reportedFallback = false;
-            _readTrace = 0;
-            setting.Obf_luA<string, ReadSetting>("GetValue", Wrapper);
-            Debug.Log("[Ro3Emu.CombatSettings] click-to-attack setting fallback installed");
+            _setValue = setValue;
+            _attackSetting = attack;
+            modeWidget.Obf_luA<string, SaveMode>("_saveGameModeSettingReal", Wrapper);
+            Debug.Log("[Ro3Emu.CombatSettings] first mode pick turns click-to-attack on");
         }
 
-        private static long First(object[] result)
-            => result != null && result.Length > 0 ? LuaPatches.ToLong(result[0]) : long.MinValue;
-
-        private static long Read()
+        private static void SaveGameModeSettingReal(Obf_R.Obf_ff self)
         {
-            long value = First(_original.Obf_HuA());
-            // 1 = enabled, 2 = disabled. Preserve an explicit value supplied by the client's setter.
-            if (value == 1 || value == 2) return Trace(value, value, "explicit flat preference");
-            long chase = First(_getValue.Obf_HuA(_chaseLogic));
-            if (chase != 1) return Trace(value, 0, "chase=" + chase);
-            // Resolve each read, rather than caching: settings and PC/mobile mode can change after login.
-            long loaded = First(_getBattleSetting.Obf_HuA("eSelectTargetNormalAttack"));
-            if (loaded != 1 && loaded != 2) return Trace(value, 0, "invalid loaded preference=" + loaded);
-            if (!_reportedFallback)
-            {
-                _reportedFallback = true;
-                Debug.Log("[Ro3Emu.CombatSettings] missing flat attack setting; using loaded battle preference " + loaded);
-            }
-            return Trace(value, loaded, "loaded battle preference");
-        }
-
-        private static long Trace(long original, long effective, string reason)
-        {
-            if (_readTrace++ < 20)
-                Debug.Log("[Ro3Emu.CombatSettings] read original=" + original + " effective=" + effective + " " + reason);
-            return effective;
+            bool firstPick = self?.Obf_RuA<object>("m_bPcPlatformRecord") is false;
+            _original.Obf_HuA(self);
+            if (!firstPick) return;
+            _setValue.Obf_HuA(_attackSetting, 1L);
+            Debug.Log("[Ro3Emu.CombatSettings] first mode pick: click-to-attack set to 1");
         }
     }
 }

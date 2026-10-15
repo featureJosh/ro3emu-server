@@ -91,3 +91,20 @@ The fallback above was installed but never used: the flat setting was not missin
 - Verified in game: `ContinuousAttack=1 flat=1` → `RJ_onClickSkill dispatched: iSkillId=1000001 bOnlyClick=True` →
   server `casts skill 1000001` → `killed … (5000001)`.
 - `CombatSettings` stays as a harmless fallback for a role that never had the value. ClientHooks tests: 10/10 pass.
+
+## Final design (2026-10-15): fix the first mode pick, respect the toggle
+
+Forcing 403001 on in the server was not enough. A new action-mode character's first mode pick sets the value to 2 in
+the client's memory and only queues the save, so the server had nothing to correct during that first session (a
+relog fixed it). The setting does have a UI: the **LOG** tab's "attack after selecting a target"; changing it
+refreshes the in-memory value, which is how the player noticed.
+
+- **Client** (`CombatSettings`): wraps `UI_Sys_SetModeWidgetCtrl._saveGameModeSettingReal`
+  (`UI/Setup/Controllers/UI_Sys_SetModeWidgetCtrl.lua:448-522`). On the first pick (`m_bPcPlatformRecord == false`)
+  it calls the original, then `lc_settinghelper.SetValue(ContinuousAttackAfterTargetSelected, 1)`, the same call the
+  LOG tab makes, so the value is on in memory and saved as on. Later mode changes and the toggle are untouched. The
+  earlier getter override (and Codex's missing-value fallback) is gone. Tests: `CombatSettingsTests` (4 cases).
+- **Server** (`GameMessageHandler.LoadSettings`): adds 403001 = 1 only when the role never saved it; a saved value is
+  the player's choice.
+- Verified in game: new character Renna (action mode) click-attacked from the first session; the hook logged
+  `first mode pick: click-to-attack set to 1`. The LOG-tab "off" path was not exercised in that session.

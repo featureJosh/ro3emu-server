@@ -135,8 +135,10 @@ public sealed partial class CombatService
                 NextSwingMs = Now + SkillMs(s, row.Value) + Math.Max(0, GameData.Int(row.Value, "_iChantFix") + GameData.Int(row.Value, "_iChantVar")) + 1,
                 StartX = s.Position.X, StartZ = s.Position.Z };
         }
-        else if (owned == null && s.Attack is { } attack && attack.Target.Uid == req.TargetId && CanHitMonster(s, attack.Target))
-            // A skill on the auto-attacked monster pauses the loop; normal attacks resume after it (inferred).
+        else if (owned == null && s.Attack is { } attack && CanHitMonster(s, attack.Target)
+            && (target == null || target.Uid == attack.Target.Uid))
+            // Only a skill on a different monster ends the auto-attack. One on the same monster, or a self/ally skill
+            // such as First Aid, pauses it and normal attacks resume afterwards (player report; inferred).
             attack.NextSwingMs = Math.Max(attack.NextSwingMs, Now + SkillMs(s, row.Value)
                 + Math.Max(0, GameData.Int(row.Value, "_iChantFix") + GameData.Int(row.Value, "_iChantVar")) + 1);
         else s.Attack = null;

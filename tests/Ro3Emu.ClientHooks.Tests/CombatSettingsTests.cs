@@ -5,107 +5,80 @@ namespace Ro3Emu.ClientHooks.Tests;
 
 public class CombatSettingsTests
 {
+    private const long Attack = 403001;
+
+    /// <summary>The mode widget class, lc_settinghelper and the setting value they share.</summary>
     private sealed class Client
     {
-        public object Flat;
-        public object Chase = 1L;
-        public object Loaded = 1L;
-        public readonly Obf_ff Global = new(), Process = new(), Helper = new(), Setting = new();
-        public int BattleReads;
+        public readonly Obf_ff Global = new(), Widget = new(), Helper = new();
+        public object Value;
+        public readonly List<object> Writes = new();
+        public int OriginalCalls;
 
-        public Client()
+        /// <param name="pick">What the original writes on a first pick: 1 classic, 2 action.</param>
+        public Client(long pick)
         {
             var types = new Obf_ff();
-            types.Obf_luA("ContinuousAttackAfterTargetSelected", 2L);
-            types.Obf_luA("ChaseLogic", 1L);
+            types.Obf_luA("ContinuousAttackAfterTargetSelected", Attack);
             Global.Obf_luA("enum_SettingItemType", types);
-            var config = new Obf_ff();
-            config.Obf_luA("getBattleSetting", new Obf_Ef(args =>
+            Helper.Obf_luA("SetValue", new Obf_Ef(args =>
             {
-                Assert.Equal("eSelectTargetNormalAttack", args[0]);
-                BattleReads++;
-                return new[] { Loaded };
+                Assert.Equal(Attack, args[0]);
+                Value = args[1];
+                Writes.Add(args[1]);
+                return [];
             }));
-            Global.Obf_luA("G_ClientCfg", config);
-            Helper.Obf_luA("GetValue", new Obf_Ef(args =>
+            Widget.Obf_luA("_saveGameModeSettingReal", new Obf_Ef(args =>
             {
-                Assert.Equal(1L, args[0]);
-                return new[] { Chase };
+                OriginalCalls++;
+                var self = (Obf_ff)args[0];
+                if (self.Obf_RuA<object>("m_bPcPlatformRecord") is false)
+                    Helper.Obf_RuA<Obf_Ef>("SetValue").Obf_HuA(Attack, pick);
+                return [];
             }));
-            Setting.Obf_luA("GetValue", new Obf_Ef(_ => new object[]
-            {
-                LuaPatches.ToLong(Chase) == 1 ? Flat ?? 0L : 0L,
-            }));
-            var definition = new Obf_ff();
-            definition.Obf_luA("ValueSetting", Setting);
-            Process.Obf_luA(2L, definition);
         }
 
-        public void Install() => CombatSettings.Install(Global, Process, Helper);
-        public long Read() => Setting.Obf_RuA<CombatSettings.ReadSetting>("GetValue")();
-    }
+        public void Install() => CombatSettings.Install(Global, Widget, Helper);
 
-    [Fact]
-    public void LoginPreferenceEnablesClickWithoutFlatAsset()
-    {
-        var c = new Client();
-        c.Install();
-        Assert.Equal(1, c.Read());
-        Assert.Null(c.Flat); // Reading does not overwrite the player's setting or sync it to the server.
+        public void Save(bool recorded)
+        {
+            var self = new Obf_ff();
+            self.Obf_luA("m_bPcPlatformRecord", recorded);
+            Widget.Obf_RuA<CombatSettings.SaveMode>("_saveGameModeSettingReal")(self);
+        }
     }
 
     [Theory]
-    [InlineData(1, 2)]
-    [InlineData(2, 1)]
-    public void ExplicitFlatPreferenceWins(int flat, int loaded)
+    [InlineData(2L)] // action mode: the client's own default is off
+    [InlineData(1L)] // classic mode
+    public void FirstModePickEndsWithClickToAttackOn(long pick)
     {
-        var c = new Client { Flat = (long)flat, Loaded = (long)loaded };
+        var c = new Client(pick);
         c.Install();
-        Assert.Equal(flat, c.Read());
-        Assert.Equal(0, c.BattleReads);
-    }
-
-    [Theory]
-    [InlineData(2)]
-    [InlineData(3)]
-    public void ChaseGateStillDisablesAttack(int chase)
-    {
-        var c = new Client { Chase = (long)chase, Flat = 1L };
-        c.Install();
-        Assert.Equal(0, c.Read());
-        Assert.Equal(0, c.BattleReads);
+        c.Save(recorded: false);
+        Assert.Equal(1, c.OriginalCalls);
+        Assert.Equal(1L, c.Value);
+        Assert.Equal([pick, 1L], c.Writes);
     }
 
     [Fact]
-    public void ReadsUpdatedPlatformPreferenceAndPlayerEdits()
+    public void LaterModeChangesKeepThePlayersSetting()
     {
-        var c = new Client();
+        var c = new Client(2L) { Value = 2L };
         c.Install();
-        Assert.Equal(1, c.Read());
-        c.Loaded = 2L;
-        Assert.Equal(2, c.Read());
-        c.Flat = 1L;
-        Assert.Equal(1, c.Read());
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData(0)]
-    [InlineData(3)]
-    public void MissingOrInvalidLoadedPreferenceDoesNotEnableAttack(object loaded)
-    {
-        var c = new Client { Loaded = loaded };
-        c.Install();
-        Assert.Equal(0, c.Read());
+        c.Save(recorded: true);
+        Assert.Equal(1, c.OriginalCalls);
+        Assert.Empty(c.Writes);
+        Assert.Equal(2L, c.Value); // the LOG-tab choice stands
     }
 
     [Fact]
-    public void IncompatibleClientKeepsOriginalGetter()
+    public void IncompatibleClientKeepsOriginalMethod()
     {
-        var c = new Client();
-        var original = c.Setting.Obf_RuA<Obf_Ef>("GetValue");
-        c.Global.Obf_luA<string, object>("G_ClientCfg", null);
+        var c = new Client(2L);
+        var original = c.Widget.Obf_RuA<Obf_Ef>("_saveGameModeSettingReal");
+        c.Helper.Obf_luA<string, object>("SetValue", null);
         c.Install();
-        Assert.Same(original, c.Setting.Obf_RuA<Obf_Ef>("GetValue"));
+        Assert.Same(original, c.Widget.Obf_RuA<Obf_Ef>("_saveGameModeSettingReal"));
     }
 }
