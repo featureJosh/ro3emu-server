@@ -62,6 +62,7 @@ public sealed class MonsterService : MonsterBrain, IGameTicker
     /// <summary>Set by CombatService: a monster's attack on its target (the brain decides when).</summary>
     public Func<MonsterUnit, GameSession, Task>? Attack { get; set; }
     public Func<MonsterUnit, TowerPetUnit, Task>? AttackPet { get; set; }
+    internal Func<MonsterUnit, PopulationUnit, Task>? AttackPopulation { get; set; }
 
     public static long NowMs => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
@@ -383,6 +384,11 @@ public sealed class MonsterService : MonsterBrain, IGameTicker
             Fight(m, map, now);
             return;
         }
+        if (m.PopulationTarget != null)
+        {
+            FightPopulation(m, map, now);
+            return;
+        }
         if (m.Template.Aggressive && m.Viewers.Count > 0 && !m.Returning)
         {
             var near = NearestTarget(m);
@@ -437,6 +443,7 @@ public sealed class MonsterService : MonsterBrain, IGameTicker
     public void Engage(MonsterUnit m, GameSession target)
     {
         if (m.Dead || m.WorldScene != target.WorldScene || m.Template.SpeedCm == 0 && m.Template.AttackRange <= 0) return;
+        m.PopulationTarget = null; // Real players always take priority over simulated combat.
         if (m.Target == null) m.NextSwingMs = NowMs + 300;
         SetTarget(m, target);
         m.Returning = false;
@@ -460,6 +467,40 @@ public sealed class MonsterService : MonsterBrain, IGameTicker
         if (m.PetTarget == null) m.NextSwingMs = NowMs + 300;
         m.PetTarget = target;
         m.Returning = false;
+    }
+
+    internal void Engage(MonsterUnit monster, PopulationUnit bot)
+    {
+        if (!PopulationService.PopulationCanHunt(bot, monster)) return;
+        if (monster.PopulationTarget == null) monster.NextSwingMs = NowMs + 500;
+        monster.PopulationTarget = bot; monster.Returning = false;
+    }
+
+    private void FightPopulation(MonsterUnit monster, MapInstance map, long now)
+    {
+        var bot = monster.PopulationTarget!;
+        if (bot.Dead || bot.Removed || bot.Target != monster || !PopulationService.PopulationCanHunt(bot, monster)
+            || Distance(monster.Home.X, monster.Home.Z, bot.X, bot.Z) > Math.Max(20, monster.Template.LeashDistance))
+        {
+            Disengage(monster, map); return;
+        }
+        float distance = Distance(monster.X, monster.Z, bot.X, bot.Z);
+        if (distance <= monster.Template.AttackRange + 0.5f)
+        {
+            if (monster.Moving) { monster.Moving = false; SendStop(monster, now); }
+            if (now >= monster.NextSwingMs && AttackPopulation != null)
+            {
+                monster.NextSwingMs = now + Math.Max(500, monster.Template.SwingIntervalMs);
+                monster.Face = Angle(monster.X, monster.Z, bot.X, bot.Z);
+                loop.TrackRuntimeDetached("monster population attack", () => AttackPopulation(monster, bot));
+            }
+        }
+        else if (monster.Template.SpeedCm > 0 && (!monster.Moving || now >= monster.NextChaseMs))
+        {
+            monster.NextChaseMs = now + 400;
+            float fraction = Math.Min(12, Math.Max(0, distance - monster.Template.AttackRange * 0.8f)) / Math.Max(0.1f, distance);
+            WalkTo(monster, map, monster.X + (bot.X - monster.X) * fraction, monster.Z + (bot.Z - monster.Z) * fraction, 1);
+        }
     }
 
     private void FightPet(MonsterUnit m, MapInstance map, long now)
@@ -541,6 +582,7 @@ public sealed class MonsterService : MonsterBrain, IGameTicker
     {
         SetTarget(m, null);
         m.PetTarget = null;
+        m.PopulationTarget = null;
         m.Returning = true;
         if (m.Template.SpeedCm > 0) WalkTo(m, map, m.Home.X, m.Home.Z, 2f); // buff 901501: +100 % MSPD on the way back
     }
@@ -611,6 +653,7 @@ public sealed class MonsterService : MonsterBrain, IGameTicker
         m.Moving = false;
         SetTarget(m, null);
         m.PetTarget = null;
+        m.PopulationTarget = null;
         await world.ToUnitViewersAsync(m, CombatService.AoiAttrChange, Hp(m));
         await world.ToUnitViewersAsync(m, CombatService.EntityBaseChange, m.StateChange());
         if (m.RuntimeMap.Kind != RuntimeMapKind.PublicLine)

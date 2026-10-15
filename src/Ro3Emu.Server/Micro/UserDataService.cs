@@ -13,7 +13,7 @@ namespace Ro3Emu.Server.Micro;
 /// including itself.
 /// </summary>
 public sealed class UserDataService(SocialOwnerCache cache, OwnerRegistry owners, GameLoop loop, SessionRegistry sessions, GuildService guilds,
-    IOptions<ServerOptions> options, ILogger<UserDataService> log) : IMicroService
+    IOptions<ServerOptions> options, ILogger<UserDataService> log, PopulationService population) : IMicroService
 {
     // (inferred) Full profile replies use increasing versions, so a previous guild/online snapshot is replaceable.
     // The original per-field version allocation is not exported; this service already returns all requested roles.
@@ -30,7 +30,13 @@ public sealed class UserDataService(SocialOwnerCache cache, OwnerRegistry owners
         if (args is IDictionary<object, object?> map && map.TryGetValue("UidFieldVersions", out var v) && v is IDictionary<object, object?> uids)
         {
             var ids = uids.Keys.Select(key => long.TryParse(key.ToString(), out long id) ? id : 0L)
-                .Where(id => id > 0).Distinct().ToArray();
+                .Where(id => id > 0 && !PopulationService.IsUid(id)).Distinct().ToArray();
+            foreach (var key in uids.Keys)
+                if (long.TryParse(key.ToString(), out long botId) && PopulationService.IsUid(botId)
+                    && population.Profile(botId, Interlocked.Increment(ref version), options.Value.ClusterId) is { } botProfile)
+                    results.Add(botProfile);
+            if (ids.Length == 0)
+                return new Dictionary<string, object?> { ["Ret"] = MicroServiceRouter.Ret(true), ["Results"] = results.ToArray() };
             // Guild state has an entity revision separate from the role vector. Until guild publication
             // reaches this projection, a small worker snapshot validates it on every batch.
             while (true)

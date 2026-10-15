@@ -50,6 +50,7 @@ public sealed class MonsterUnit : WorldUnit
     // AI
     public long NextRoamMs { get; set; }
     public GameSession? Target { get; set; }
+    internal PopulationUnit? PopulationTarget { get; set; }
     /// <summary>Tower pet currently drawing this monster's attacks; owner remains the fallback target (inferred).</summary>
     public TowerPetUnit? PetTarget { get; set; }
     public long NextSwingMs { get; set; }

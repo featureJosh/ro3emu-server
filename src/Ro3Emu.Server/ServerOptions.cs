@@ -2,6 +2,9 @@ namespace Ro3Emu.Server;
 
 public sealed class ServerOptions
 {
+    /// <summary>Optional offline ambient player population.</summary>
+    public PopulationOptions Population { get; set; } = new();
+
     /// <summary>Address the client is told to connect to (server list gate addresses). Must be an IP literal.</summary>
     public string PublicHost { get; set; } = "127.0.0.1";
 
@@ -181,4 +184,12 @@ public sealed class OpenContentOptions
     public bool ForcesActivity(long activityId) => Enabled && Activities.Contains(activityId);
     public bool OpensStageActivities => Enabled && SeasonStageActivities;
     public bool ServerDayFree => Enabled && IgnoreServerDay;
+}
+
+/// <summary>Optional ambient players; bounded per occupied public map/line and across the server.</summary>
+public sealed class PopulationOptions
+{
+    public bool Enabled { get; set; }
+    public int PerMap { get; set; } = 20;
+    public int MaxTotal { get; set; } = 100;
 }
