@@ -8,6 +8,55 @@ built for a couch distance. It is a remake, not a reskin of the mobile UI.
 Status legend as in [ROADMAP.md](../../../ROADMAP.md): `[x]` done and verified in game, `[ ] 🔄` in progress, `[ ]`
 not started, `❓` needs investigation. Tick an item only after it works in game.
 
+## Handoff for the next agent (2026-10-15)
+
+**State.** Phase 0 (controller works everywhere on the stock UI) is largely done and verified by scripted runs: pad-only
+login without passwords, character select, tutorial guide, bag/equip navigation, tabs, item use, on-screen keyboard,
+PS5 glyphs on stock key labels. **Nothing looks Diablo-like yet**: the player expects that, and it is Phase 2/3. The
+player asked for a full remake, no shortcuts.
+
+**Code** (all in `src/Ro3Emu.ClientHooks`): `Controller.cs` (bindings on the game's Input System actions, camera,
+virtual cursor, mode select hooks, own per-frame button edges), `ControllerIni.cs` (defaults + parser, tested),
+`UiNav.cs` (menu navigation, guide mode), `Osk.cs` (on-screen keyboard), `Overlay.cs` (our canvas, prompt bar,
+`Overlay.Scale`), `Glyphs.cs` (PS5 sprites by control path, stock key labels -> glyphs), `Diagnostics.cs` (dev commands),
+`UiTweaks.cs` (mode-select relabel, password row hidden). Server: `RequirePasswords` (off in appsettings).
+
+**Dev loop (use it, do not ask the player to restart or press buttons):**
+1. Build: `RO3_CLIENT_DIR="$PWD/../RO3 Launcher/Client" dotnet build src/Ro3Emu.ClientHooks` (toolchain in CLAUDE.md).
+2. `tools/linux/dev/restart-client.sh`: installs the DLL (atomic rename), restarts the client, waits for the login panel.
+3. `cat tools/linux/dev/to-world.txt more-commands.txt | tools/linux/dev/cmd.sh`: reaches the world by virtual pad.
+4. Commands (one per line, one per frame): `focus ignore` (first; input works while the window is in the background),
+   `verbose`, `pad <GamepadButton>` (South/East/West/North/DpadUp/LeftShoulder/LeftTrigger/RightStick/Start/Select...;
+   a virtual `Ro3emuTestPad`, the real DualSense overwrites injected states), `key <Key>`, `wait <frames>`,
+   `waitmenu <part of panel name> [seconds]`, `select <object name>`, `shot <name>` -> `<client>/ro3emu/shot-<name>.png`,
+   `tree <object> [depth]` -> `ro3emu/tree.txt`, `find`, `panels`, `actions` (real Input System action names), `lua`,
+   `luacall`. Log: `~/.local/share/ro3emu/prefix/drive_c/users/steamuser/AppData/LocalLow/gravity/ro3/Player.log`.
+5. Read the screenshots; restart the server with `start-server.sh --Ro3Emu:Population:Enabled=true
+   --Ro3Emu:Population:PerMap=50 --Ro3Emu:Population:MaxTotal=50` when server code changes.
+
+**Gotchas learned.** Use Input System action names (`ClosePanel`, `InteractiveSkill_01`), not Lua `enum_InputKey` keys.
+Game buttons are Selectables, but item cells (`UIDragButton`) and many links (`ClickEvent`) are plain click handlers.
+Key labels are `InputBinder` (`m_inputKey`, `m_tip`, `m_view`), often inside a layout-group badge. The guide panel
+blocks Esc and hotkeys until its hole is clicked. `UiTweaks.Tick` can be pumped more than once a frame (guarded).
+Commit only your own files: another agent has uncommitted `ClickAttackTrace.cs`, a `LuaPatches.cs` hunk, guide and
+`tools/Loc` edits. The player's `controller.ini` still has a temporary `OpenBag = <Gamepad>/rightStickPress`; remove it
+once an in-game way to open the bag exists (radial menu).
+
+**Next goals, in order:**
+1. **Phase 2 HUD (Diablo-style), the visible change the player is waiting for.** Inventory the PC HUD widgets with
+   `tree` (skill bar `UI_Sys_Main_JoyStickSkillWidget_PC`, props/potions `UI_Sys_Main_PropsWidget_PC`, avatar/HP-SP
+   `Transf_Avatar`, target `UI_Sys_Main_TargetAvatarInfoWidget_PC`, EXP bar). Build on `Overlay`: bottom-centre bar with
+   HP orb (left), SP orb (right), six skill slots with glyphs, cooldown fills (mirror the stock slot Images' sprite and
+   fillAmount), D-pad potions, EXP line. Hide the stock skill bar/bars with CanvasGroup alpha 0 (keep them running as the
+   data source). Size by `Overlay.Scale`; check at 1080p and 4K (player plays at 4K; glyphs are currently "too big").
+2. **Radial menu** on TOUCHPAD/CREATE or hold Start: bag, equip, skills, character, map, quests, guild, friends, mail,
+   shop, settings (call the same actions as the stock HUD buttons). Replaces the temporary R3 bag binding.
+3. **World interaction:** context prompt (✕ talk / pick up / portal) and soft targeting (R1 cycle, target frame).
+4. **Controller settings page** (in-game remap writing `controller.ini`, glyph style, UiScale/GlyphScale, sensitivity).
+5. **Phase 3 rebuilt menus** in usage order (inventory with paper doll first), then the rest of the roadmap above.
+6. Open issues: Options glyph reads poorly; prompt bar placement vs. HUD; camera speed/sign unverified; L3 OpenMap
+   and other defaults unreviewed; English text/grammar pass (separate roadmap item).
+
 ## How it is built
 
 - **Code:** client hooks (`src/Ro3Emu.ClientHooks`), C# loaded into the client. The signed Lua cannot be changed, so

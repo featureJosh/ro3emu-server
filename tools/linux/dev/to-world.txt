@@ -1,0 +1,15 @@
+focus ignore
+verbose
+waitmenu LoginPanel
+select Enter_Btn
+pad South
+wait 120
+select Login_Btn
+pad South
+waitmenu ChooseRole
+wait 90
+select Login_Btn
+pad South
+waitmenu Guide 90
+pad South
+wait 30
