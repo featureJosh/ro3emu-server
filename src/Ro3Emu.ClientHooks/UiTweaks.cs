@@ -20,11 +20,14 @@ namespace Ro3Emu.ClientHooks
         private const string MobileColumn = "PCMobile_RTransform";
 
         private static readonly HashSet<int> Done = new HashSet<int>();
-        private static int _frame;
+        private static int _frame, _lastFrame = -1;
 
         /// <summary>Called every frame; looks for the views every 10th frame (GameObject.Find only sees active objects).</summary>
         public static void Tick()
         {
+            // The pump (ServerImAdapter's per-frame call) can run more than once a frame; everything here is per frame.
+            if (Time.frameCount == _lastFrame) return;
+            _lastFrame = Time.frameCount;
             Diagnostics.AutoDump();
             Diagnostics.PollCommandFile();
             TextFit.Tick();

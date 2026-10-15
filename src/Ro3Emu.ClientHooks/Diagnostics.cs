@@ -54,6 +54,12 @@ namespace Ro3Emu.ClientHooks
                     case "verbose":
                         Verbose = parts.Length < 2 || parts[1] != "off";
                         break;
+                    case "waitmenu":
+                        // "waitmenu <part of the menu name> [timeout seconds]": pause the queue until that menu has the pad.
+                        var w = parts.Length > 1 ? parts[1].Split(' ') : new[] { "" };
+                        _waitMenu = w[0];
+                        _waitUntil = Time.realtimeSinceStartup + (w.Length > 1 && float.TryParse(w[1], out float timeout) ? timeout : 60f);
+                        break;
                     case "wait":
                         _wait = parts.Length > 1 && int.TryParse(parts[1], out int frames) ? frames : 30;
                         break;
@@ -123,7 +129,17 @@ namespace Ro3Emu.ClientHooks
         public static void PollCommandFile()
         {
             if (_release != null && --_releaseIn <= 0) { var r = _release; _release = null; r(); }
-            if (_wait > 0) _wait--;
+            if (_waitMenu != null)
+            {
+                bool found = UiNav.MenuName.IndexOf(_waitMenu, StringComparison.OrdinalIgnoreCase) >= 0;
+                if (found || Time.realtimeSinceStartup > _waitUntil)
+                {
+                    Debug.Log("[Ro3Emu.Diag] waitmenu " + _waitMenu + (found ? ": " + UiNav.MenuName : ": timed out"));
+                    _waitMenu = null;
+                    _wait = 30; // let it finish opening
+                }
+            }
+            else if (_wait > 0) _wait--;
             else if (Queue.Count > 0) Run(Queue.Dequeue());
             if (++_pollFrame % 60 != 0) return;
             string file = System.IO.Path.Combine(Dir(), "cmd.txt");
@@ -137,6 +153,8 @@ namespace Ro3Emu.ClientHooks
         // cmd.txt lines run one per frame; "wait <frames>" pauses the queue.
         private static readonly System.Collections.Generic.Queue<string> Queue = new System.Collections.Generic.Queue<string>();
         private static int _pollFrame, _wait, _releaseIn;
+        private static string _waitMenu;
+        private static float _waitUntil;
         private static Action _release;
         private static UnityEngine.InputSystem.Gamepad _testPad;
 

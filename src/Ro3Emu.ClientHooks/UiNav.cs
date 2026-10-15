@@ -43,6 +43,9 @@ namespace Ro3Emu.ClientHooks
         private static bool _escDown;
         private static Image[] _ring;
 
+        /// <summary>The menu that has the pad ("" when none; the guide panel's name while a guide waits).</summary>
+        public static string MenuName => _panel != null ? _panel.name : "";
+
         /// <summary>A menu is open and has the controller.</summary>
         public static bool Active => _panel != null;
 
@@ -353,7 +356,9 @@ namespace Ro3Emu.ClientHooks
                 float along = Vector2.Dot(d, dir);
                 if (along <= 1f) continue;
                 float side = Math.Abs(dir.x != 0 ? d.y : d.x);
-                float score = along + side * 2f;
+                // Inside the 45° cone first (so "right" crosses to the next window rather than to a slot just below);
+                // outside it only when nothing is inside.
+                float score = along + side * 2f + (side > along ? 100000f : 0f);
                 if (score < bestScore) { best = s; bestScore = score; }
             }
             if (best == null) return;
@@ -403,26 +408,42 @@ namespace Ro3Emu.ClientHooks
             if (Keyboard.current != null) InputSystem.QueueStateEvent(Keyboard.current, new KeyboardState());
         }
 
-        /// <summary>L1/R1: the panel's top-most toggle group with two or more toggles is its tab bar.</summary>
-        private static void Tab(int step)
+        private static readonly Dictionary<int, int> TabIndex = new Dictionary<int, int>();
+
+        /// <summary>The focused window's top-most tab bar: the items under one ToggleGroup object (real Toggles, or the
+        /// game's ClickEvent tabs, e.g. the Backpack's Type1/Type2_ClickEvent), two or more, in reading order.</summary>
+        private static List<Component> TabBar(out int key)
         {
-            ToggleGroup bar = null;
+            key = 0;
+            List<Component> bar = null;
             float barY = float.MinValue;
-            var tabs = new List<Toggle>();
             foreach (var group in FocusPanel.GetComponentsInChildren<ToggleGroup>(false))
             {
-                var mine = new List<Toggle>();
-                foreach (var s in Items) if (s is Toggle t && t.group == group) mine.Add(t);
-                if (mine.Count < 2) continue;
-                float y = ScreenRect(mine[0]).center.y;
-                if (y > barY) { bar = group; barY = y; tabs = mine; }
+                var tabs = new List<Component>();
+                foreach (var c in Items) if (c.transform.IsChildOf(group.transform) || c is Toggle t && t.group == group) tabs.Add(c);
+                if (tabs.Count < 2) continue;
+                float y = ScreenRect(group).center.y;
+                if (y <= barY) continue;
+                bar = tabs; barY = y; key = group.GetInstanceID();
             }
+            if (bar == null) return null;
+            bool vertical = Math.Abs(ScreenRect(bar[0]).center.x - ScreenRect(bar[bar.Count - 1]).center.x) < 4f;
+            bar.Sort((a, b) => vertical ? ScreenRect(b).center.y.CompareTo(ScreenRect(a).center.y) : ScreenRect(a).center.x.CompareTo(ScreenRect(b).center.x));
+            return bar;
+        }
+
+        /// <summary>L1/R1: previous / next tab. The current tab is the Toggle that is on, else the one last chosen here.</summary>
+        private static void Tab(int step)
+        {
+            var bar = TabBar(out int key);
             if (bar == null) return;
-            bool vertical = Math.Abs(ScreenRect(tabs[0]).center.x - ScreenRect(tabs[tabs.Count - 1]).center.x) < 4f;
-            tabs.Sort((a, b) => vertical ? ScreenRect(b).center.y.CompareTo(ScreenRect(a).center.y) : ScreenRect(a).center.x.CompareTo(ScreenRect(b).center.x));
-            int on = tabs.FindIndex(t => t.isOn);
-            var next = tabs[((on < 0 ? 0 : on) + step + tabs.Count) % tabs.Count];
-            Click(next);
+            // Our own index: the game's tab toggles do not always flip isOn when clicked (Backpack Type1/Type2), so isOn
+            // only seeds it the first time this bar is used.
+            if (!TabIndex.TryGetValue(key, out int on)) on = Math.Max(0, bar.FindIndex(c => c is Toggle t && t.isOn));
+            int next = ((on + step) % bar.Count + bar.Count) % bar.Count;
+            TabIndex[key] = next;
+            Click(bar[next]);
+            _focus = bar[next]; // the old focus is usually gone with the old tab's content
         }
 
         private static ScrollRect ScrollFor(Component s)
@@ -512,20 +533,18 @@ namespace Ro3Emu.ClientHooks
         }
 
         private static readonly List<(string, string)> PromptList = new List<(string, string)>();
+        private static bool _hasTabs;
 
         private static void Prompts()
         {
             PromptList.Clear();
             PromptList.Add((Control("MenuConfirm", "buttonSouth"), _focus is Slider ? "Adjust" : _focus is TMPro.TMP_InputField ? "Type" : "Select"));
             PromptList.Add((Control("MenuBack", "buttonEast"), "Back"));
-            foreach (var group in FocusPanel.GetComponentsInChildren<ToggleGroup>(false))
+            if (_frame % 10 == 0) _hasTabs = TabBar(out _) != null; // ponytail: rechecked with the scan, not every frame
+            if (_hasTabs)
             {
-                int n = 0;
-                foreach (var s in Items) if (s is Toggle t && t.group == group) n++;
-                if (n < 2) continue;
                 PromptList.Add((Control("MenuTabLeft", "leftShoulder"), ""));
                 PromptList.Add((Control("MenuTabRight", "rightShoulder"), "Tabs"));
-                break;
             }
             if (ScrollFor(_focus) != null) PromptList.Add(("<Gamepad>/rightStick/up", "Scroll"));
             Overlay.SetPrompts(PromptList);
