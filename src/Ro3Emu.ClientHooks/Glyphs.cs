@@ -56,14 +56,10 @@ namespace Ro3Emu.ClientHooks
             {
                 var tip = TipField.GetValue(binder) as TMPro.TMP_Text;
                 if (tip == null) continue;
-                var icon = tip.transform.parent != null ? tip.transform.parent.Find(IconName + tip.GetInstanceID()) : null;
                 Sprite sprite = on ? For(Controller.FirstBinding(KeyField.GetValue(binder) as string)) : null;
-                var badge = tip.transform.parent != null ? tip.transform.parent.GetComponent<Image>() : null;
                 if (sprite == null)
                 {
-                    if (icon != null) UnityEngine.Object.Destroy(icon.gameObject);
-                    tip.enabled = true;
-                    if (badge != null && icon != null) badge.enabled = true;
+                    Unreplace(tip);
                     // Controller mode: an action without a gamepad binding shows no keyboard key.
                     var view = ViewField.GetValue(binder) as GameObject;
                     if (on && view != null && view.activeSelf) view.SetActive(false);
@@ -71,18 +67,40 @@ namespace Ro3Emu.ClientHooks
                 }
                 var view2 = ViewField.GetValue(binder) as GameObject;
                 if (view2 != null && !view2.activeSelf) view2.SetActive(true);
-                tip.enabled = false;
-                if (badge != null) badge.enabled = false; // the small key badge behind the label (KeyPosition_Img)
-                if (icon == null) icon = MakeIcon(tip);
-                ((RectTransform)icon).localPosition = tip.transform.localPosition;
-                // Some labels (skill-bar corners) are tiny, so there is also a floor: 28 px at 1080p, in the label's canvas units.
-                var canvas = tip.canvas;
-                float floor = 28f * Controller.Setting("GlyphScale", 2f) / 2f * (canvas != null ? Screen.height / 1080f / canvas.scaleFactor : 1f);
-                float size = Math.Max(Math.Max(((RectTransform)tip.transform).rect.height, tip.fontSize * 1.25f) * Controller.Setting("GlyphScale", 2f), floor);
-                ((RectTransform)icon).sizeDelta = new Vector2(size, size);
-                var image = icon.GetComponent<Image>();
-                if (image.sprite != sprite) image.sprite = sprite;
+                // Some labels (skill-bar corners) are tiny, so there is also a floor: 28 px at 1080p.
+                Replace(tip, sprite, 28f * Controller.Setting("GlyphScale", 2f) / 2f);
             }
+            if (!on) StockPrompts.Restore();
+        }
+
+        /// <summary>Shows the glyph in place of a key label (hidden, with the small key badge behind it): label line height
+        /// x GlyphScale, at least <paramref name="floor"/> px at 1080p (exactly that with <paramref name="exact"/>).</summary>
+        internal static RectTransform Replace(TMPro.TMP_Text tip, Sprite sprite, float floor, bool exact = false)
+        {
+            var icon = tip.transform.parent != null ? tip.transform.parent.Find(IconName + tip.GetInstanceID()) : null;
+            tip.enabled = false;
+            var badge = tip.transform.parent != null ? tip.transform.parent.GetComponent<Image>() : null;
+            if (badge != null) badge.enabled = false; // the small key badge behind the label (KeyPosition_Img)
+            if (icon == null) icon = MakeIcon(tip);
+            ((RectTransform)icon).localPosition = tip.transform.localPosition;
+            var canvas = tip.canvas;
+            floor *= canvas != null ? Screen.height / 1080f / canvas.scaleFactor : 1f; // in the label's canvas units
+            float size = exact ? floor : Math.Max(Math.Max(((RectTransform)tip.transform).rect.height, tip.fontSize * 1.25f) * Controller.Setting("GlyphScale", 2f), floor);
+            ((RectTransform)icon).sizeDelta = new Vector2(size, size);
+            var image = icon.GetComponent<Image>();
+            if (image.sprite != sprite) image.sprite = sprite;
+            return (RectTransform)icon;
+        }
+
+        /// <summary>The key label again, without our glyph.</summary>
+        internal static void Unreplace(TMPro.TMP_Text tip)
+        {
+            var icon = tip.transform.parent != null ? tip.transform.parent.Find(IconName + tip.GetInstanceID()) : null;
+            if (icon == null) return;
+            UnityEngine.Object.Destroy(icon.gameObject);
+            tip.enabled = true;
+            var badge = tip.transform.parent.GetComponent<Image>();
+            if (badge != null) badge.enabled = true;
         }
 
         /// <summary>A square Image where the label was; Refresh sizes it (label line height x GlyphScale).</summary>

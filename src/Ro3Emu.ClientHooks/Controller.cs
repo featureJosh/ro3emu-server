@@ -64,6 +64,7 @@ namespace Ro3Emu.ClientHooks
             try
             {
                 bool on = Enabled;
+                UpdateEdges();
                 ControllerHud.Tick(on);
                 if (++_frame % 30 == 0)
                 {
@@ -225,17 +226,28 @@ namespace Ro3Emu.ClientHooks
         private static bool Pressed(Gamepad pad, string name) => Edge(Button(pad, name, out _), true);
         private static bool Released(Gamepad pad, string name) => Edge(Button(pad, name, out _), false);
 
-        // Per control: (frame, held before, held now). wasPressedThisFrame missed short presses here (the client's input
+        // Per control: (held last frame, held now). wasPressedThisFrame missed short presses here (the client's input
         // updates do not line up with Update; a scripted press was never seen), so edges are computed once per frame,
-        // the same for every check in that frame.
-        private static readonly Dictionary<InputControl, (int frame, bool before, bool now)> Edges = new Dictionary<InputControl, (int, bool, bool)>();
+        // the same for every check in that frame. Every control seen once is sampled every frame (UpdateEdges): sampled
+        // only when looked at, a press seen by one caller (UiNav in a menu) left a stale "held" for the next (Interact),
+        // which then missed every other press.
+        private static readonly Dictionary<ButtonControl, (bool before, bool now)> Edges = new Dictionary<ButtonControl, (bool, bool)>();
+        private static readonly List<ButtonControl> EdgeControls = new List<ButtonControl>();
+        private static int _edgeFrame;
 
-        /// <summary>The button went down (down = true) or up (down = false) since the frame it was last looked at.</summary>
+        private static void UpdateEdges()
+        {
+            if (_edgeFrame == Time.frameCount) return;
+            _edgeFrame = Time.frameCount;
+            foreach (var b in EdgeControls) Edges[b] = (Edges[b].now, b.isPressed);
+        }
+
+        /// <summary>The button went down (down = true) or up (down = false) this frame.</summary>
         internal static bool Edge(ButtonControl b, bool down)
         {
             if (b == null) return false;
-            int frame = Time.frameCount;
-            if (!Edges.TryGetValue(b, out var h) || h.frame != frame) Edges[b] = h = (frame, h.now, b.isPressed);
+            UpdateEdges();
+            if (!Edges.TryGetValue(b, out var h)) { EdgeControls.Add(b); Edges[b] = h = (b.isPressed, b.isPressed); } // first look: no edge
             return down ? h.now && !h.before : !h.now && h.before;
         }
         private static bool Held(Gamepad pad, string name) => Button(pad, name, out _)?.isPressed == true;

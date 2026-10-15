@@ -54,6 +54,7 @@ namespace Ro3Emu.ClientHooks
         {
             if (_escDown) { ReleaseEscape(); }
             if (!enabled || pad == null) { Close(); return; }
+            if (Diagnostics.Verbose && pad.buttonSouth.isPressed) Debug.Log("[Ro3Emu.UiNav] dbg south: panel=" + (_panel?.name ?? "-") + " guide=" + (_guide != null) + " osk=" + Osk.Open + " focus=" + (_focus?.name ?? "-") + " edge=" + Controller.Edge(pad.buttonSouth, true));
             if (++_frame % 10 == 0) Scan(); // ponytail: FindObjectsOfType<Canvas> every 10th frame; panel open/close events if it costs
             if (_panel == null) { Close(); return; }
             if (Osk.Open)
@@ -146,14 +147,15 @@ namespace Ro3Emu.ClientHooks
         /// ponytail: full GetComponentsInChildren every 6th frame; cache per panel if it shows in a profile.</summary>
         private static void Collect(Transform root, List<Component> into)
         {
+            var skip = StockPrompts.For(root)?.NoFocus;
             foreach (var s in Selectable.allSelectablesArray)
-                if (s.transform.IsChildOf(root) && Usable(s)) into.Add(s);
+                if (s.transform.IsChildOf(root) && Usable(s) && (skip == null || Array.IndexOf(skip, s.name) < 0)) into.Add(s);
             root.GetComponentsInChildren(false, Behaviours);
             foreach (var mb in Behaviours)
             {
                 if (!(mb is IPointerClickHandler) || mb is Selectable || mb.GetComponent<Selectable>() != null) continue;
                 if (mb.GetComponent<TMPro.TMP_Text>() != null) continue; // text with links (item tips title), not a control
-                if (Small(mb) && Usable(mb)) into.Add(mb);
+                if (Small(mb) && Usable(mb) && (skip == null || Array.IndexOf(skip, mb.name) < 0)) into.Add(mb);
             }
         }
 
@@ -324,7 +326,12 @@ namespace Ro3Emu.ClientHooks
                 }
             }
             _held = dir;
-            if (Pressed(pad, "MenuConfirm", "buttonSouth")) Click(_focus);
+            if (Pressed(pad, "MenuConfirm", "buttonSouth"))
+            {
+                string confirm = StockPrompts.For(_panel)?.Confirm;
+                if (_focus == null && confirm != null) Wheel.Run(confirm); // nothing to pick: the screen's own key (NPC dialog: Space continues)
+                else Click(_focus);
+            }
             if (Pressed(pad, "MenuBack", "buttonEast")) TapEscape();
             if (Pressed(pad, "MenuTabLeft", "leftShoulder")) Tab(-1);
             if (Pressed(pad, "MenuTabRight", "rightShoulder")) Tab(1);
@@ -547,6 +554,14 @@ namespace Ro3Emu.ClientHooks
 
         private static void Prompts()
         {
+            var stock = StockPrompts.For(_panel);
+            if (stock != null)
+            {
+                // The screen draws its own prompts: they get our glyphs and our bar stays off.
+                if (_frame % 5 == 0) StockPrompts.Skin(_panel, stock);
+                Overlay.SetPrompts(null);
+                return;
+            }
             PromptList.Clear();
             PromptList.Add((Control("MenuConfirm", "buttonSouth"), _focus is Slider ? "Adjust" : _focus is TMPro.TMP_InputField ? "Type" : "Select"));
             PromptList.Add((Control("MenuBack", "buttonEast"), "Back"));
