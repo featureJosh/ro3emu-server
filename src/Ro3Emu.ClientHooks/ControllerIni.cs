@@ -20,7 +20,8 @@ namespace Ro3Emu.ClientHooks
 # OpenMonsterHunt OpenWardrobe OpenCollection OpenLifeJob OpenEmoji OpenTask OpenRole OpenBag OpenSkill
 # OpenEquipGrowth ClosePanel (Esc) Jump OpenBattleReport FastPickUp FastPickUpAll FixTip Direction_Up Direction_Down
 # ActionPageLeft ActionPageRight GamePlaySkill_01..03.
-# Controller actions: CursorMode (toggle the menu cursor), LeftClick / RightClick (in cursor mode),
+# Controller actions: MenuWheel (tap: radial menu), CursorMode (on the same button: hold 0.5 s; toggles the mouse
+# cursor), LeftClick / RightClick (in cursor mode),
 # CameraZoom (hold, then right stick up/down). In menus: MenuConfirm, MenuBack, MenuTabLeft, MenuTabRight
 # (D-pad / left stick move the focus, right stick scrolls).
 # Tuning: CameraSpeedX / CameraSpeedY (negative inverts), CursorSpeed (pixels per second), Deadzone (0-1),
@@ -45,6 +46,7 @@ ShortCut_2 = <Gamepad>/dpad/right
 ClosePanel = <Gamepad>/start
 OpenMap = <Gamepad>/leftStickPress
 CameraZoom = <Gamepad>/rightStickPress
+MenuWheel = <Gamepad>/select
 CursorMode = <Gamepad>/select
 LeftClick = <Gamepad>/buttonSouth
 RightClick = <Gamepad>/buttonEast

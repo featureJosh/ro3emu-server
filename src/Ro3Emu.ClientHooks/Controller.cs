@@ -70,15 +70,17 @@ namespace Ro3Emu.ClientHooks
                 }
                 var pad = Gamepad.current;
                 if (!on || pad == null || !(Application.isFocused || Diagnostics.IgnoreFocus)) { EndCamera(); UiNav.Tick(null, false); return; }
-                if (Pressed(pad, "CursorMode"))
+                WheelAndCursorButton(pad);
+                if (Wheel.Open)
                 {
-                    _cursor = !_cursor;
-                    EndCamera();
-                    Sync(true);
-                    Debug.Log("[Ro3Emu.Controller] cursor mode " + (_cursor ? "on" : "off"));
+                    UiNav.Tick(pad, false);
+                    WheelPrompts.Clear();
+                    Wheel.Tick(pad, WheelPrompts);
+                    Overlay.SetPrompts(Wheel.Open ? WheelPrompts : null);
                 }
-                UiNav.Tick(pad, !_cursor);
-                if (UiNav.Active != _menu) { _menu = UiNav.Active; EndCamera(); Sync(true); }
+                else UiNav.Tick(pad, !_cursor);
+                bool menu = UiNav.Active || Wheel.Open;
+                if (menu != _menu) { _menu = menu; EndCamera(); Sync(true); }
                 if (_cursor) Cursor(pad);
                 else if (!_menu) Camera(pad);
             }
@@ -87,6 +89,42 @@ namespace Ro3Emu.ClientHooks
                 Debug.LogWarning("[Ro3Emu.Controller] " + e.GetType().Name + ": " + e.Message);
                 _frame = 0;
             }
+        }
+
+        private static readonly List<(string, string)> WheelPrompts = new List<(string, string)>();
+        private static float _wheelDown = -1f;
+        private static bool _held;
+
+        /// <summary>
+        /// MenuWheel (default Create / View) opens the radial menu on a tap, in the world (not over a menu). CursorMode on
+        /// the same control is a 0.5 s hold; on its own control it is a plain press.
+        /// </summary>
+        private static void WheelAndCursorButton(Gamepad pad)
+        {
+            string wheel = FirstBinding("MenuWheel") ?? "<Gamepad>/select", cursor = FirstBinding("CursorMode");
+            bool shared = cursor == wheel;
+            if (!shared && Pressed(pad, "CursorMode")) ToggleCursor();
+            if (Wheel.Open) { _wheelDown = -1f; return; }
+            var button = pad.TryGetChildControl(wheel.Substring(wheel.IndexOf('/') + 1)) as ButtonControl;
+            if (button == null) return;
+            if (button.isPressed)
+            {
+                if (_wheelDown < 0f) { _wheelDown = Time.unscaledTime; _held = false; }
+                else if (shared && !_held && Time.unscaledTime - _wheelDown > 0.5f) { _held = true; ToggleCursor(); }
+            }
+            else if (_wheelDown >= 0f)
+            {
+                _wheelDown = -1f;
+                if (!_held && !_cursor && !UiNav.Active) { EndCamera(); Wheel.Show(); }
+            }
+        }
+
+        private static void ToggleCursor()
+        {
+            _cursor = !_cursor;
+            EndCamera();
+            Sync(true);
+            Debug.Log("[Ro3Emu.Controller] cursor mode " + (_cursor ? "on" : "off"));
         }
 
         private static void Load()
@@ -150,7 +188,7 @@ namespace Ro3Emu.ClientHooks
 
         private static bool _reportedMissing;
         private static readonly HashSet<string> Pseudo = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight" };
+            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuWheel" };
 
         /// <summary>Every enabled Input System action: map, name, bindings (dev command "actions").</summary>
         internal static string DescribeActions()
@@ -253,7 +291,7 @@ namespace Ro3Emu.ClientHooks
         [DllImport("user32.dll")] private static extern bool SetCursorPos(int x, int y);
         [DllImport("user32.dll")] private static extern void mouse_event(uint flags, int dx, int dy, int data, UIntPtr extra);
 
-        private const uint LeftDown = 0x02, LeftUp = 0x04, RightDown = 0x08, RightUp = 0x10, Wheel = 0x800;
+        private const uint LeftDown = 0x02, LeftUp = 0x04, RightDown = 0x08, RightUp = 0x10, MouseWheel = 0x800;
 
         private static void Cursor(Gamepad pad)
         {
@@ -276,7 +314,7 @@ namespace Ro3Emu.ClientHooks
             {
                 int notches = (int)_scroll;
                 _scroll -= notches;
-                mouse_event(Wheel, 0, 0, notches * 120, UIntPtr.Zero);
+                mouse_event(MouseWheel, 0, 0, notches * 120, UIntPtr.Zero);
             }
         }
 
