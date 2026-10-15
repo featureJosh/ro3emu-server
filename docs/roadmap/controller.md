@@ -42,12 +42,15 @@ not started, `❓` needs investigation. Tick an item only after it works in game
 - [ ] 🔄 Overlay canvas + UI scale (`353bc6f`); theme (frame, fonts from the game's TMP assets, colours); glyph component that follows
   bindings and glyph style.
 - [x] Login, character select and world entry with the pad only (player, 2026-10-14; `353bc6f`).
+- [x] Menus verified by scripted run: login, character select (cards), bag + equip windows (item cells via UIDragButton), ○ Back closes the top window.
+- [ ] Cross-window focus (Equip -> Backpack) and R1/L1 tabs on the Backpack: not yet exercised.
 - [ ] 🔄 Navigation core: focus scan of the top panel (stock buttons, toggles, sliders, dropdowns, input fields, scroll
   views), spatial moves, focus ring, ✕ click / ○ back / L1 R1 tabs / R-stick scroll, hold-to-repeat.
 - [x] Glyph size readable on the skill bar (`36ca586`, player: "bigger now, too big"); tune size later.
 - [x] Start / ✕ interact bound: the ini must use Input System action names (`ClosePanel`, `InteractiveSkill_01`,
   `ExpandSkill_01`), not Lua `enum_InputKey` keys (`Esc`, `Interactive_1`); `actions` dev command lists them.
-- [ ] 🔄 Tutorial guide: its mask only passes clicks inside the highlighted hole, so it soft-locks a pad player and
+- [x] Tutorial guide with the pad: ring on the hole, ✕ clicks through (`13708ba`, verified by scripted run).
+- [ ] (was) Tutorial guide: its mask only passes clicks inside the highlighted hole, so it soft-locks a pad player and
   blocks Esc ("ESC action blocked by: Guide") and panel keys. Guide mode: ring on the hole, ✕ clicks through.
 - [ ] Glyphs too large in places now (player); per-context size.
 - [ ] Prompt bar on every screen (✕ Select, ○ Back, △/□ per screen), built from what the focused screen supports.
@@ -57,7 +60,8 @@ not started, `❓` needs investigation. Tick an item only after it works in game
 
 ## Phase 1: from launch to the world, without a keyboard
 
-- [ ] Login screen: focusable account field, on-screen keyboard (✕ type, □ delete, △ space, L1/R1 move cursor,
+- [x] Login without keyboard/mouse: no password (server `RequirePasswords` off, row hidden), focus starts on Start Game; on-screen keyboard for text fields (`c2d26fa`, `d248ad9`, scripted run).
+- [ ] Login screen polish: focusable account field, on-screen keyboard (✕ type, □ delete, △ space, L1/R1 move cursor,
   OPTIONS done), remember last account, ✕ to log in. Any account works on our server.
 - [ ] On-screen keyboard component, reused by chat, naming, search, mail, stall titles.
 - [ ] Server list, notices, agreements and pop-ups: navigable, ✕ / ○.
