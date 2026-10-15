@@ -66,6 +66,21 @@ namespace Ro3Emu.ClientHooks
                     case "wait":
                         _wait = parts.Length > 1 && int.TryParse(parts[1], out int frames) ? frames : 30;
                         break;
+                    case "stick":
+                        // "stick <x> <y> <frames>": the virtual pad's left stick held there (walk), then centred.
+                        var v = (parts.Length > 1 ? parts[1] : "").Split(' ');
+                        if (v.Length >= 2 && float.TryParse(v[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float sx)
+                            && float.TryParse(v[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float sy))
+                        {
+                            if (_testPad == null) _testPad = UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Gamepad>("Ro3emuTestPad");
+                            var device = _testPad;
+                            device.MakeCurrent();
+                            UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.GamepadState { leftStick = new Vector2(sx, sy) });
+                            _release = () => UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.GamepadState());
+                            _releaseIn = v.Length > 2 && int.TryParse(v[2], out int hold) ? hold : 60;
+                            Debug.Log("[Ro3Emu.Diag] stick " + sx + "," + sy + " for " + _releaseIn + " frames");
+                        }
+                        break;
                     case "pad":
                     case "key":
                         if (parts.Length > 1) Press(parts[0] == "pad", parts[1]);

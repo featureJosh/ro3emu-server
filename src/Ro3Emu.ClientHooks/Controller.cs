@@ -69,7 +69,7 @@ namespace Ro3Emu.ClientHooks
                     Glyphs.Refresh(on);
                 }
                 var pad = Gamepad.current;
-                if (!on || pad == null || !(Application.isFocused || Diagnostics.IgnoreFocus)) { EndCamera(); UiNav.Tick(null, false); return; }
+                if (!on || pad == null || !(Application.isFocused || Diagnostics.IgnoreFocus)) { EndCamera(); UiNav.Tick(null, false); Interact.Tick(null, false); return; }
                 WheelAndCursorButton(pad);
                 if (Wheel.Open)
                 {
@@ -81,6 +81,7 @@ namespace Ro3Emu.ClientHooks
                 else UiNav.Tick(pad, !_cursor);
                 bool menu = UiNav.Active || Wheel.Open;
                 if (menu != _menu) { _menu = menu; EndCamera(); Sync(true); }
+                Interact.Tick(pad, !_menu && !_cursor);
                 if (_cursor) Cursor(pad);
                 else if (!_menu) Camera(pad);
             }
@@ -188,7 +189,7 @@ namespace Ro3Emu.ClientHooks
 
         private static bool _reportedMissing;
         private static readonly HashSet<string> Pseudo = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuWheel" };
+            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuWheel", "Interact" };
 
         /// <summary>Every enabled Input System action: map, name, bindings (dev command "actions").</summary>
         internal static string DescribeActions()
