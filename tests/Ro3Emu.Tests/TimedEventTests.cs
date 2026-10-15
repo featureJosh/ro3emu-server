@@ -106,6 +106,19 @@ public sealed class TimedEventTests : IAsyncLifetime
     }
 
     private GameSession Session(BotClient bot) => Service<SessionRegistry>().All().Single(s => s.Account == bot.Account && s.Role != null);
+    /// <summary>
+    /// Unix second <paramref name="minutes"/> after the exported opening of activity <paramref name="todo"/> on the
+    /// given November 2026 day, in the test clock's civil zone. Derived from DailyActivityConfig so the fixtures
+    /// follow the export instead of a hard-coded UTC time (the Asia export opens these at 18:30, not 17:00).
+    /// </summary>
+    private long WindowSecond(int todo, int day, int minutes)
+    {
+        var times = Service<GameData>().Row("DailyActivityConfig", todo)!.Value.GetProperty("_kTime");
+        int start = (int)GameData.Number(times[0])!.Value;
+        var local = new DateTime(2026, 11, day, start / 100, start % 100, 0).AddMinutes(minutes);
+        return new DateTimeOffset(local, clock.LocalTimeZone.GetUtcOffset(local)).ToUnixTimeSeconds();
+    }
+
     private Task OverrideMatchShapeAsync(int entry, int players, int teamSize) => OnLoop(() =>
     {
         var name = entry == 2 ? "EatChickenMatchConfig" : "DragonIslandMatchConfig";
@@ -120,7 +133,7 @@ public sealed class TimedEventTests : IAsyncLifetime
     private async Task StartChickenAsync(params BotClient[] players)
     {
         foreach (var player in players) await Gm(player, "!lvl 99");
-        clock.Set(new DateTimeOffset(2026, 11, 10, 16, 5, 0, TimeSpan.Zero).ToUnixTimeSeconds());
+        clock.Set(WindowSecond(114, 10, 5));
         await OverrideMatchShapeAsync(2, players.Length, 1);
         foreach (var player in players)
         {
@@ -309,7 +322,7 @@ public sealed class TimedEventTests : IAsyncLifetime
         Assert.Equal(ErrorCodes.FeatureUnavailable,
             (await Next(alice, TimedBattleService.StartMatch, StartMatchResp.Parser)).Result);
         await Gm(alice, "!lvl 99"); await Gm(bob, "!lvl 99");
-        clock.Set(new DateTimeOffset(2026, 11, day, 16, 5, 0, TimeSpan.Zero).ToUnixTimeSeconds());
+        clock.Set(WindowSecond(todo, day, 5));
         Assert.True(Service<TimedTodoSchedule>().IsOpen(todo));
         var exportedMatch = Service<GameData>().Row(entry == 2 ? "EatChickenMatchConfig" : "DragonIslandMatchConfig", entry)!.Value;
         Assert.Equal(entry == 2 ? 100 : 30, GameData.Int(exportedMatch, "_kStartQuantity"));
@@ -414,7 +427,12 @@ public sealed class TimedEventTests : IAsyncLifetime
             Assert.Equal(20, Service<CharacterService>().CountOf(Session(bob), 17));
             await alice.SendGameAsync(TimedBattleService.DragonClaim, new DragonIslandClaimRankRewardReq());
             Assert.Equal(0, (await Next(alice, TimedBattleService.DragonClaim, DragonIslandClaimRankRewardRes.Parser)).ErrorCode);
-            Assert.Equal(10, Service<CharacterService>().CountOf(Session(alice), 1200000));
+            // Rank-2 award quantity comes from the export (AwardConfig 10050002 grants 3 in the Asia data), not a literal.
+            long rankAward = GameData.Int(Service<GameData>().Row("DragonIslandLevelConfig", 2)!.Value, "_iAward");
+            int rankCount = Service<GameData>().Table("AwardConfig")[rankAward.ToString()][0].GetProperty("_kAward")
+                .EnumerateArray().Where(g => GameData.Number(g[0]) == 1200000).Sum(g => (int)GameData.Number(g[1])!.Value);
+            Assert.True(rankCount > 0);
+            Assert.Equal(rankCount, Service<CharacterService>().CountOf(Session(alice), 1200000));
             await alice.SendGameAsync(TimedBattleService.DragonClaim, new DragonIslandClaimRankRewardReq());
             Assert.Equal(ErrorCodes.TaskRequirements,
                 (await Next(alice, TimedBattleService.DragonClaim, DragonIslandClaimRankRewardRes.Parser)).ErrorCode);
@@ -431,7 +449,7 @@ public sealed class TimedEventTests : IAsyncLifetime
         await using var dan = await InWorld("Dan");
         var players = new[] { alice, bob, cara, dan };
         foreach (var player in players) await Gm(player, "!lvl 99");
-        clock.Set(new DateTimeOffset(2026, 11, 10, 16, 5, 0, TimeSpan.Zero).ToUnixTimeSeconds());
+        clock.Set(WindowSecond(114, 10, 5));
         await OverrideMatchShapeAsync(2, 4, 2);
         foreach (var player in players)
         {
@@ -598,7 +616,7 @@ public sealed class TimedEventTests : IAsyncLifetime
         {
             var detachB = BeginHandover(b);
             await bWaiting.Task.WaitAsync(TimeSpan.FromSeconds(8));
-            clock.Set(new DateTimeOffset(2026, 11, 10, 16, 10, 0, TimeSpan.Zero).ToUnixTimeSeconds());
+            clock.Set(WindowSecond(114, 10, 10));
             await OnLoop(() => { Service<TimedBattleService>().Tick(default); return Task.CompletedTask; });
             await settled.Task.WaitAsync(TimeSpan.FromSeconds(8));
             var result = await Next(cara, TimedBattleService.ChickenResult, ChickenResultNotify.Parser);
@@ -681,7 +699,7 @@ public sealed class TimedEventTests : IAsyncLifetime
             Assert.Equal(0, Service<CharacterService>().CountOf(a, 7));
             Assert.Equal(0, CountRows(receiptCount));
             Assert.Equal(0, CountRows(obligationCount));
-            clock.Set(new DateTimeOffset(2026, 11, 10, 16, 10, 0, TimeSpan.Zero).ToUnixTimeSeconds());
+            clock.Set(WindowSecond(114, 10, 10));
             await OnLoop(() => { Service<TimedBattleService>().Tick(default); return Task.CompletedTask; });
             await cara.SendGameAsync(TimedBattleService.DragonClaim, new DragonIslandClaimRankRewardReq());
             Assert.Equal(ErrorCodes.FeatureUnavailable,
