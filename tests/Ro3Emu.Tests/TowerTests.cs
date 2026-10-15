@@ -345,11 +345,12 @@ public sealed class TowerTests : IAsyncLifetime
         await other.SendGameAsync(TowerService.ClaimFirstPass, new ClimbTowerClaimFirstPassRewardReq());
         var claim = await Next(other, TowerService.ClaimFirstPass, ClimbTowerClaimFirstPassRewardRes.Parser);
         Assert.Equal((0, 10L), (claim.Result, claim.ClaimedUpToLayer));
-        Assert.Equal(10, Count(other, 1250709));
+        // Floor-10 server-first milestone: AwardConfig 10011010 = [[1250709, 3, 0]] (via MultiverseGroupConfig 11010 _iValue_default).
+        Assert.Equal(3, Count(other, 1250709));
         Assert.Equal(0, Session(other).Tower!.LayerConfID); // honor is independent of personal clears
         await other.SendGameAsync(TowerService.ClaimFirstPass, new ClimbTowerClaimFirstPassRewardReq());
         Assert.Equal(ErrorCodes.Parameter, (await Next(other, TowerService.ClaimFirstPass, ClimbTowerClaimFirstPassRewardRes.Parser)).Result);
-        Assert.Equal(10, Count(other, 1250709));
+        Assert.Equal(3, Count(other, 1250709));
         // Replaying the floor cannot replace the recorded first pass.
         var replay = await EnterFloor(winner, 10, inside: true);
         await Kill(winner, Assert.Single(replay.Monsters).Uuid);
