@@ -37,11 +37,12 @@ not started, `❓` needs investigation. Tick an item only after it works in game
 - [x] Controller card uses its own mode value 4; no mobile HUD on re-pick (`79e753e`, verified by the player).
 - [x] Glyphs replace stock key labels (`InputBinder`) in controller mode (`79e753e`, verified by the player: shown, but
   too small to read the shapes at the label size).
-- [ ] 🔄 `GlyphScale` (default 2.4x, live) for readable glyphs; to check in game.
+- [ ] 🔄 `GlyphScale` (default 2.4x, live) plus a 34 px floor: 2.4x was still ~14 px on the skill bar (screenshot).
 - [ ] 🔄 HUD inventory: dump the PC HUD widgets (skill bar, HP/SP, buffs, minimap, quest tracker, chat, team, target).
-- [ ] Overlay canvas + UI scale; theme (frame, fonts from the game's TMP assets, colours); glyph component that follows
+- [ ] 🔄 Overlay canvas + UI scale (`353bc6f`); theme (frame, fonts from the game's TMP assets, colours); glyph component that follows
   bindings and glyph style.
-- [ ] Navigation core: focus scan of the top panel (stock buttons, toggles, sliders, dropdowns, input fields, scroll
+- [x] Login, character select and world entry with the pad only (player, 2026-10-14; `353bc6f`).
+- [ ] 🔄 Navigation core: focus scan of the top panel (stock buttons, toggles, sliders, dropdowns, input fields, scroll
   views), spatial moves, focus ring, ✕ click / ○ back / L1 R1 tabs / R-stick scroll, hold-to-repeat.
 - [ ] Prompt bar on every screen (✕ Select, ○ Back, △/□ per screen), built from what the focused screen supports.
 - [ ] Device detection: controller connected / disconnected, "press any button" wake, keyboard and mouse still work
