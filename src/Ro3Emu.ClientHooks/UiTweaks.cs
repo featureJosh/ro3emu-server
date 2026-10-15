@@ -76,19 +76,63 @@ namespace Ro3Emu.ClientHooks
             foreach (var t in content.GetComponentsInChildren<Transform>(true))
                 if (t.name == MobileColumn) { mobile = t; break; }
             if (mobile == null) return false;
-            var texts = mobile.GetComponentsInChildren<TMPro.TMP_Text>(true);
+            // Names logged in game (2026-10-14): PCModel_TTxt title, PCModelContent_TTxt blurb, PCMode01-03_TTxt the three
+            // feature captions, Txt_Null "In Development - Coming Soon" on the overlay that blocks the column.
+            Transform title = null, overlay = null;
             int set = 0;
-            foreach (var text in texts)
+            foreach (var text in mobile.GetComponentsInChildren<TMPro.TMP_Text>(true))
             {
-                Debug.Log("[Ro3Emu.UiTweaks] mode select Mobile text " + text.name + ": " + text.text);
-                if (text.name.Contains("Content")) { text.enableAutoSizing = true; text.text = ControllerBlurb; set++; }
-                else if (text.name.Contains("Model") || text.name.Contains("Mode")) { text.text = "Controller"; set++; }
+                if (Labels.TryGetValue(text.name, out var label))
+                {
+                    if (text.name == "PCModelContent_TTxt") text.enableAutoSizing = true;
+                    text.text = label;
+                    set++;
+                }
+                if (text.name == "PCModel_TTxt") title = text.transform;
+                if (text.name == "Txt_Null") overlay = text.transform.parent;
             }
+            if (overlay != null)
+            {
+                Debug.Log("[Ro3Emu.UiTweaks] mode select overlay: " + Describe(overlay, mobile));
+                // The overlay node goes, unless it also holds the card itself (then only its text does).
+                if (overlay != mobile && (title == null || !title.IsChildOf(overlay))) overlay.gameObject.SetActive(false);
+                else foreach (var t in overlay.GetComponentsInChildren<TMPro.TMP_Text>(true)) if (t.name == "Txt_Null") t.gameObject.SetActive(false);
+            }
+            // Whatever dims or locks the column.
+            foreach (var group in mobile.GetComponentsInChildren<CanvasGroup>(true))
+            {
+                group.alpha = 1f;
+                group.interactable = true;
+                group.blocksRaycasts = true;
+            }
+            foreach (var selectable in mobile.GetComponentsInChildren<UnityEngine.UI.Selectable>(true)) selectable.interactable = true;
             if (set > 0) Debug.Log("[Ro3Emu.UiTweaks] mode select: Mobile column relabelled Controller (" + set + " text(s))");
             return set > 0;
         }
 
-        private const string ControllerBlurb = "Modern PC controls on a gamepad. Left stick moves, right stick turns the camera, "
-            + "View/Select toggles a cursor for menus. Remap in ro3emu/controller.ini.";
+        private static readonly Dictionary<string, string> Labels = new Dictionary<string, string>
+        {
+            { "PCModel_TTxt", "Controller" },
+            { "PCModelContent_TTxt", "For players who use a gamepad. Modern PC controls; remap in ro3emu/controller.ini" },
+            { "PCMode01_TTxt", "Stick Movement" },
+            { "PCMode02_TTxt", "Stick Camera" },
+            { "PCMode03_TTxt", "Target Lock Mode" },
+        };
+
+        /// <summary>Path from the column and the components of the node and its children, for the log.</summary>
+        private static string Describe(Transform node, Transform root)
+        {
+            string path = node.name;
+            for (var p = node.parent; p != null && p != root.parent; p = p.parent) path = p.name + "/" + path;
+            var parts = new List<string>();
+            foreach (var t in node.GetComponentsInChildren<Transform>(true))
+            {
+                var names = new List<string>();
+                foreach (var c in t.GetComponents<Component>()) if (c != null && !(c is Transform)) names.Add(c.GetType().Name);
+                parts.Add(t.name + "[" + string.Join(",", names) + "]");
+            }
+            return path + " :: " + string.Join(" ", parts);
+        }
+
     }
 }
