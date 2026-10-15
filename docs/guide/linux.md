@@ -38,8 +38,10 @@ dotnet run --project src/Ro3Emu.ClientTools -- patch "$RO3_CLIENT_DIR" http://12
 tools/linux/play.sh
 ```
 
-`play.sh` uses `WINEPREFIX` (default `~/.local/share/ro3emu/prefix`) and `PROTONPATH` (default `GE-Proton`, which
-umu downloads if needed; point it at an installed Proton folder to avoid that). Unity's log is in the prefix at
+`play.sh` uses `WINEPREFIX` (default `~/.local/share/ro3emu/prefix`) and `PROTONPATH`. If it is unset, the script
+selects the newest GE-Proton directory it finds in the usual per-user and system Steam compatibility-tool directories.
+If none is installed, it falls back to umu's `GE-Proton` alias, which may download a build. Set `PROTONPATH`
+explicitly to choose another installed Proton directory. Unity's log is in the prefix at
 `drive_c/users/steamuser/AppData/LocalLow/gravity/ro3/Player.log`.
 
 ## Asia recovery client (RO3 Asia Launcher)

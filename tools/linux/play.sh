@@ -9,7 +9,30 @@ set -euo pipefail
 [[ -f "$RO3_CLIENT_DIR/ro3emu-backup/RO3.ClientSecurity.dll" || ! -f "$RO3_CLIENT_DIR/ro3_Data/Managed/RO3.ClientSecurity.dll" ]] \
   || { echo "client is not patched; run ClientTools patch first" >&2; exit 1; }
 export WINEPREFIX="${WINEPREFIX:-$HOME/.local/share/ro3emu/prefix}"
-export PROTONPATH="${PROTONPATH:-GE-Proton}"
+if [[ -z "${PROTONPATH:-}" ]]; then
+  # Prefer a locally installed GE-Proton release so umu-run does not try to
+  # download its generic GE-Proton alias when the machine is offline.
+  proton_roots=(
+    "$HOME/.local/share/Steam/compatibilitytools.d"
+    "$HOME/.steam/root/compatibilitytools.d"
+    "$HOME/.steam/steam/compatibilitytools.d"
+    "/usr/share/steam/compatibilitytools.d"
+    "/usr/local/share/steam/compatibilitytools.d"
+  )
+  proton_candidates=()
+  for proton_root in "${proton_roots[@]}"; do
+    [[ -d "$proton_root" ]] || continue
+    while IFS= read -r proton_dir; do
+      proton_candidates+=("$proton_dir")
+    done < <(find "$proton_root" -mindepth 1 -maxdepth 1 -type d -name 'GE-Proton*' -print)
+  done
+  if ((${#proton_candidates[@]})); then
+    PROTONPATH="$(printf '%s\n' "${proton_candidates[@]}" | sort -V | tail -n 1)"
+  else
+    PROTONPATH="GE-Proton"
+  fi
+fi
+export PROTONPATH
 export GAMEID="${GAMEID:-umu-ro3emu}"
 unset RO3_SHIELD_READY
 mkdir -p "$WINEPREFIX"
