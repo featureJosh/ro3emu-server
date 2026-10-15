@@ -58,10 +58,12 @@ namespace Ro3Emu.ClientHooks
                 if (tip == null) continue;
                 var icon = tip.transform.parent != null ? tip.transform.parent.Find(IconName + tip.GetInstanceID()) : null;
                 Sprite sprite = on ? For(Controller.FirstBinding(KeyField.GetValue(binder) as string)) : null;
+                var badge = tip.transform.parent != null ? tip.transform.parent.GetComponent<Image>() : null;
                 if (sprite == null)
                 {
                     if (icon != null) UnityEngine.Object.Destroy(icon.gameObject);
                     tip.enabled = true;
+                    if (badge != null && icon != null) badge.enabled = true;
                     // Controller mode: an action without a gamepad binding shows no keyboard key.
                     var view = ViewField.GetValue(binder) as GameObject;
                     if (on && view != null && view.activeSelf) view.SetActive(false);
@@ -70,7 +72,9 @@ namespace Ro3Emu.ClientHooks
                 var view2 = ViewField.GetValue(binder) as GameObject;
                 if (view2 != null && !view2.activeSelf) view2.SetActive(true);
                 tip.enabled = false;
+                if (badge != null) badge.enabled = false; // the small key badge behind the label (KeyPosition_Img)
                 if (icon == null) icon = MakeIcon(tip);
+                ((RectTransform)icon).localPosition = tip.transform.localPosition;
                 // Some labels (skill-bar corners) are tiny, so there is also a floor: 34 px at 1080p, in the label's canvas units.
                 var canvas = tip.canvas;
                 float floor = 34f * Controller.Setting("GlyphScale", 2.4f) / 2.4f * (canvas != null ? Screen.height / 1080f / canvas.scaleFactor : 1f);
@@ -89,10 +93,10 @@ namespace Ro3Emu.ClientHooks
             var src = (RectTransform)tip.transform;
             rect.SetParent(src.parent, false);
             rect.SetSiblingIndex(src.GetSiblingIndex() + 1);
-            rect.anchorMin = src.anchorMin;
-            rect.anchorMax = src.anchorMax;
-            rect.pivot = src.pivot;
-            rect.anchoredPosition = src.anchoredPosition;
+            // Key labels often sit in a HorizontalLayoutGroup + ContentSizeFitter badge (skill bar: 16x16 KeyPosition_Img)
+            // that would size the icon back down every layout pass.
+            go.AddComponent<LayoutElement>().ignoreLayout = true;
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
             var image = go.GetComponent<Image>();
             image.preserveAspect = true;
             image.raycastTarget = false;

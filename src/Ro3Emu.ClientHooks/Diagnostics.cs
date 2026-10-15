@@ -126,6 +126,7 @@ namespace Ro3Emu.ClientHooks
         private static readonly System.Collections.Generic.Queue<string> Queue = new System.Collections.Generic.Queue<string>();
         private static int _pollFrame, _wait, _releaseIn;
         private static Action _release;
+        private static UnityEngine.InputSystem.Gamepad _testPad;
 
         /// <summary>"pad &lt;GamepadButton&gt;" (South, East, DpadUp, LeftShoulder, Start...) / "key &lt;Key&gt;" (Escape, B...):
         /// pressed for 3 frames through the Input System, as if from the device.</summary>
@@ -133,8 +134,11 @@ namespace Ro3Emu.ClientHooks
         {
             if (pad)
             {
-                var device = UnityEngine.InputSystem.Gamepad.current;
-                if (device == null || !Enum.TryParse(name, true, out UnityEngine.InputSystem.LowLevel.GamepadButton button)) { Debug.Log("[Ro3Emu.Diag] pad " + name + ": no pad or unknown button"); return; }
+                // A virtual pad of our own: a real DualSense streams full reports that would overwrite an injected press.
+                if (_testPad == null) _testPad = UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Gamepad>("Ro3emuTestPad");
+                var device = _testPad;
+                if (!Enum.TryParse(name, true, out UnityEngine.InputSystem.LowLevel.GamepadButton button)) { Debug.Log("[Ro3Emu.Diag] pad " + name + ": unknown button"); return; }
+                device.MakeCurrent();
                 UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.GamepadState().WithButton(button));
                 _release = () => UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.GamepadState());
             }
