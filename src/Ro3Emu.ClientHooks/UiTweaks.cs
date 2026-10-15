@@ -25,6 +25,7 @@ namespace Ro3Emu.ClientHooks
         public static void Tick()
         {
             Diagnostics.AutoDump();
+            Diagnostics.PollCommandFile();
             TextFit.Tick();
             Controller.Tick();
             if (++_frame % 10 != 0) return;

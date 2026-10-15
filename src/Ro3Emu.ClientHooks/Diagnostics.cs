@@ -28,6 +28,14 @@ namespace Ro3Emu.ClientHooks
                     case "panels":
                         Panels();
                         break;
+                    case "tree":
+                        Tree(parts.Length > 1 ? parts[1] : "UI_Sys_MainWidget_PC(Clone)");
+                        break;
+                    case "shot":
+                        string shot = System.IO.Path.Combine(Dir(), "shot.png");
+                        ScreenCapture.CaptureScreenshot(shot);
+                        Debug.Log("[Ro3Emu.Diag] screenshot -> " + shot);
+                        break;
                     case "dumptex":
                         DumpTextures(parts.Length > 1 ? parts[1] : "Txt");
                         break;
@@ -69,6 +77,76 @@ namespace Ro3Emu.ClientHooks
                 }
             }
             Debug.Log("[Ro3Emu.Diag] find '" + filter + "': " + hits + " hit(s)" + sb);
+        }
+
+        /// <summary>
+        /// Developer commands without chat: each line of &lt;client&gt;/ro3emu/cmd.txt is run like "!client &lt;line&gt;", then the
+        /// file is deleted. Polled about once a second from the frame pump; also works before world entry.
+        /// </summary>
+        public static void PollCommandFile()
+        {
+            if (++_pollFrame % 60 != 0) return;
+            string file = System.IO.Path.Combine(Dir(), "cmd.txt");
+            if (!File.Exists(file)) return;
+            string[] lines;
+            try { lines = File.ReadAllLines(file); File.Delete(file); }
+            catch (IOException) { return; } // still being written
+            foreach (var line in lines) if (line.Trim().Length > 0) Run(line.Trim());
+        }
+
+        private static int _pollFrame;
+
+        private static string Dir()
+        {
+            string dir = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), "ro3emu");
+            Directory.CreateDirectory(dir);
+            return dir;
+        }
+
+        /// <summary>
+        /// "tree &lt;name&gt; [depth]": the hierarchy under the first scene object named &lt;name&gt; (also inactive): active flag,
+        /// rect size and screen position, components, sprite / fill / text. Written to &lt;client&gt;/ro3emu/tree.txt.
+        /// </summary>
+        private static void Tree(string args)
+        {
+            // "name [depth]"; names of UI objects have no spaces.
+            var parts = args.Split(' ');
+            int depth = parts.Length > 1 && int.TryParse(parts[1], out int d) ? d : 6;
+            string name = parts[0];
+            Transform root = null;
+            foreach (var t in Resources.FindObjectsOfTypeAll<Transform>())
+                if (t.gameObject.scene.name != null && t.name == name) { root = t; if (t.gameObject.activeInHierarchy) break; }
+            var sb = new StringBuilder("tree '" + name + "' screen=" + Screen.width + "x" + Screen.height);
+            if (root == null) sb.Append(": not found");
+            else { sb.Append(" path=").Append(Path(root)); TreeNode(root, 0, depth, sb); }
+            File.WriteAllText(System.IO.Path.Combine(Dir(), "tree.txt"), sb.ToString());
+            Debug.Log("[Ro3Emu.Diag] " + (root == null ? sb.ToString() : "tree '" + name + "' -> ro3emu/tree.txt"));
+        }
+
+        private static readonly Vector3[] Corners = new Vector3[4];
+
+        private static void TreeNode(Transform t, int level, int depth, StringBuilder sb)
+        {
+            sb.Append('\n').Append(' ', level * 2).Append(t.name).Append(t.gameObject.activeSelf ? "" : " [off]");
+            if (t is RectTransform rt)
+            {
+                rt.GetWorldCorners(Corners);
+                var cam = rt.GetComponentInParent<Canvas>()?.worldCamera;
+                Vector2 a = RectTransformUtility.WorldToScreenPoint(cam, Corners[0]), b = RectTransformUtility.WorldToScreenPoint(cam, Corners[2]);
+                sb.Append(" size=").Append(rt.rect.size.ToString("F0")).Append(" screen=").Append(a.ToString("F0")).Append('-').Append(b.ToString("F0"));
+            }
+            foreach (var c in t.GetComponents<Component>())
+            {
+                if (c == null || c is Transform) continue;
+                sb.Append(' ').Append(c.GetType().Name);
+                if (c is Image img) sb.Append("(").Append(img.sprite != null ? img.sprite.name : "-").Append(img.type == Image.Type.Filled ? " fill=" + img.fillAmount.ToString("F2") : "").Append(")");
+                else if (c is RawImage raw) sb.Append("(").Append(raw.texture != null ? raw.texture.name : "-").Append(")");
+                else if (c is TMPro.TMP_Text tmp) sb.Append("(\"").Append(tmp.text.Replace("\n", " ")).Append("\")");
+                else if (c is Slider sl) sb.Append("(").Append(sl.value.ToString("F2")).Append(")");
+                else if (c is CanvasGroup cg) sb.Append("(a=").Append(cg.alpha.ToString("F2")).Append(")");
+            }
+            if (level >= depth) { if (t.childCount > 0) sb.Append(" +").Append(t.childCount); return; }
+            for (int i = 0; i < t.childCount; i++) TreeNode(t.GetChild(i), level + 1, depth, sb);
         }
 
         /// <summary>Open UI views: active objects named UI_Sys_* / UI_Com_* (the view prefabs' roots), outermost only.</summary>
