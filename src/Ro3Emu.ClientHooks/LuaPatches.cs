@@ -47,6 +47,8 @@ namespace Ro3Emu.ClientHooks
         private static int _frame;
         // The controller class tables already wrapped in this LuaEnv (their modules load on first use of the UI).
         private static Obf_R.Obf_ff _global, _topBarClass, _evePanelClass;
+        /// <summary>The game LuaEnv's globals once the patches ran (for Diagnostics).</summary>
+        internal static Obf_R.Obf_ff Global => _global;
         private static Obf_R.Obf_Ef _topBarState, _topBarRefresh, _evePanelOriginal;
         // Kept alive here: Lua holds the pushed delegates only weakly through xLua's object pool.
         private static readonly SelfMethod TopBarStateWrapper = UpdateCountdownState, TopBarRefreshWrapper = RefreshCountdown,

@@ -257,12 +257,37 @@ namespace Ro3Emu.ClientHooks
                 Debug.LogWarning("[Ro3Emu.Controller] mode-select functions not found; no Controller mode option");
                 return;
             }
+            var manager = global.Obf_RuA<Obf_R.Obf_ff>("LC_OperationModeManager");
+            _setModeType = manager?.Obf_RuA<Obf_R.Obf_Ef>("SetModeType");
+            _traceback = global.Obf_LuA<Obf_R.Obf_Ef>("debug.traceback");
+            if (_setModeType != null) manager.Obf_luA<string, SetModeMethod>("SetModeType", SetModeWrapper);
+            else Debug.LogWarning("[Ro3Emu.Controller] LC_OperationModeManager.SetModeType not found; no mobile-mode guard");
             modeWidget.Obf_luA<string, SelfMethod>("_saveGameModeSetting", SaveWrapper);
             modeWidget.Obf_luA<string, SetupMethod>("Setup", SetupWrapper);
             Debug.Log("[Ro3Emu.Controller] mode select: Mobile column is Controller");
         }
 
-        private static bool Same(object a, object b) => a != null && b != null && Convert.ToInt64(a) == Convert.ToInt64(b);
+        /// <summary>LC_OperationModeManager:SetModeType(mode).</summary>
+        public delegate void SetModeMethod(Obf_R.Obf_ff self, object mode);
+        private static readonly SetModeMethod SetModeWrapper = SetModeType;
+        private static Obf_R.Obf_Ef _setModeType, _traceback;
+
+        /// <summary>
+        /// Every operation-mode change goes through here (the client's own LC_OperationModeManager instance, so the class
+        /// stays untouched). While Controller mode is on, Mobile becomes Modern PC: after a Controller pick the client
+        /// still ended up in the mobile UI (player report 2026-10-14, Group_MobileRoot active) although gameMode 2 was saved;
+        /// each call is logged with a Lua traceback to find where Mobile comes from.
+        /// </summary>
+        private static void SetModeType(Obf_R.Obf_ff self, object mode)
+        {
+            string trace = (_traceback?.Obf_HuA("SetModeType", 2) is object[] r && r.Length > 0 ? r[0] as string : null) ?? "";
+            bool swap = Enabled && Same(mode, _mobile);
+            Debug.Log("[Ro3Emu.Controller] SetModeType(" + (mode == null ? "nil" : mode + ":" + mode.GetType().Name) + ")"
+                + (swap ? " -> Fashion (controller mode)" : "") + "\n" + trace);
+            _setModeType.Obf_HuA(self, swap ? Convert.ToInt64(_fashion) : mode);
+        }
+
+        private static bool Same(object a, object b) => a is IConvertible && b is IConvertible && Convert.ToInt64(a) == Convert.ToInt64(b);
 
         private static void SaveGameModeSetting(Obf_R.Obf_ff self)
         {

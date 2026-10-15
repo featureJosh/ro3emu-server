@@ -31,6 +31,10 @@ namespace Ro3Emu.ClientHooks
                     case "tree":
                         Tree(parts.Length > 1 ? parts[1] : "UI_Sys_MainWidget_PC(Clone)");
                         break;
+                    case "lua":
+                    case "luacall":
+                        Lua(parts[0] == "luacall", parts.Length > 1 ? parts[1] : "");
+                        break;
                     case "shot":
                         string shot = System.IO.Path.Combine(Dir(), "shot.png");
                         ScreenCapture.CaptureScreenshot(shot);
@@ -95,6 +99,27 @@ namespace Ro3Emu.ClientHooks
         }
 
         private static int _pollFrame;
+
+        /// <summary>"lua a.b.c": a Lua global path's value; "luacall a.b.c [self]": calls it, with the table a.b as self
+        /// when the word self follows (a:c()).</summary>
+        private static void Lua(bool call, string args)
+        {
+            var global = LuaPatches.Global;
+            if (global == null) { Debug.Log("[Ro3Emu.Diag] lua: game Lua not ready"); return; }
+            var parts = args.Split(' ');
+            string path = parts[0];
+            object value;
+            if (!call) value = global.Obf_LuA<object>(path);
+            else
+            {
+                var fn = global.Obf_LuA<Obf_R.Obf_Ef>(path);
+                int dot = path.LastIndexOfAny(new[] { '.', ':' });
+                object self = parts.Length > 1 && parts[1] == "self" && dot > 0 ? global.Obf_LuA<object>(path.Substring(0, dot)) : null;
+                var results = fn == null ? null : (self != null ? fn.Obf_HuA(self) : fn.Obf_HuA());
+                value = results == null ? "(no function)" : string.Join(", ", Array.ConvertAll(results, r => r == null ? "nil" : r + ":" + r.GetType().Name));
+            }
+            Debug.Log("[Ro3Emu.Diag] " + (call ? "luacall " : "lua ") + path + " = " + (value == null ? "nil" : value + " (" + value.GetType().Name + ")"));
+        }
 
         private static string Dir()
         {
