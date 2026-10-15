@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using Romsg;
 using Ro3Emu.Server.Micro;
 using Ro3Emu.Server;
@@ -37,7 +38,7 @@ public sealed class PopulationTests : IDisposable
         BitConverter.GetBytes(64).CopyTo(grid, 48);
         for (int i = 64; i < grid.Length; i += 4) grid[i] = 0x80;
         File.WriteAllBytes(Path.Combine(root, "nav", "test_dynamicmapdata.bytes"), grid);
-        options = new ServerOptions { DataDir = root, Population = new() { Enabled = true, PerMap = 6, MaxTotal = 10 } };
+        options = new ServerOptions { DataDir = root, Population = new() { Enabled = true, PerMap = 6, MaxTotal = 10, MaxSpawnsPerTick = 100, Maps = new() { [1] = new() { AreaLevel = 5, MinLevel = 5, MaxLevel = 5 } } } };
         var wrapped = Options.Create(options);
         data = new GameData(wrapped, NullLogger<GameData>.Instance);
         world = new World(sink, loop, NullLogger<World>.Instance);
@@ -88,7 +89,7 @@ public sealed class PopulationTests : IDisposable
         var a = Player(); var b = Player(2, line: 2);
         await world.JoinAsync(a); await world.JoinAsync(b); await population.UpdateAsync(1000);
         Assert.Equal(10, population.Count);
-        Assert.Equal(6, a.VisibleUnits.Count); Assert.Equal(4, b.VisibleUnits.Count);
+        Assert.Equal(5, a.VisibleUnits.Count); Assert.Equal(5, b.VisibleUnits.Count);
         Assert.All(a.VisibleUnits, u => Assert.Equal(a.RuntimeMap, u.RuntimeMap));
         Assert.All(b.VisibleUnits, u => Assert.Equal(b.RuntimeMap, u.RuntimeMap));
         await world.LeaveAsync(a); await population.UpdateAsync(2000);
@@ -284,6 +285,172 @@ public sealed class PopulationTests : IDisposable
         Assert.Empty(PopulationNavigation.Route(NavGrid.Load(path), new(10.5f, 0, 20.5f, 0), goal, 100));
     }
 
+    [Fact]
+    public void ProfilesResolveCountsOverridesBoundsAndDisabledMaps()
+    {
+        options.Population.UseMapProfiles = true;
+        options.Population.MaxTotal = 100;
+        options.Population.Maps[1].Profile = "city";
+        Assert.Equal(50, population.Settings(1).Count);
+        options.Population.Maps[1].Count = 17;
+        Assert.Equal(17, population.Settings(1).Count);
+        options.Population.Maps[1].Enabled = false;
+        Assert.Equal(0, population.Settings(1).Count);
+        options.Population.Maps[1] = new() { Profile = "remote", AreaLevel = 1, MinLevel = 80, MaxLevel = 100 };
+        var remote = population.Settings(1);
+        Assert.Equal(3, remote.Count); Assert.InRange(remote.MaxLevel, 1, 3);
+        Assert.True(remote.MinLevel <= remote.MaxLevel); // A minimum cannot raise an area's difficulty ceiling.
+    }
+
+    [Fact]
+    public async Task RuntimeMapControlsAndGlobalOffRespectConfiguredProfiles()
+    {
+        options.Population.UseMapProfiles = true;
+        options.Population.Profiles["field"].Count = 4;
+        await world.JoinAsync(Player());
+        await population.EnableConfiguredAsync(); Assert.Equal(4, population.Count);
+        await population.SetMapCountAsync(1, 2); Assert.Equal(2, population.Count);
+        await population.SetCountAsync(0); Assert.Equal(0, population.Count);
+        await population.EnableConfiguredAsync(); Assert.Equal(2, population.Count);
+        await population.SetMapCountAsync(1, null); Assert.Equal(4, population.Count);
+        await population.SetMapCountAsync(1, 0); Assert.Equal(0, population.Count);
+        await population.SetCountAsync(null); Assert.Equal(4, population.Count);
+    }
+
+    [Fact]
+    public async Task SpawnsAreGradualAndHighLevelVisitorsDoNotRaiseBeginnerBots()
+    {
+        options.Population.MaxSpawnsPerTick = 2;
+        options.Population.Maps[1] = new() { AreaLevel = 1, MinLevel = 1, MaxLevel = 1 };
+        var player = Player(); player.Role = player.Role! with { Level = 99 };
+        await world.JoinAsync(player); await population.UpdateAsync(1000);
+        Assert.Equal(2, population.Count);
+        await population.UpdateAsync(1250); Assert.Equal(4, population.Count);
+        await population.UpdateAsync(1500); Assert.Equal(6, population.Count);
+        Assert.All(world.AllUnits().OfType<PopulationUnit>(), b => { Assert.Equal(1, b.Level); Assert.Equal(1000, b.Career); });
+    }
+
+    [Fact]
+    public void BudgetIsSharedAcrossLargeAndSmallMaps()
+    {
+        var city = RuntimeMapKey.Public(1); var field = RuntimeMapKey.Public(2); var remote = RuntimeMapKey.Public(3);
+        var result = PopulationService.AllocateBudget(new Dictionary<RuntimeMapKey, int> { [city] = 50, [field] = 12, [remote] = 3 }, 20);
+        Assert.Equal(3, result[remote]); Assert.InRange(result[city], 8, 9); Assert.InRange(result[field], 8, 9);
+        Assert.Equal(20, result.Values.Sum());
+    }
+
+    [Fact]
+    public void AreaPresetsUseMetadataAndConfigurationBindsMapOverrides()
+    {
+        File.WriteAllText(Path.Combine(root, "config", "MapConfig.json"), """{"1":{"_iSceneType":0,"_kWorldMapIcon":"worldmap_icon_city_test.png"},"2":{"_iSceneType":0},"3":{"_iSceneType":1}}""");
+        options.Population.UseMapProfiles = true; options.Population.MaxTotal = 100;
+        Assert.Equal(50, population.Settings(1).Count); Assert.Equal(30, population.Settings(2).Count);
+        Assert.Equal(12, population.Settings(3).Count);
+        var config = new Microsoft.Extensions.Configuration.ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Population:Enabled"] = "true", ["Population:UseMapProfiles"] = "true",
+            ["Population:Maps:10111:Count"] = "3", ["Population:Maps:10111:AreaLevel"] = "1",
+            ["Population:Profiles:city:Count"] = "60"
+        }).Build();
+        var bound = Microsoft.Extensions.Configuration.ConfigurationBinder.Get<ServerOptions>(config)!;
+        Assert.Equal(3, bound.Population.Maps[10111].Count); Assert.Equal(1, bound.Population.Maps[10111].AreaLevel);
+        Assert.Equal(60, bound.Population.Profiles["city"].Count);
+    }
+
+    [Theory]
+    [InlineData(1, 2)] [InlineData(19, 2)] [InlineData(20, 3)] [InlineData(40, 4)] [InlineData(60, 5)] [InlineData(80, 6)]
+    public void EquipmentRarityTracksStrengthTier(int level, int quality) => Assert.Equal(quality, PopulationLoadouts.QualityForLevel(level));
+
+    private void WriteLoadoutConfig()
+    {
+        File.WriteAllText(Path.Combine(root, "config", "ItemConfig.json"), """
+        {
+          "501":{"_iID":501,"_iType":5,"_iEquipId":501,"_iEquipPart":2,"_iLevelNeed":1,"_iQuality":2,"_kJobNeed":[1000]},
+          "502":{"_iID":502,"_iType":5,"_iEquipId":502,"_iEquipPart":2,"_iLevelNeed":80,"_iQuality":6,"_kJobNeed":[1000]},
+          "503":{"_iID":503,"_iType":5,"_iEquipId":503,"_iEquipPart":2,"_iLevelNeed":1,"_iQuality":6,"_kJobNeed":[1000]},
+          "504":{"_iID":504,"_iType":5,"_iEquipId":504,"_iEquipPart":2,"_iLevelNeed":1,"_iQuality":2,"_kJobNeed":[1100]},
+          "505":{"_iID":505,"_iType":5,"_iEquipId":505,"_iEquipPart":2,"_iLevelNeed":1,"_iQuality":2,"_kJobNeed":[1000]},
+          "506":{"_iID":506,"_iType":5,"_iEquipId":506,"_iEquipPart":1,"_iLevelNeed":1,"_iQuality":2,"_kJobNeed":[3100]},
+          "507":{"_iID":507,"_iType":5,"_iEquipId":507,"_iEquipPart":3,"_iLevelNeed":1,"_iQuality":2},
+          "90000102":{"_iID":90000102,"_iType":5,"_iEquipId":501,"_iEquipPart":2,"_iLevelNeed":1,"_iQuality":2,"_kJobNeed":[1000]}
+        }
+        """);
+        File.WriteAllText(Path.Combine(root, "config", "EquipConfig.json"), """
+        {
+          "501":{"_kBasicAttribute":[[103,7],[104,3]]}, "502":{"_kBasicAttribute":[[103,60],[101,500]]},
+          "503":{"_kBasicAttribute":[[103,100]]}, "504":{"_kBasicAttribute":[[103,7]]},
+          "505":{"_kBasicAttribute":[[101,1000000]]}, "506":{"_kBasicAttribute":[[103,12]]},
+          "507":{"_kBasicAttribute":[[101,20]]}
+        }
+        """);
+        File.WriteAllText(Path.Combine(root, "config", "WardRobeConfig.json"), """
+        {
+          "7001":{"_iID":7001,"_iType":7,"_iDefaultLightUp":1,"_iSexNeed":1,"_kModelResourceB":"hair1"},
+          "7002":{"_iID":7002,"_iType":7,"_iDefaultLightUp":1,"_iSexNeed":1,"_kModelResourceB":"hair2"},
+          "7003":{"_iID":7003,"_iType":7,"_iDefaultLightUp":1,"_iSexNeed":2,"_kModelResourceG":"hair3"},
+          "7004":{"_iID":7004,"_iType":7,"_iDefaultLightUp":1,"_iSexNeed":1,"_iDisable":1,"_kModelResourceB":"bad"},
+          "1001":{"_iID":1001,"_iType":1,"_iQuality":6,"_iLuxury":1,"_kModelResourceB":"crown"},
+          "1002":{"_iID":1002,"_iType":5,"_iQuality":2,"_kModelResourceB":"wings"}
+        }
+        """);
+    }
+
+    [Fact]
+    public void BeginnerLoadoutsExcludeLegendariesDebugItemsWrongJobsAndOverpoweredStats()
+    {
+        WriteLoadoutConfig(); var loadouts = new PopulationLoadouts(data);
+        var bot = new PopulationUnit { Uid = 1, Name = "Beginner", Level = 1, Gender = 1, Career = 1000 };
+        loadouts.Apply(bot, 6, 123);
+        Assert.Equal(501, bot.EquipmentLook[0]); Assert.Equal(23, bot.Attack); Assert.Equal(19, bot.MagicAttack);
+        Assert.DoesNotContain(90000102L, bot.EquipmentLook); Assert.DoesNotContain(505L, bot.EquipmentLook);
+        Assert.True(bot.Appearances.ContainsKey(7)); Assert.False(bot.Appearances.ContainsKey(1)); Assert.False(bot.Appearances.ContainsKey(5));
+        Assert.Equal(bot.EquipmentLook, bot.Entity().EquipInfo.ToArray());
+        Assert.Equal(bot.Attack, bot.Entity().Property.Single(p => p.Idx == 103).Data);
+    }
+
+    [Fact]
+    public void StrongEquipmentRequiresLevelAndAreaPermissionAndChangesActualStats()
+    {
+        WriteLoadoutConfig(); var loadouts = new PopulationLoadouts(data);
+        var strong = new PopulationUnit { Uid = 1, Name = "Veteran", Level = 80, Gender = 1, Career = 1000 };
+        loadouts.Apply(strong, 6, 42);
+        Assert.Equal(502, strong.EquipmentLook[0]); Assert.Equal(392, strong.Attack);
+        Assert.Equal(4720, strong.MaxHp); // baseline 4200 + weapon 500 + offhand 20
+        loadouts.Apply(strong, 2, 42);
+        Assert.Equal(501, strong.EquipmentLook[0]); Assert.Equal(339, strong.Attack);
+        Assert.False(strong.Appearances.ContainsKey(1));
+    }
+
+    [Fact]
+    public void AppearanceSeedIsStableGenderCompatibleAndTwoHandedWeaponsExcludeOffhand()
+    {
+        WriteLoadoutConfig(); var loadouts = new PopulationLoadouts(data);
+        var archer = new PopulationUnit { Uid = 1, Name = "Archer", Level = 15, Gender = 1, Career = 3100 };
+        loadouts.Apply(archer, 6, 12);
+        Assert.Equal(506, archer.EquipmentLook[0]); Assert.Equal(0, archer.EquipmentLook[1]);
+        var before = archer.Entity(); loadouts.Apply(archer, 6, 12);
+        Assert.Equal(before.CurUseAppearances, archer.Entity().CurUseAppearances);
+        var seen = new HashSet<int>();
+        for (int seed = 0; seed < 20; seed++) { loadouts.Apply(archer, 6, seed); seen.Add(archer.Appearances[7]); }
+        Assert.Equal(2, seen.Count);
+        var female = new PopulationUnit { Uid = 2, Name = "Female", Level = 1, Gender = 2 };
+        loadouts.Apply(female, 2, 123); Assert.Equal(7003, female.Appearances[7]);
+    }
+
+    [Fact]
+    public async Task AppearanceProfileAndWorldEntityUseTheSameStableLook()
+    {
+        WriteLoadoutConfig(); await world.JoinAsync(Player()); await population.UpdateAsync(1000);
+        foreach (var bot in world.AllUnits().OfType<PopulationUnit>())
+        {
+            var profile = population.Profile(bot.Uid, 1, 1)!;
+            var fields = (Dictionary<string, object?>)profile["Data"]!;
+            var info = RoleAdditionBaseInfo.Parser.ParseFrom((byte[])fields["Base"]!);
+            Assert.Equal(bot.Entity().CurUseAppearances, info.Appearances);
+            Assert.True(info.Appearances.ContainsKey(7));
+        }
+    }
+
     private (CombatService Combat, MonsterService Monsters) CombatServices()
     {
         var character = new CharacterService(null!, null!, data, world, NullLogger<CharacterService>.Instance);
@@ -355,6 +522,24 @@ public sealed class PopulationTests : IDisposable
                 await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs); monster.Hp = 99; });
             await Task.Delay(300);
             Assert.Equal(99, await loop.InvokeAsync(() => Task.FromResult(monster.Hp)));
+        }
+        finally { await loop.StopAsync(default); }
+    }
+
+    [Fact]
+    public async Task EquippedAttributeBonusesIncreaseActualCombatDamage()
+    {
+        File.WriteAllText(Path.Combine(root, "config", "SkillConfig.json"), """{"1000001":{"_iActionTime":300,"_iDistanceMax":300,"_iSkillHit":10000,"_iDmgType":1,"_kDamageParam1":[10000]}}""");
+        var (combat, _) = CombatServices();
+        var bot = Fighter(); var monster = Monster(1000); bot.Target = monster; bot.TargetExpectedHp = 1000;
+        bot.GearAttributes[103] = 100;
+        await loop.StartAsync(default);
+        try
+        {
+            await loop.InvokeAsync(async () => { await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
+                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs); });
+            await WaitFor(() => monster.Hp < 1000);
+            Assert.True(1000 - monster.Hp > 100, "Gear was shown visually but omitted from actual damage.");
         }
         finally { await loop.StopAsync(default); }
     }

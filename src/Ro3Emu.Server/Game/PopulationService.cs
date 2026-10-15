@@ -18,6 +18,8 @@ public sealed class PopulationService : IGameTicker
     private readonly PopulationOptions options;
     private readonly CombatService? combat;
     private readonly SkillService? skills;
+    private readonly PopulationPolicy policy;
+    private readonly PopulationLoadouts loadouts;
     private readonly Random random = new();
     private readonly List<PopulationUnit> bots = new();
     private readonly SemaphoreSlim gate = new(1, 1);
@@ -25,22 +27,31 @@ public sealed class PopulationService : IGameTicker
     private bool running;
     private TimeSpan nextTick;
     private int? overrideCount;
+    private bool? enabledOverride;
+    private readonly Dictionary<long, int> mapCounts = new();
     private static readonly int[] Careers = [1000, 1100, 2100, 3100, 4100, 5100, 6100];
 
     public PopulationService(World world, WorldData worldData, GameData data, GameLoop loop, IOptions<ServerOptions> options, CombatService? combat = null, SkillService? skills = null)
     {
         this.world = world; this.worldData = worldData; this.data = data; this.loop = loop;
         this.options = options.Value.Population; this.combat = combat; this.skills = skills;
+        policy = new(data, worldData, this.options); loadouts = new(data);
         loop.Add(this);
     }
 
     public int Count => bots.Count;
     public int Limit => Math.Clamp(options.MaxTotal, 0, 500);
-    public int PerMap => Math.Clamp(overrideCount ?? (options.Enabled ? options.PerMap : 0), 0, Math.Min(100, Limit));
+    private bool Enabled => overrideCount is { } count ? count > 0 : enabledOverride ?? options.Enabled;
+    public int PerMap => Enabled ? Math.Clamp(overrideCount ?? options.PerMap, 0, Math.Min(100, Limit)) : 0;
+    internal PopulationMapSettings Settings(long scene)
+    {
+        var resolved = policy.Resolve(scene, mapCounts.TryGetValue(scene, out int count) ? count : overrideCount);
+        return resolved with { Count = Enabled ? resolved.Count : 0 };
+    }
 
     public void Tick(GameTime time)
     {
-        if (running || time.Now < nextTick || PerMap == 0 && bots.Count == 0) return;
+        if (running || time.Now < nextTick || (!Enabled || Limit == 0) && bots.Count == 0) return;
         nextTick = time.Now + TimeSpan.FromMilliseconds(250);
         running = true;
         loop.TrackRuntimeDetached("offline population", async () =>
@@ -50,23 +61,49 @@ public sealed class PopulationService : IGameTicker
         });
     }
 
-    public void RegisterCommands(GmCommands gm) => gm.Register("bots", "[0..100|off|status|reset]", async (session, args) =>
+    public void RegisterCommands(GmCommands gm) => gm.Register("bots", "[on|0..100|off|status|reset|map 0..100/off/reset]", async (session, args) =>
     {
-        if (args.Length > 1) throw new ArgumentException();
         string arg = args.FirstOrDefault()?.ToLowerInvariant() ?? "status";
-        if (arg != "status")
+        if (arg == "map")
+        {
+            if (args.Length != 2 || session.SceneEntry <= 0) throw new ArgumentException();
+            int? count = args[1].Equals("reset", StringComparison.OrdinalIgnoreCase) ? null
+                : args[1].Equals("off", StringComparison.OrdinalIgnoreCase) ? 0 : int.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture);
+            if (count is < 0 or > 100) throw new ArgumentException();
+            await SetMapCountAsync(session.SceneEntry, count);
+        }
+        else if (args.Length > 1) throw new ArgumentException();
+        else if (arg == "on") await EnableConfiguredAsync();
+        else if (arg != "status")
         {
             int? count = arg == "reset" ? null : arg == "off" ? 0 : int.Parse(arg, System.Globalization.CultureInfo.InvariantCulture);
             if (count is < 0 or > 100) throw new ArgumentException();
             await SetCountAsync(count);
         }
-        await GmCommands.ReplyAsync(session, $"Population bots: {Count} active; {PerMap}/occupied public map; total limit {Limit}. Changes last until restart.");
+        var map = Settings(session.SceneEntry);
+        await GmCommands.ReplyAsync(session, $"Population: {Count}/{Limit} total; map {session.SceneEntry} {map.Profile}, target {map.Count}, levels {map.MinLevel}-{map.MaxLevel}, quality cap {map.MaxQuality}. Changes last until restart.");
     });
 
     internal async Task SetCountAsync(int? count)
     {
         await gate.WaitAsync();
-        try { overrideCount = count; }
+        try { overrideCount = count; enabledOverride = null; if (count == null) mapCounts.Clear(); }
+        finally { gate.Release(); }
+        await UpdateAsync(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+    }
+
+    internal async Task SetMapCountAsync(long scene, int? count)
+    {
+        await gate.WaitAsync();
+        try { if (count is { } value) mapCounts[scene] = Math.Clamp(value, 0, 100); else mapCounts.Remove(scene); }
+        finally { gate.Release(); }
+        await UpdateAsync(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+    }
+
+    internal async Task EnableConfiguredAsync()
+    {
+        await gate.WaitAsync();
+        try { overrideCount = null; enabledOverride = true; }
         finally { gate.Release(); }
         await UpdateAsync(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
     }
@@ -79,40 +116,48 @@ public sealed class PopulationService : IGameTicker
             var occupied = world.ActivePlayers().Where(p => p.Role != null && !p.SceneLoading && p.InstanceId == 0 && p.SceneEntry > 0)
                 .GroupBy(p => p.RuntimeMap).OrderBy(g => g.Key.SceneEntry).ThenBy(g => g.Key.Id)
                 .ToDictionary(g => g.Key, g => g.ToArray());
+            var targets = occupied.Keys.ToDictionary(runtime => runtime,
+                runtime => Settings(runtime.SceneEntry).Count is var count && count > 0 && worldData.Map(runtime.SceneEntry)?.Nav != null ? count : 0);
+            var budgets = AllocateBudget(targets, Limit);
             // Reclaim empty maps and old neighbourhoods before assigning the global budget.
             foreach (var bot in bots.ToArray())
             {
-                if (PerMap == 0 || !occupied.TryGetValue(bot.RuntimeMap, out var players) ||
+                if (Settings(bot.SceneEntry).Count == 0 || !occupied.TryGetValue(bot.RuntimeMap, out var players) ||
                     !players.Any(p => Distance2(bot.X, bot.Z, p.Position.X, p.Position.Z) < 220 * 220))
                     await RemoveAsync(bot);
             }
             // Trim before spawning so reductions never temporarily exceed the new limit.
             foreach (var group in bots.GroupBy(b => b.RuntimeMap).ToArray())
-                foreach (var bot in group.Skip(PerMap).ToArray()) await RemoveAsync(bot);
+                foreach (var bot in group.Skip(budgets.GetValueOrDefault(group.Key)).ToArray()) await RemoveAsync(bot);
             foreach (var bot in bots.Skip(Limit).ToArray()) await RemoveAsync(bot);
-            if (PerMap == 0) return;
+            if (!Enabled || Limit == 0) return;
             int[] careers = Careers.Where(c => data.Row("JobConfig", c) is { } row && GameData.Int(row, "_iUnitB") > 0 && GameData.Int(row, "_iUnitG") > 0).ToArray();
+            int spawned = 0, spawnLimit = Math.Clamp(options.MaxSpawnsPerTick, 1, 100);
             foreach (var (runtime, players) in occupied)
             {
                 // Missing navigation means no safe placement; never guess around walls or on another floor.
                 if (worldData.Map(runtime.SceneEntry)?.Nav is not { } nav) continue;
+                var settings = Settings(runtime.SceneEntry) with { Count = budgets.GetValueOrDefault(runtime) };
                 int have = bots.Count(b => b.RuntimeMap == runtime);
-                int attempts = Math.Min(PerMap - have, Limit - bots.Count) * 8;
-                for (int attempt = 0; have < PerMap && bots.Count < Limit && attempt < attempts; attempt++)
+                int attempts = Math.Min(settings.Count - have, Limit - bots.Count) * 8;
+                for (int attempt = 0; have < settings.Count && bots.Count < Limit && spawned < spawnLimit && attempt < attempts; attempt++)
                 {
                     var player = players[have % players.Length];
                     var anchor = new MapPoint(player.Position.X, player.Position.Y, player.Position.Z, 0);
                     if (PointNear(nav, anchor, 4, 24) is not { } point) continue;
                     long id = ++serial;
+                    int level = random.Next(settings.MinLevel, settings.MaxLevel + 1);
+                    var allowedCareers = level < 10 ? careers.Where(c => c == 1000).ToArray() : careers;
                     var bot = new PopulationUnit
                     {
                         Uid = UidBase | id, SceneEntry = runtime.SceneEntry, RuntimeMap = runtime,
                         Name = PopulationNames.ForSerial(id),
-                        Career = careers.Length == 0 ? 1000 : careers[random.Next(careers.Length)],
-                        Gender = random.Next(1, 3), Level = Math.Max(1, player.Role!.Level),
+                        Career = allowedCareers.Length == 0 ? 1000 : allowedCareers[random.Next(allowedCareers.Length)],
+                        Gender = random.Next(1, 3), Level = level,
                         Home = point, X = point.X, Y = point.Y, Z = point.Z, Face = random.Next(360),
                         NextWalkMs = now + random.Next(1000, 8000), VisitingNpc = id % 3 == 0,
                     };
+                    loadouts.Apply(bot, settings.MaxQuality, id);
                     bot.Hp = bot.MaxHp;
                     bot.NormalSkill = skills?.NormalAttack(bot.Career) ?? 1000001;
                     bot.AttackRange = data.Row("SkillConfig", bot.NormalSkill) is { } normal ? Math.Max(2, GameData.Int(normal, "_iDistanceMax") / 100f) : 2;
@@ -127,7 +172,7 @@ public sealed class PopulationService : IGameTicker
                     bot.Advance(now);
                     bots.Add(bot);
                     await world.AddUnitAsync(bot);
-                    have++;
+                    have++; spawned++;
                 }
             }
             int routeBudget = 1; // Bound pathfinding admissions per pass, even at the population ceiling.
@@ -213,6 +258,24 @@ public sealed class PopulationService : IGameTicker
     }
 
 
+    internal static Dictionary<RuntimeMapKey, int> AllocateBudget(IReadOnlyDictionary<RuntimeMapKey, int> targets, int limit)
+    {
+        var result = targets.Keys.ToDictionary(key => key, _ => 0);
+        int remaining = Math.Max(0, limit);
+        while (remaining > 0)
+        {
+            bool allocated = false;
+            foreach (var (map, target) in targets)
+            {
+                if (remaining == 0) break;
+                if (result[map] >= target) continue;
+                result[map]++; remaining--; allocated = true;
+            }
+            if (!allocated) break;
+        }
+        return result;
+    }
+
     internal static bool IsUid(long uid) => uid >= UidBase && uid < UidBase * 2;
 
     internal Dictionary<string, object?>? Profile(long uid, long version, int cluster)
@@ -220,6 +283,7 @@ public sealed class PopulationService : IGameTicker
         if (bots.FirstOrDefault(b => b.Uid == uid) is not { } bot) return null;
         var info = new RoleAdditionBaseInfo { Career = bot.Career, Gender = bot.Gender, JobLevel = 1,
             BornArea = 1, CantBeInvited = true, Offlinetime = -1 };
+        info.Appearances.Add(bot.Appearances);
         var fields = new Dictionary<string, object?> { ["Name"] = bot.Name, ["Level"] = bot.Level,
             ["Base"] = info.ToByteArray(), ["Online"] = true, ["OfflineTime"] = -1L, ["ClusterId"] = cluster,
             ["GuildSnap"] = new GuildSnapInfo().ToByteArray() };

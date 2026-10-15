@@ -192,4 +192,32 @@ public sealed class PopulationOptions
     public bool Enabled { get; set; }
     public int PerMap { get; set; } = 20;
     public int MaxTotal { get; set; } = 100;
+    public bool UseMapProfiles { get; set; }
+    public int DefaultAreaLevel { get; set; } = 5;
+    public int MaxSpawnsPerTick { get; set; } = 8;
+    public Dictionary<long, PopulationMapOptions> Maps { get; set; } = new();
+    public Dictionary<string, PopulationPreset> Profiles { get; set; } = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["city"] = new() { Count = 50 }, ["town"] = new() { Count = 30 },
+        ["field"] = new() { Count = 12 }, ["remote"] = new() { Count = 3 },
+    };
+}
+
+public sealed class PopulationPreset
+{
+    public int Count { get; set; } = 20;
+    public int MinLevel { get; set; } = 1;
+    public int MaxLevel { get; set; } = 100;
+    public int MaxEquipmentQuality { get; set; } = 6;
+}
+
+public sealed class PopulationMapOptions
+{
+    public bool Enabled { get; set; } = true;
+    public string? Profile { get; set; }
+    public int? Count { get; set; }
+    public int? AreaLevel { get; set; }
+    public int? MinLevel { get; set; }
+    public int? MaxLevel { get; set; }
+    public int? MaxEquipmentQuality { get; set; }
 }

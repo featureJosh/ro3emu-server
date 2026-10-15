@@ -29,7 +29,7 @@ public sealed partial class CombatService
             if (bot.Removed || bot.Dead || bot.Target != monster || !PopulationService.PopulationCanHunt(bot, monster)
                 || MonsterService.Distance(bot.X, bot.Z, monster.X, monster.Z) > range + 2) return;
             // Attribute progression is inferred offline policy; damage math is shared with real combat.
-            var attacker = new Fighter(12 + bot.Level * 4L, 12 + bot.Level * 4L, 100, 300, bot.Level, 1);
+            var attacker = new Fighter(bot.Attack, bot.MagicAttack, bot.Hit, bot.Critical, bot.Level, 1);
             var defender = new Fighter(0, 0, 0, 0, monster.Template.Level, monster.Template.Element)
                 { Def = monster.Template.Def, Mdef = monster.Template.Mdef, Flee = monster.Template.Flee };
             var (damage, result) = Damage(attacker, defender, row);
@@ -93,7 +93,7 @@ public sealed partial class CombatService
             if (bot.Dead || bot.Removed || monster.Dead || monster.Hp <= 0 || monster.PopulationTarget != bot || monster.Target != null
                 || MonsterService.Distance(monster.X, monster.Z, bot.X, bot.Z) > monster.Template.AttackRange + 2) return;
             var attacker = new Fighter(monster.Template.Atk, monster.Template.Matk, monster.Template.Hit, monster.Template.Cri, monster.Template.Level, monster.Template.Element);
-            var defender = new Fighter(0, 0, 0, 0, bot.Level, 1) { Def = bot.Level * 2, Mdef = bot.Level * 2, Flee = bot.Level * 2 };
+            var defender = new Fighter(0, 0, 0, 0, bot.Level, 1) { Def = bot.Defence, Mdef = bot.MagicDefence, Flee = bot.Flee };
             var (damage, result) = data.Row("SkillConfig", monster.Template.NormalSkill) is { } row
                 ? Damage(attacker, defender, row) : (Math.Max(1, monster.Template.Atk), DamageHitResult.Normal);
             bot.Hp = Math.Max(0, bot.Hp - damage);

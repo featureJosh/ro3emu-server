@@ -15,10 +15,24 @@ Everything in the core roadmap works offline, with optional features controlled 
 - [x] Normal attacks, selected offensive job skills, retaliation, First Aid and death/revival.
 - [x] Player priority over ambient hunting; ambient bot kills grant no player rewards.
 
-The user confirmed the base works in game. The merged implementation passed a Release build, 23 focused tests
-and two smoke checks. LAN behavior and the latest name aesthetics still need acceptance checks. Current settings
+The user confirmed the base works in game. The current profile/loadout increment passed Release builds,
+39 focused cases and two real-data/initialization smoke checks. The new appearances need in-game acceptance. LAN behavior and the latest name aesthetics still need acceptance checks. Current settings
 are documented in [the usage guide](../guide/offline-population.md). Current bots do not chat, join parties,
 complete real quests or populate private dungeons. Those are milestones below.
+
+## Implemented increment: profiles and believable loadouts (2026-10-14)
+
+- [x] City/town/field/remote count presets, exact map overrides and per-map opt-out; defaults 50/30/12/3.
+- [x] Configured per-area level bounds and equipment rarity ceilings, independent of human visitor level.
+- [x] Fair global allocation across occupied public lines and bounded gradual spawning (eight per pass).
+- [x] `!bots on`, per-map count/off/reset controls and profile/level/rarity status readouts.
+- [x] Stable compatible randomized hair and real visible job equipment; restrained optional headgear at level 20+.
+- [x] Beginner-equipment rule: rarity/required-level/compatibility gates, debug-stat exclusion, no automatic
+  premium outfits/wings/glows, and equipped base attributes used in actual combat.
+
+Configuration reload, smooth despawning, activity/chat presets, per-view render budgets, complete fashion/color/face
+variation and private-dungeon populations are still pending. Settings and commands are in the
+[usage guide](../guide/offline-population.md). Server tests cannot establish client model rendering or LAN behavior.
 
 ## Recommended sequence
 
@@ -37,7 +51,7 @@ complete real quests or populate private dungeons. Those are milestones below.
 
 - [ ] Define presets for cities, towns, ordinary fields, remote areas and eligible dungeons, plus exact map-ID overrides.
 - [ ] Give each profile a target count, job/level mix, activity mix, chat frequency and allowed spawn/activity zones.
-- [ ] Resolve settings in a clear order: map override, area-type preset, server default. Let owners disable any map.
+- [x] Resolve settings in a clear order: map override, area-type preset, server default. Let owners disable any map.
 - [ ] Apply public-map targets per occupied line; private-dungeon targets apply per eligible instance, not per viewer.
 - [ ] Keep a global ceiling, reserve capacity for recruited companions, and share remaining capacity fairly across
   occupied maps. A busy city must not consume the entire budget and leave a friend's map empty.
@@ -66,6 +80,11 @@ instances remain isolated; lowering a target cleans up gradually; the global lim
 
 ## 2. Randomized appearances, activities, chat and reactions — high-value atmosphere
 
+- [x] **Believable equipment rule (user requirement, baseline implemented):** appearance must reflect the bot's real level, combat
+  strength and area difficulty. Beginner areas get beginner gear; high-rarity or legendary-looking equipment
+  requires an appropriately strong bot in suitable content. A visiting high-level human must not turn a level-1
+  area into a crowd of legendary adventurers. Real equipped gear must contribute to the bot's combat attributes;
+  cosmetic overrides must not disguise weak bots as endgame characters.
 - [ ] **Randomized appearance presets:** vary hairstyles, supported hair colors, faces where available, outfits,
   visible weapons/equipment, headgear and cosmetics. Use valid exported client appearance IDs and respect
   gender, job, level and model compatibility; avoid arbitrary combinations that fail to render.
@@ -73,7 +92,7 @@ instances remain isolated; lowering a target cleans up gradually; the global lim
   and occasional distinctive adventurers. Make rare cosmetics rare and avoid nearby bots sharing identical looks.
 - [ ] Choose each bot's appearance once per identity seed and keep it stable during its lifetime, map transitions
   and party recruitment. Persistent identity seeds in milestone 6 will preserve looks across later sessions.
-  Cosmetic variation should not silently grant items or change combat stats; functional gear is separate work.
+  Pure cosmetic variation must not grant items or stats; functional equipped gear already contributes real base attributes.
 
 
 - [ ] Assign behavior profiles such as explorer, hunter, socializer, crafter, merchant and resting adventurer.
@@ -176,6 +195,5 @@ bots do not leak private-instance state or consume real-player admission slots.
   visibility, reward attribution and chat cooldowns; perform in-game and two-player LAN acceptance separately.
 - [ ] Keep defaults conservative, provide a clear off switch, and document implemented options as they ship.
 
-The next implementation should be milestone 1: area presets and exact map overrides. Randomized appearances and chat/reactions are good
-second increments. Party companions should be delivered as a complete roster/follow/ownership lifecycle before
+Next increments should refine density controls and appearance pools, then add activity roles and bounded nearby chat/reactions. Party companions should be delivered as a complete roster/follow/ownership lifecycle before
 enabling dense private-dungeon combat.

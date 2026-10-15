@@ -1,7 +1,7 @@
 # Offline population
 
 The optional population service fills occupied public maps with simulated player characters. They have names,
-Novice/first-job models and male/female appearances, travel between activity spots, hunt ordinary monsters
+Novice/first-job models, randomized compatible hair and level-appropriate equipment, travel between activity spots, hunt ordinary monsters
 and use job skills on the exported navigation grid.
 They are server actors, with no client connection, account, saved character, inventory or rewards.
 This is an original RO3 implementation inspired by the population feature in
@@ -9,37 +9,89 @@ This is an original RO3 implementation inspired by the population feature in
 
 ## Try it
 
-On a server built from `feature/offline-population`, enter a public map and type in chat:
+On the current main server, enter a public map and type in chat:
 
-- `!bots 20` — enable up to 20 simulated players per occupied public map/line.
-- `!bots status` — show actual population, per-map target and total limit.
-- `!bots 5` — reduce each map to five.
-- `!bots off` — remove all inhabitants immediately.
-- `!bots reset` — restore the startup configuration.
+- `!bots on` — enable configured profiles: cities 50, towns 30, fields 12, explicit remote profiles 3.
+- `!bots 20` — use a uniform target of 20 per occupied public map/line.
+- `!bots map 3` / `!bots map off` — override the current map ID across its public lines.
+- `!bots map reset` — remove the current map's runtime override.
+- `!bots status` — show total population/limit and the current map's profile, target, level range and rarity cap.
+- `!bots off` — remove all inhabitants immediately, including maps with runtime overrides.
+- `!bots reset` — restore startup settings and clear all runtime map overrides.
 
-These commands use the existing GM account policy (`!help` lists the command). Overrides last until restart.
-Counts apply server-wide, including maps occupied by LAN friends, rather than only to the command sender.
+Commands use the existing GM account policy (`!help` lists the command). Runtime changes last until restart;
+`!bots map` does not enable a disabled master switch. `!bots on` removes the uniform override but preserves
+runtime map overrides. An explicitly disabled map in configuration stays disabled under every command.
+Counts apply server-wide, including maps occupied by LAN friends.
 
 To enable on every startup, edit `Ro3Emu.Population` in `src/Ro3Emu.Server/appsettings.json` before building:
 
 ```json
 "Population": {
   "Enabled": true,
+  "UseMapProfiles": true,
   "PerMap": 20,
-  "MaxTotal": 100
+  "MaxTotal": 100,
+  "MaxSpawnsPerTick": 8,
+  "DefaultAreaLevel": 5,
+  "Profiles": {
+    "city": { "Count": 50 },
+    "town": { "Count": 30 },
+    "field": { "Count": 12 },
+    "remote": { "Count": 3 }
+  },
+  "Maps": {
+    "10111": { "Count": 8, "AreaLevel": 1, "MaxEquipmentQuality": 2 },
+    "10112": { "Profile": "remote" }
+  }
 }
 ```
 
-Or start the server with configuration arguments (no file edits required):
+The map IDs above illustrate overrides; choose IDs and difficulty for your own export. Profiles also accept
+`MinLevel`, `MaxLevel` and `MaxEquipmentQuality`. Map overrides accept those fields plus `Enabled`, `Profile`,
+`Count` and `AreaLevel`. Missing preset fields retain their defaults. A city world-map icon selects `city`;
+other maps explicitly marked scene type 0 select `town`; the rest select `field`. Remote areas require an
+explicit profile override. These are inferred policies, not official RO3 classifications.
+
+Count precedence is runtime map override, runtime uniform override, configured map count, then profile count
+(or `PerMap` when `UseMapProfiles=false`). Level/rarity settings resolve map override before profile defaults.
+Changing file settings requires a server restart; live file reload is future work.
+
+Or enable profiles with configuration arguments:
 
 ```bash
 dotnet run --project src/Ro3Emu.Server -c Release -- \
-  --Ro3Emu:Population:Enabled=true --Ro3Emu:Population:PerMap=20 --Ro3Emu:Population:MaxTotal=100
+  --Ro3Emu:Population:Enabled=true --Ro3Emu:Population:UseMapProfiles=true --Ro3Emu:Population:MaxTotal=100
 ```
 
-Disabled by default. The per-map target is clamped to 0–100; the total ceiling to 0–500. The total ceiling also
-limits GM commands. A zero ceiling disables spawning. Counts are targets: a small or obstructed navigable area
-may hold fewer actors. Missing navigation means that map gets none. No external AI service or internet is used.
+Disabled by default. Per-map targets clamp to 0–100 and the total ceiling to 0–500; a zero ceiling disables
+spawning. At most eight new actors spawn per simulation pass by default. Smaller targets receive a fair share
+of the global budget before busy maps fill the remaining space. Reductions and shutdown remove actors immediately;
+gradual despawning remains planned. Small/obstructed areas can hold fewer actors; missing navigation means none.
+No external AI service or internet is used.
+
+## Levels, appearances and real equipment
+
+Bot levels come from **the area, never the visiting player's level**. Difficulty uses an explicit `AreaLevel`,
+otherwise the median level of unique ordinary monster types in exported spawn groups; maps without this data
+use `DefaultAreaLevel` (5). Bots roll within two levels of that difficulty, constrained by configured bounds.
+`MinLevel` cannot push a bot above the area's upper bound. Below level 10 they stay Novices; higher areas can
+use Novice/first-job careers. These progression rules are inferred and configurable area overrides are useful
+where exported spawns do not represent intended difficulty.
+
+Equipment must satisfy its actual required level, gender, career and series restrictions. Maximum quality
+is 2 below level 20, 3 at 20+, 4 at 40+, 5 at 60+, and 6 at 80+, also capped by the map/profile setting.
+Candidates favor useful nearby item levels and lower rarities. Debug ID ranges and implausibly powerful base
+attributes are excluded even if an item claims beginner level/rarity. Two-handed weapons exclude an offhand.
+Selected equipment's base attributes and supported primary-stat conversions contribute to actual HP/SP,
+attack, magic attack, defense, hit, critical and flee values. These are simulated equipped items, not accounts,
+inventories or items granted to humans. Missing equipment data falls back to baseline attributes/default looks.
+
+Each actor receives a stable seeded look for its lifetime: compatible default-unlocked hair, visible job gear
+and optional non-luxury headgear from level 20. Headgear rarity cannot exceed the bot's allowed and worn rarity,
+and effect-bearing headgear is excluded. Automatic premium outfits, wings, mounts and glow effects are excluded;
+beginner bots therefore cannot masquerade as legendary adventurers. AOI and profile responses use the same look.
+Hair colors, supported faces, regional fashion pools and persistent identity seeds remain planned.
 
 ## Behavior and limits
 
@@ -65,7 +117,8 @@ skills from SkillTreeConfig, SkillConfig and visual target selectors. Low-health
 The normal combat damage formula and 31100/31101 skill packets are reused. Ordinary, unclaimed public spawn-group
 monsters near the bot (within five levels above it and below 10,000 HP) can retaliate; bots can die and revive after 30 seconds. Attribute progression is inferred
 (HP 200+50×level, attack/magic attack 12+4×level). This is a small combat simulation, not full character builds:
-AoE, buffs/debuffs, equipment bonuses, SP/cost accounting and complex skill scripts are not implemented for bots.
+AoE, buffs/debuffs, refinement/cards/enchants, SP/cost accounting and complex skill scripts are not implemented for bots.
+The baseline attributes above now receive the selected equipment bonuses.
 
 Real players take priority: bots skip damaged, player-targeted or reward-reserved monsters and other bots' targets.
 A delayed bot hit checks for intervening player damage and yields rather than finishing that hit. Field MVPs
@@ -76,14 +129,14 @@ Bots disappear when their public map/line becomes empty. Actors more than 220 un
 are reclaimed and replaced near the players. Placement alternates between players sharing a map. Private dungeons
 and event instances receive none. Reconnect grace counts as presence until the player leaves World.
 
-The total budget is allocated in scene/line order, so maps later in that order can get fewer characters when
-several friends spread out. Bots do not consume account slots or public-line admission capacity. They are WorldUnit
+The total budget is shared round-robin across occupied scenes/lines, up to each target.
+At exceptionally small total limits some maps still cannot receive an actor. Bots do not consume account slots or public-line admission capacity. They are WorldUnit
 actors and use the server-unit AOI path; they have their own bounded population and do not use the real-player
-view-limit/rebalancer. Lower `PerMap` if the client renders too many models.
+view-limit/rebalancer. Lower profile/map counts or use `!bots 5` if the client renders too many models.
 
 Bots have no accounts or saved progression. They do not accept parties, sell items, chat or support the full
-player social/inspection workflow. Their profile explicitly disables party invitations. Displayed levels match
-the spawning player's level and are simulated progression, not saved characters. A restart clears all bots.
+player social/inspection workflow. Their profile explicitly disables party invitations. Levels and gear are
+simulated progression based on area difficulty, not saved characters. A restart clears all bots.
 Companions, shops, full quest chains and advanced skill behavior remain future work.
 ## Protocol evidence and validation
 
@@ -102,16 +155,20 @@ Companions, shops, full quest chains and advanced skill behavior remain future w
 
 `PopulationTests` uses synthetic config/navigation and the real World visibility path to cover lifecycle,
 line isolation, limits, names and real UserDataService responses, long journeys, obstacle detours, delayed hits,
-monster retaliation, First Aid and the absence of player kill rewards. In-game names/skill animation and LAN
+monster retaliation, First Aid and the absence of player kill rewards. Further checks cover configuration
+precedence/binding, fair budgets, gradual spawning, area-derived levels, real equipment bonuses, rarity/level/job/sex
+restrictions, debug exclusions, two-handed weapons and stable appearance packets. In-game names/skill animation and LAN
 behavior still require manual verification after each update; a passing server test is not proof of client rendering.
 
-Manual acceptance: restart the main server when convenient, reconnect the regular client and use `!bots 20`; check head names,
+Manual acceptance: restart the main server when convenient, reconnect the regular client and use `!bots on`; compare city/field density, try `!bots map 3`, and check head names,
 follow a bot across a longer journey, observe attacks and job skills near Porings, then attack its target and
-confirm the bot yields. Check First Aid/monster retaliation and death/revival. Change line, visit a dungeon,
+confirm the bot yields. Check First Aid/monster retaliation and death/revival. Visit a beginner area with a high-level character: bots
+should remain modest Novices with plain gear. Follow one bot and verify its hairstyle/weapon remain stable;
+compare its world model with its profile. Change line, visit a dungeon,
 and use `!bots off` to verify cleanup. NPC stops should look like questing without changing your own quests.
 
 ## Planned improvements
 
-See the [bot improvement roadmap](../roadmap/offline-population.md) for per-map density, contextual chat/reactions,
+See the [bot improvement roadmap](../roadmap/offline-population.md) for remaining density/appearance refinements, contextual chat/reactions,
 temporary party companions, dungeon populations and later AI/quest/economy work. All items there are proposals
 unless marked complete; they are not additional settings available in this version.

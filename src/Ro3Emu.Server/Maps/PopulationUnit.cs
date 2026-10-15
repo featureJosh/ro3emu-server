@@ -17,7 +17,18 @@ public sealed class PopulationUnit : WorldUnit
     internal long TargetExpectedHp;
     internal bool VisitingNpc, JourneyActive;
     internal int HuntKills;
-    public long MaxHp => 200 + Level * 50L;
+    public long[] EquipmentLook { get; } = new long[7];
+    public Dictionary<int, int> Appearances { get; } = new();
+    public Dictionary<int, long> GearAttributes { get; } = new();
+    public long MaxHp => 200 + Level * 50L + GearAttributes.GetValueOrDefault(101);
+    public long Attack => 12 + Level * 4L + GearAttributes.GetValueOrDefault(103);
+    public long MagicAttack => 12 + Level * 4L + GearAttributes.GetValueOrDefault(104);
+    public long MaxSp => 50 + GearAttributes.GetValueOrDefault(102);
+    public long Hit => 100 + GearAttributes.GetValueOrDefault(109);
+    public long Critical => 300 + GearAttributes.GetValueOrDefault(111);
+    public long Flee => Level * 2L + GearAttributes.GetValueOrDefault(110);
+    public long Defence => Level * 2L + GearAttributes.GetValueOrDefault(105);
+    public long MagicDefence => Level * 2L + GearAttributes.GetValueOrDefault(106);
     public long Hp { get; set; } = 250;
     public bool Dead => Hp <= 0;
     internal int NormalSkill = 1000001;
@@ -71,9 +82,12 @@ public sealed class PopulationUnit : WorldUnit
             Face = Face, MovementInfo = Movement(), NotifyType = EntityBase.Types.NotifyType.All,
         };
         foreach (var (id, value) in new (long, long)[]
-            { (101, MaxHp), (2000, Hp), (102, 50), (2001, 50), (2002, Level), (113, 500), (115, 100) })
+            { (101, MaxHp), (2000, Hp), (102, MaxSp), (2001, MaxSp), (2002, Level), (113, 500), (115, 100) })
             entity.Property.Add(new AoIProperty { Idx = id, Data = value, BaseData = value });
-        entity.EquipInfo.Add(new long[7]);
+        entity.EquipInfo.Add(EquipmentLook);
+        entity.CurUseAppearances.Add(Appearances);
+        foreach (var (id, amount) in new (long, long)[] { (103, Attack), (104, MagicAttack), (105, Defence), (106, MagicDefence), (109, Hit), (110, Flee), (111, Critical) })
+            entity.Property.Add(new AoIProperty { Idx = id, Data = amount, BaseData = amount });
         return entity;
     }
 }
