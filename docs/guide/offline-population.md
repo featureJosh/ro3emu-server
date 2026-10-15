@@ -52,8 +52,12 @@ Failed paths are retried later. Navigation is local to one map; bots do not cros
 
 The activity loop simulates questing: visit an NPC, travel to hunting grounds, fight a few monsters, return
 and pause. **This does not accept or complete real quests**, alter quest NPC state or award quest rewards.
-No dialogue windows are opened for the human player. Names come from a deterministic local handle generator
-(e.g. Ariwyn, Brifall); no username API or internet access is needed. UserDataService supplies the bot's
+No dialogue windows are opened for the human player. Names come from a shuffled bank of short aliases, nicknames with numbers, gamer-style handles and word pairs
+(e.g. Mochi, Ren42, xKurox, SleepyPoring, LuckyMage). Every bank entry is unique ignoring case;
+serial numbers draw without replacement, with a separate rollover suffix after exhausting the bank.
+No username API or internet access is needed. The word lists and implementation are original.
+Online research considered [Markov username generation](https://github.com/karrni/username-generator) and
+[configurable username templates](https://github.com/subhamg/unique-username-generator); neither project is a dependency. UserDataService supplies the bot's
 Name/Level/Base/Online fields, as the client obtains player head names from that cache rather than EntityBase.Name.
 
 Bots use each job's configured normal attack and a small selection of level-appropriate, hostile single-target

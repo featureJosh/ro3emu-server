@@ -193,8 +193,13 @@ public sealed class PopulationTests : IDisposable
     public void OfflineHandlesAreUniqueAndReadable()
     {
         var names = Enumerable.Range(1, 10000).Select(i => PopulationNames.ForSerial(i)).ToArray();
-        Assert.Equal(names.Length, names.Distinct().Count());
-        Assert.All(names, name => { Assert.InRange(name.Length, 4, 16); Assert.All(name, c => Assert.True(char.IsLetterOrDigit(c))); });
+        Assert.Equal(names.Length, names.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        var firstCohort = names.Take(500).ToArray();
+        Assert.True(firstCohort.Count(n => n.Any(char.IsDigit)) > 50);
+        Assert.True(firstCohort.Count(n => n.All(char.IsLetter)) > 200);
+        Assert.True(firstCohort.Select(n => n[..Math.Min(3, n.Length)]).Distinct().Count() > 40);
+        Assert.Equal(names, Enumerable.Range(1, 10000).Select(i => PopulationNames.ForSerial(i)).ToArray());
+        Assert.All(names, name => { Assert.InRange(name.Length, 3, 16); Assert.All(name, c => Assert.True(char.IsLetterOrDigit(c) || c == '_')); });
     }
 
     [Fact]
