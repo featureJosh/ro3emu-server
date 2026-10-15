@@ -267,7 +267,9 @@ namespace Ro3Emu.ClientHooks
         private static void SaveGameModeSetting(Obf_R.Obf_ff self)
         {
             bool pad = Same(self?.Obf_RuA<object>("m_iSelectMode"), _mobile);
-            if (pad) self.Obf_luA<string, object>("m_iSelectMode", _fashion);
+            // Typed as long: pushed as object, Lua got a userdata, not the number 2, so SetModeType's "== Fashion" failed and
+            // the client fell through to the mobile UI (player report 2026-10-14; the saved setting still encoded 2).
+            if (pad) self.Obf_luA<string, long>("m_iSelectMode", Convert.ToInt64(_fashion));
             Enabled = pad;
             _save.Obf_HuA(self);
         }
@@ -281,7 +283,7 @@ namespace Ro3Emu.ClientHooks
                 column.AddComponent<UnityEngine.UI.Image>().color = new Color(0f, 0f, 0f, 0f); // invisible click target
             column.AddComponent<UnityEngine.UI.Button>().onClick.AddListener(() =>
             {
-                if (_widget != null && _select != null) _select.Obf_HuA(_widget, _mobile);
+                if (_widget != null && _select != null) _select.Obf_HuA(_widget, Convert.ToInt64(_mobile));
                 Debug.Log("[Ro3Emu.Controller] Controller column clicked" + (_widget == null ? " (no mode widget yet)" : ""));
             });
         }
@@ -292,7 +294,7 @@ namespace Ro3Emu.ClientHooks
         {
             _widget = self;
             _setup.Obf_HuA(self, record, mode, initMode, layer, panel);
-            if (Enabled && (mode == null || Same(mode, _fashion))) _select.Obf_HuA(self, _mobile);
+            if (Enabled && (mode == null || Same(mode, _fashion))) _select.Obf_HuA(self, Convert.ToInt64(_mobile));
         }
     }
 }
