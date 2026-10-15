@@ -68,7 +68,7 @@ namespace Ro3Emu.ClientHooks
                     Glyphs.Refresh(on);
                 }
                 var pad = Gamepad.current;
-                if (!on || pad == null || !Application.isFocused) { EndCamera(); UiNav.Tick(null, false); return; }
+                if (!on || pad == null || !(Application.isFocused || Diagnostics.IgnoreFocus)) { EndCamera(); UiNav.Tick(null, false); return; }
                 if (Pressed(pad, "CursorMode"))
                 {
                     _cursor = !_cursor;

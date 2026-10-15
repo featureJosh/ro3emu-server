@@ -71,7 +71,10 @@ namespace Ro3Emu.ClientHooks
                 if (view2 != null && !view2.activeSelf) view2.SetActive(true);
                 tip.enabled = false;
                 if (icon == null) icon = MakeIcon(tip);
-                float size = Math.Max(((RectTransform)tip.transform).rect.height, tip.fontSize * 1.25f) * Controller.Setting("GlyphScale", 2.4f);
+                // Some labels (skill-bar corners) are tiny, so there is also a floor: 34 px at 1080p, in the label's canvas units.
+                var canvas = tip.canvas;
+                float floor = 34f * Controller.Setting("GlyphScale", 2.4f) / 2.4f * (canvas != null ? Screen.height / 1080f / canvas.scaleFactor : 1f);
+                float size = Math.Max(Math.Max(((RectTransform)tip.transform).rect.height, tip.fontSize * 1.25f) * Controller.Setting("GlyphScale", 2.4f), floor);
                 ((RectTransform)icon).sizeDelta = new Vector2(size, size);
                 var image = icon.GetComponent<Image>();
                 if (image.sprite != sprite) image.sprite = sprite;

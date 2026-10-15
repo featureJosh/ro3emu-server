@@ -35,6 +35,16 @@ namespace Ro3Emu.ClientHooks
                     case "luacall":
                         Lua(parts[0] == "luacall", parts.Length > 1 ? parts[1] : "");
                         break;
+                    case "focus":
+                        // "focus ignore": input (ours and the device's) keeps working while the window is in the background,
+                        // so cmd.txt test runs work while the developer is in another window.
+                        IgnoreFocus = parts.Length < 2 || parts[1] != "normal";
+                        Application.runInBackground = IgnoreFocus || Application.runInBackground;
+                        UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior = IgnoreFocus
+                            ? UnityEngine.InputSystem.InputSettings.BackgroundBehavior.IgnoreFocus
+                            : UnityEngine.InputSystem.InputSettings.BackgroundBehavior.ResetAndDisableNonBackgroundDevices;
+                        Debug.Log("[Ro3Emu.Diag] focus " + (IgnoreFocus ? "ignored" : "normal"));
+                        break;
                     case "wait":
                         _wait = parts.Length > 1 && int.TryParse(parts[1], out int frames) ? frames : 30;
                         break;
@@ -95,6 +105,9 @@ namespace Ro3Emu.ClientHooks
         /// Developer commands without chat: each line of &lt;client&gt;/ro3emu/cmd.txt is run like "!client &lt;line&gt;", then the
         /// file is deleted. Polled about once a second from the frame pump; also works before world entry.
         /// </summary>
+        /// <summary>Developer "focus ignore": controller input is handled while the window is in the background.</summary>
+        public static bool IgnoreFocus;
+
         public static void PollCommandFile()
         {
             if (_release != null && --_releaseIn <= 0) { var r = _release; _release = null; r(); }
