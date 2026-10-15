@@ -24,7 +24,7 @@ public class ControllerIniTests
         }
         Assert.Equal(["<Gamepad>/buttonSouth"], binds["Interactive_1"]);
         Assert.Equal(0.2f, tune["Deadzone"]);
-        Assert.Equal(4, tune.Count);
+        Assert.Equal(5, tune.Count);
     }
 
     [Fact]

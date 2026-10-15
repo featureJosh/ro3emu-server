@@ -151,6 +151,9 @@ namespace Ro3Emu.ClientHooks
         private static bool Released(Gamepad pad, string name) => Button(pad, name, out _)?.wasReleasedThisFrame == true;
         private static bool Held(Gamepad pad, string name) => Button(pad, name, out _)?.isPressed == true;
 
+        /// <summary>A number setting from controller.ini.</summary>
+        public static float Setting(string name, float fallback) => Get(name, fallback);
+
         private static float Get(string name, float fallback) => Tune.TryGetValue(name, out float v) ? v : fallback;
 
         private static Vector2 Stick(Vector2 v)

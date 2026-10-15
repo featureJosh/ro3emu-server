@@ -21,7 +21,8 @@ namespace Ro3Emu.ClientHooks
 # SwitchTarget FastPickUp FastPickUpAll Esc.
 # Controller actions: CursorMode (toggle the menu cursor), LeftClick / RightClick (in cursor mode),
 # CameraZoom (hold, then right stick up/down).
-# Tuning: CameraSpeedX / CameraSpeedY (negative inverts), CursorSpeed (pixels per second), Deadzone (0-1).
+# Tuning: CameraSpeedX / CameraSpeedY (negative inverts), CursorSpeed (pixels per second), Deadzone (0-1),
+# GlyphScale (button glyph size relative to the key label it replaces).
 
 MoveForward = <Gamepad>/leftStick/up
 MoveBackward = <Gamepad>/leftStick/down
@@ -50,6 +51,7 @@ CameraSpeedX = 700
 CameraSpeedY = 400
 CursorSpeed = 1200
 Deadzone = 0.2
+GlyphScale = 2.4
 ";
 
         /// <summary>"Action = &lt;Gamepad&gt;/control" lines go to binds, "Name = number" lines to tune.</summary>

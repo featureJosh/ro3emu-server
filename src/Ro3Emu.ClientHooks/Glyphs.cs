@@ -71,12 +71,14 @@ namespace Ro3Emu.ClientHooks
                 if (view2 != null && !view2.activeSelf) view2.SetActive(true);
                 tip.enabled = false;
                 if (icon == null) icon = MakeIcon(tip);
+                float size = Math.Max(((RectTransform)tip.transform).rect.height, tip.fontSize * 1.25f) * Controller.Setting("GlyphScale", 2.4f);
+                ((RectTransform)icon).sizeDelta = new Vector2(size, size);
                 var image = icon.GetComponent<Image>();
                 if (image.sprite != sprite) image.sprite = sprite;
             }
         }
 
-        /// <summary>A square Image where the label was, as tall as the label's line (at least the rect height).</summary>
+        /// <summary>A square Image where the label was; Refresh sizes it (label line height x GlyphScale).</summary>
         private static Transform MakeIcon(TMPro.TMP_Text tip)
         {
             var go = new GameObject(IconName + tip.GetInstanceID(), typeof(RectTransform), typeof(Image));
@@ -88,8 +90,6 @@ namespace Ro3Emu.ClientHooks
             rect.anchorMax = src.anchorMax;
             rect.pivot = src.pivot;
             rect.anchoredPosition = src.anchoredPosition;
-            float size = Math.Max(src.rect.height, tip.fontSize * 1.25f);
-            rect.sizeDelta = new Vector2(size, size);
             var image = go.GetComponent<Image>();
             image.preserveAspect = true;
             image.raycastTarget = false;
