@@ -40,6 +40,9 @@ namespace Ro3Emu.ClientHooks
         private static float _zoomLast, _scroll;
         private static Vector2 _cursorRest;
 
+        /// <summary>Cursor mode is on (the pad drives the mouse).</summary>
+        public static bool CursorOn => _cursor;
+
         /// <summary>The "Controller" mode is chosen (saved in PlayerPrefs).</summary>
         public static bool Enabled
         {

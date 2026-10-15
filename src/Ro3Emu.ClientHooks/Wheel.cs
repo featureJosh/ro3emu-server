@@ -61,6 +61,7 @@ namespace Ro3Emu.ClientHooks
             Open = true;
             _selected = -1;
             _root.gameObject.SetActive(true);
+            foreach (var s in Slices) if (s.bg.GetComponent<Punch>() is Punch p) p.enabled = false; // a closing punch must not hide it again
             Refresh();
         }
 
@@ -82,7 +83,7 @@ namespace Ro3Emu.ClientHooks
                 if (angle < 0) angle += 360f;
                 int n = Entries.Length;
                 int index = (int)Math.Round(angle / (360f / n)) % n;
-                if (index != _selected) { _selected = index; Refresh(); }
+                if (index != _selected) { _selected = index; Refresh(); Punch.Play(Slices[index].bg.transform, 1.25f, null, 1.12f); }
             }
             var dpad = pad.dpad.ReadValue();
             if (dpad != Vector2.zero && Controller.Edge(dpad.x > 0 ? pad.dpad.right : dpad.x < 0 ? pad.dpad.left : dpad.y > 0 ? pad.dpad.up : pad.dpad.down, true))
@@ -90,13 +91,16 @@ namespace Ro3Emu.ClientHooks
                 int step = dpad.x > 0 || dpad.y < 0 ? 1 : -1;
                 _selected = ((_selected < 0 ? 0 : _selected) + step + Entries.Length) % Entries.Length;
                 Refresh();
+                Punch.Play(Slices[_selected].bg.transform, 1.25f, null, 1.12f);
             }
             bool confirm = Controller.Edge(pad.TryGetChildControl(Path(UiNav.Control("MenuConfirm", "buttonSouth"))) as ButtonControl, true)
                 || Controller.Edge(pad.TryGetChildControl(Path(UiNav.Control("MenuWheel", "select"))) as ButtonControl, true);
             if (confirm)
             {
-                Hide();
-                if (_selected >= 0) Run(Entries[_selected].action);
+                if (_selected < 0) { Hide(); return; }
+                Open = false; // the wheel stays on screen for the pick's punch, then hides itself
+                Punch.Play(Slices[_selected].bg.transform, 1.4f, null, 1.12f, _root.gameObject);
+                Run(Entries[_selected].action);
                 return;
             }
             if (Controller.Edge(pad.TryGetChildControl(Path(UiNav.Control("MenuBack", "buttonEast"))) as ButtonControl, true)) { Hide(); return; }

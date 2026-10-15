@@ -16,8 +16,9 @@ namespace Ro3Emu.ClientHooks
     /// <list type="bullet">
     /// <item>Skill slot (UI_Sys_Main_JoyStickSkillWidget_PC/.../UI_Com_JoyStickSkillItemWidgetN): skillIcon_Img (icon),
     /// Mask_Img active while cooling down with BarTime_Img fill and Time_TTxt seconds, Disable_Img when unusable.</item>
-    /// <item>Potion slot (UI_Sys_Main_PropsWidget_PC/PropsItem0N): ItemIcon_Img, PropNum_TTxt (count), CD_RTransform active
-    /// while cooling down with CD_Img fill and CD_TTxt.</item>
+    /// <item>Potion slot (UI_Sys_Main_PropsWidget_PC/PropsItem0N): ItemIcon_Img, PropNum_TTxt (count); the item cell's
+    /// UI_Com_NullNew_MaskWidget shows the cooldown: MaskItem_Img fill (shared by both potions, ~30 s) and
+    /// MaskItemTip_TTxt seconds. Stock cooldown fills are Radial360 and mirrored (x scale -1).</item>
     /// <item>HP / SP: UI_Sys_Main_AvatarInfoWidget_PC HPBar_Slider / BlueBar_Slider (0..1).</item>
     /// </list>
     /// </summary>
@@ -47,7 +48,7 @@ namespace Ro3Emu.ClientHooks
         private sealed class Slot
         {
             public RectTransform Rect;
-            public Image Icon, Cd, Glyph, Frame;
+            public Image Icon, Cd, Glyph, Frame, Flash;
             public TextMeshProUGUI CdText, Count;
         }
 
@@ -63,6 +64,13 @@ namespace Ro3Emu.ClientHooks
 
         /// <summary>Our HUD is on screen (the prompt bar moves above it).</summary>
         public static bool Visible => _shown;
+
+        /// <summary>HUD base size: 1080p design units x this x Overlay.Scale.</summary>
+        private const float Size = 0.85f;
+        private static float Scale => Overlay.Scale * Size;
+
+        /// <summary>Top of the HUD (orbs) in screen pixels above the bottom edge.</summary>
+        public static float Top => (OrbSize + 6f) * Scale;
 
         /// <summary>From Controller.Tick every frame.</summary>
         internal static void Tick(bool on)
@@ -135,10 +143,11 @@ namespace Ro3Emu.ClientHooks
                         switch (img.name)
                         {
                             case "ItemIcon_Img": src.Icon = img; break;
-                            case "CD_Img": src.CdFill = img; src.CdOn = img.transform.parent.gameObject; break;
+                            // The item cell's own cooldown mask (CD_RTransform / CD_Img stay off on the PC bar).
+                            case "MaskItem_Img": src.CdFill = img; src.CdOn = img.gameObject; break;
                         }
                     foreach (var t in slot.GetComponentsInChildren<TMP_Text>(true))
-                        if (t.name == "CD_TTxt") src.CdText = t;
+                        if (t.name == "MaskItemTip_TTxt") src.CdText = t;
                         else if (t.name == "PropNum_TTxt") src.Count = t;
                     PotionSources.Add(src);
                 }
@@ -175,7 +184,7 @@ namespace Ro3Emu.ClientHooks
             {
                 if (Array.IndexOf(Lifted, rt.name) < 0) continue;
                 if (!LiftedFrom.TryGetValue(rt, out var from)) LiftedFrom[rt] = from = rt.anchoredPosition;
-                var target = from + new Vector2(0f, HudTop * Overlay.Scale * perPixel * 0.85f);
+                var target = from + new Vector2(0f, HudTop * Scale * perPixel * 0.85f);
                 if (rt.anchoredPosition != target) rt.anchoredPosition = target;
             }
         }
@@ -213,15 +222,36 @@ namespace Ro3Emu.ClientHooks
             slot.Glyph.sprite = src != null ? Glyphs.For(Controller.FirstBinding(src.Action)) : null;
             slot.Glyph.enabled = slot.Glyph.sprite != null;
             if (!has) { slot.Cd.enabled = false; slot.CdText.text = ""; if (slot.Count != null) slot.Count.text = ""; return; }
+            if (Pressed(src.Action)) Punch.Play(slot.Rect, 1.18f, slot.Flash);
             if (slot.Icon.sprite != src.Icon.sprite) slot.Icon.sprite = src.Icon.sprite;
             bool disabled = src.Disabled != null && src.Disabled.gameObject.activeInHierarchy;
             slot.Icon.color = disabled ? new Color(0.45f, 0.45f, 0.45f) : Color.white;
-            bool cd = src.CdOn != null && src.CdOn.activeInHierarchy;
+            bool cd = src.CdOn != null && src.CdOn.activeInHierarchy && (src.CdFill == null || src.CdFill.fillAmount > 0f);
             slot.Cd.enabled = cd;
-            if (cd) slot.Cd.fillAmount = src.CdFill != null ? src.CdFill.fillAmount : 1f;
+            if (cd && src.CdFill != null)
+            {
+                // Same sweep as the stock mask, which is mirrored (x scale -1): mirrored means the other direction.
+                slot.Cd.fillAmount = src.CdFill.fillAmount;
+                slot.Cd.fillMethod = src.CdFill.fillMethod;
+                slot.Cd.fillOrigin = src.CdFill.fillOrigin;
+                slot.Cd.fillClockwise = src.CdFill.fillClockwise != src.CdFill.transform.lossyScale.x < 0f;
+            }
+            else if (cd) slot.Cd.fillAmount = 1f;
             string seconds = cd && src.CdText != null ? src.CdText.text : "";
-            slot.CdText.text = seconds != null && seconds.Length > 0 && char.IsDigit(seconds[0]) ? seconds : "";
+            if (string.IsNullOrEmpty(seconds) || !char.IsDigit(seconds[0])) seconds = ""; // idle labels ("获取") are not seconds
+            else if (char.IsDigit(seconds[seconds.Length - 1])) seconds += "s"; // potions show bare numbers, skills "4s"
+            slot.CdText.text = seconds;
             if (slot.Count != null) slot.Count.text = src.Count != null ? src.Count.text : "";
+        }
+
+        /// <summary>The slot's button went down this frame while the game has it (not in menus, the wheel or cursor
+        /// mode, where the binding is taken away).</summary>
+        private static bool Pressed(string action)
+        {
+            var path = Controller.FirstBinding(action);
+            var pad = UnityEngine.InputSystem.Gamepad.current;
+            if (path == null || pad == null || UiNav.Active || Wheel.Open || Controller.CursorOn) return false;
+            return Controller.Edge(pad.TryGetChildControl(path.Substring(path.IndexOf('/') + 1)) as UnityEngine.InputSystem.Controls.ButtonControl, true);
         }
 
         // ---- view ----
@@ -253,7 +283,7 @@ namespace Ro3Emu.ClientHooks
         /// <summary>One row centred on the screen: [HP orb] [potions] [skills] [SP orb], on a plate.</summary>
         private static void Layout()
         {
-            float s = Overlay.Scale;
+            float s = Scale;
             _root.localScale = new Vector3(s, s, 1f);
             _root.anchoredPosition = new Vector2(0f, 6f * s);
             int skills = SkillSources.Count, potions = PotionSources.Count;
@@ -264,7 +294,7 @@ namespace Ro3Emu.ClientHooks
                 bool on = i < potions;
                 Potions[i].Rect.gameObject.SetActive(on);
                 if (!on) continue;
-                Potions[i].Rect.anchoredPosition = new Vector2(x, y + (SkillSize - PotionSize) / 2f);
+                Potions[i].Rect.anchoredPosition = new Vector2(x + PotionSize / 2f, y + SkillSize / 2f); // pivot: centre
                 x += PotionSize + Gap;
             }
             if (potions > 0) x += Gap;
@@ -273,7 +303,7 @@ namespace Ro3Emu.ClientHooks
                 bool on = i < skills;
                 Skills[i].Rect.gameObject.SetActive(on);
                 if (!on) continue;
-                Skills[i].Rect.anchoredPosition = new Vector2(x, y);
+                Skills[i].Rect.anchoredPosition = new Vector2(x + SkillSize / 2f, y + SkillSize / 2f);
                 x += SkillSize + Gap;
             }
             float orbX = row / 2f + 18f + OrbSize / 2f;
@@ -305,6 +335,7 @@ namespace Ro3Emu.ClientHooks
         {
             var slot = new Slot { Rect = Overlay.Rect(name, _root) };
             slot.Rect.sizeDelta = new Vector2(size, size);
+            slot.Rect.pivot = new Vector2(0.5f, 0.5f); // the press punch scales around the centre
             Img("Back", slot.Rect, Shapes.RoundedRect, new Color(0.04f, 0.03f, 0.03f, 0.85f), 0, 0, size);
             slot.Icon = Img("Icon", slot.Rect, null, Color.white, 5, 5, size - 10);
             slot.Icon.preserveAspect = true;
@@ -314,17 +345,19 @@ namespace Ro3Emu.ClientHooks
             slot.Cd.fillOrigin = (int)Image.Origin360.Top;
             slot.Cd.fillClockwise = false;
             slot.Frame = Img("Frame", slot.Rect, Shapes.RoundedRing, Gold, 0, 0, size);
+            slot.Flash = Img("Flash", slot.Rect, Shapes.RoundedRect, new Color(1f, 0.93f, 0.75f, 0f), 0, 0, size);
+            slot.Flash.enabled = false;
             slot.CdText = Overlay.Text("Seconds", slot.Rect, size * 0.38f);
             slot.CdText.alignment = TextAlignmentOptions.Center;
             Place(slot.CdText.rectTransform, 0, 0, size, size);
-            float glyph = potion ? 34f : 40f;
-            slot.Glyph = Img("Glyph", slot.Rect, null, Color.white, (size - glyph) / 2f, -glyph * 0.62f, glyph);
+            float glyph = potion ? 28f : 32f;
+            slot.Glyph = Img("Glyph", slot.Rect, null, Color.white, (size - glyph) / 2f, -glyph * 0.4f, glyph); // on the slot's bottom edge, inside the plate
             slot.Glyph.preserveAspect = true;
             if (potion)
             {
                 slot.Count = Overlay.Text("Count", slot.Rect, 18);
-                slot.Count.alignment = TextAlignmentOptions.BottomRight;
-                Place(slot.Count.rectTransform, 0, 2, size - 5, size);
+                slot.Count.alignment = TextAlignmentOptions.TopRight; // the glyph is at the bottom
+                Place(slot.Count.rectTransform, 0, 0, size - 4, size - 1);
             }
             return slot;
         }

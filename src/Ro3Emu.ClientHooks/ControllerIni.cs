@@ -59,7 +59,7 @@ CameraSpeedX = 700
 CameraSpeedY = 400
 CursorSpeed = 1200
 Deadzone = 0.2
-GlyphScale = 2.4
+GlyphScale = 2
 UiScale = 1
 ";
 

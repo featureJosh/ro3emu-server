@@ -103,8 +103,8 @@ namespace Ro3Emu.ClientHooks
                 bg.color = new Color(0.05f, 0.04f, 0.03f, 0.72f);
                 bg.raycastTarget = false;
                 var layout = _bar.gameObject.AddComponent<HorizontalLayoutGroup>();
-                layout.spacing = 18;
-                layout.padding = new RectOffset(16, 20, 6, 6);
+                layout.spacing = 12;
+                layout.padding = new RectOffset(10, 14, 3, 3);
                 layout.childAlignment = TextAnchor.MiddleRight;
                 layout.childControlWidth = layout.childControlHeight = true;
                 layout.childForceExpandWidth = layout.childForceExpandHeight = false;
@@ -112,7 +112,7 @@ namespace Ro3Emu.ClientHooks
                 _bar.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
             _bar.localScale = new Vector3(scale, scale, 1f);
-            _bar.anchoredPosition = new Vector2(-24 * scale, (ControllerHud.Visible ? 185f : 110f) * scale); // above our HUD / the stock menu buttons
+            _bar.anchoredPosition = new Vector2(-24 * scale, ControllerHud.Visible ? ControllerHud.Top + 12f * scale : 110f * scale); // above our HUD / the stock menu buttons
             int n = prompts?.Count ?? 0;
             _bar.gameObject.SetActive(n > 0);
             while (Prompts.Count < n)
@@ -120,8 +120,8 @@ namespace Ro3Emu.ClientHooks
                 var glyph = Image("Glyph", _bar, Color.white);
                 glyph.preserveAspect = true;
                 var le = glyph.gameObject.AddComponent<LayoutElement>();
-                le.preferredWidth = le.preferredHeight = 44;
-                var label = Text("Label", _bar, 26);
+                le.preferredWidth = le.preferredHeight = 32;
+                var label = Text("Label", _bar, 21);
                 label.alignment = TextAlignmentOptions.MidlineLeft;
                 Prompts.Add((glyph, label));
             }
@@ -134,6 +134,38 @@ namespace Ro3Emu.ClientHooks
                 Prompts[i].glyph.sprite = Glyphs.For(prompts[i].control);
                 Prompts[i].label.text = prompts[i].label;
             }
+        }
+    }
+
+    /// <summary>Press feedback on our UI: a scale punch that settles to <c>to</c> and an optional flash that fades, in
+    /// 0.2 s (unscaled time). <c>hide</c> is deactivated at the end (the wheel closing after the pick).</summary>
+    internal sealed class Punch : MonoBehaviour
+    {
+        private const float Duration = 0.2f;
+        private float _start, _from, _to;
+        private Graphic _flash;
+        private GameObject _hide;
+
+        public static void Play(Transform target, float from, Graphic flash = null, float to = 1f, GameObject hide = null)
+        {
+            var p = target.GetComponent<Punch>() ?? target.gameObject.AddComponent<Punch>();
+            p._start = Time.unscaledTime;
+            p._from = from;
+            p._to = to;
+            p._flash = flash;
+            p._hide = hide;
+            p.enabled = true;
+            p.Update();
+        }
+
+        private void Update()
+        {
+            float k = Mathf.Clamp01((Time.unscaledTime - _start) / Duration), ease = 1f - (1f - k) * (1f - k);
+            transform.localScale = Vector3.one * Mathf.Lerp(_from, _to, ease);
+            if (_flash != null) { var c = _flash.color; c.a = 0.75f * (1f - ease); _flash.color = c; _flash.enabled = k < 1f; }
+            if (k < 1f) return;
+            enabled = false;
+            if (_hide != null) _hide.SetActive(false);
         }
     }
 }
