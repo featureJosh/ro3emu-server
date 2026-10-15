@@ -65,6 +65,7 @@ namespace Ro3Emu.ClientHooks
                 {
                     if (on) Load();
                     if (on || _synced) Sync(on);
+                    Glyphs.Refresh(on);
                 }
                 var pad = Gamepad.current;
                 if (!on || pad == null || !Application.isFocused) { EndCamera(); return; }
@@ -127,6 +128,10 @@ namespace Ro3Emu.ClientHooks
             _synced = on;
             if (changed > 0) Debug.Log("[Ro3Emu.Controller] gamepad bindings updated on " + changed + " action(s)" + (_cursor ? " (cursor mode)" : ""));
         }
+
+        /// <summary>The first gamepad control bound to a game or controller action, or null.</summary>
+        public static string FirstBinding(string action) =>
+            !string.IsNullOrEmpty(action) && Binds.TryGetValue(action, out var list) && list.Count > 0 ? list[0] : null;
 
         private static bool CursorOwns(string path) =>
             path.StartsWith(Pad + "leftStick/") || Uses("LeftClick", path) || Uses("RightClick", path);
@@ -291,7 +296,8 @@ namespace Ro3Emu.ClientHooks
 
         private static void SaveGameModeSetting(Obf_R.Obf_ff self)
         {
-            bool pad = Same(self?.Obf_RuA<object>("m_iSelectMode"), _mobile);
+            var picked = self?.Obf_RuA<object>("m_iSelectMode");
+            bool pad = Same(picked, ControllerMode) || Same(picked, _mobile);
             // Typed as long: pushed as object, Lua got a userdata, not the number 2, so SetModeType's "== Fashion" failed and
             // the client fell through to the mobile UI (player report 2026-10-14; the saved setting still encoded 2).
             if (pad) self.Obf_luA<string, long>("m_iSelectMode", Convert.ToInt64(_fashion));
@@ -308,18 +314,32 @@ namespace Ro3Emu.ClientHooks
                 column.AddComponent<UnityEngine.UI.Image>().color = new Color(0f, 0f, 0f, 0f); // invisible click target
             column.AddComponent<UnityEngine.UI.Button>().onClick.AddListener(() =>
             {
-                if (_widget != null && _select != null) _select.Obf_HuA(_widget, Convert.ToInt64(_mobile));
+                if (_widget != null && _select != null) _select.Obf_HuA(_widget, ControllerMode);
                 Debug.Log("[Ro3Emu.Controller] Controller column clicked" + (_widget == null ? " (no mode widget yet)" : ""));
             });
         }
 
         private static Obf_R.Obf_ff _widget;
 
+        /// <summary>Our own mode value for the Controller card; enum_GameMode has OldSchool 1, Fashion 2, Mobile 3. It never
+        /// reaches the client's mode logic: the save turns it into Fashion.</summary>
+        private const long ControllerMode = 4;
+
         private static void Setup(Obf_R.Obf_ff self, object record, object mode, object initMode, object layer, object panel)
         {
             _widget = self;
             _setup.Obf_HuA(self, record, mode, initMode, layer, panel);
-            if (Enabled && (mode == null || Same(mode, _fashion))) _select.Obf_HuA(self, Convert.ToInt64(_mobile));
+            // The Mobile column's card was created as mode 3 (enum_GameMode.Mobile), and anything in the client that sees 3
+            // can switch to the mobile UI. Re-key it as ControllerMode (4), a value the client never tests for.
+            var list = self.Obf_RuA<Obf_R.Obf_ff>("m_kSelectWidgetList");
+            var card = list?.Obf_ruA<long, Obf_R.Obf_ff>(Convert.ToInt64(_mobile));
+            if (card != null)
+            {
+                list.Obf_luA<long, object>(Convert.ToInt64(_mobile), null);
+                list.Obf_luA<long, Obf_R.Obf_ff>(ControllerMode, card);
+                card.Obf_luA<string, long>("m_iMode", ControllerMode);
+            }
+            if (Enabled && (mode == null || Same(mode, _fashion))) _select.Obf_HuA(self, ControllerMode);
         }
     }
 }
