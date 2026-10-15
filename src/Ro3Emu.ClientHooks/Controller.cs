@@ -61,6 +61,7 @@ namespace Ro3Emu.ClientHooks
             try
             {
                 bool on = Enabled;
+                ControllerHud.Tick(on);
                 if (++_frame % 30 == 0)
                 {
                     if (on) Load();

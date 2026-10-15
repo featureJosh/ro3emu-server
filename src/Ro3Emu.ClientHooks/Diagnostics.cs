@@ -60,6 +60,9 @@ namespace Ro3Emu.ClientHooks
                         _waitMenu = w[0];
                         _waitUntil = Time.realtimeSinceStartup + (w.Length > 1 && float.TryParse(w[1], out float timeout) ? timeout : 60f);
                         break;
+                    case "pick":
+                        Pick(parts.Length > 1 ? parts[1] : "");
+                        break;
                     case "wait":
                         _wait = parts.Length > 1 && int.TryParse(parts[1], out int frames) ? frames : 30;
                         break;
@@ -85,6 +88,26 @@ namespace Ro3Emu.ClientHooks
             {
                 Debug.LogError("[Ro3Emu.Diag] " + line + " failed: " + e);
             }
+        }
+
+        /// <summary>"pick x y" (screenshot pixels, origin top-left): every visible UI graphic under that point.</summary>
+        private static void Pick(string args)
+        {
+            var xy = args.Split(' ');
+            if (xy.Length < 2 || !float.TryParse(xy[0], out float x) || !float.TryParse(xy[1], out float y)) return;
+            var point = new Vector2(x, Screen.height - y);
+            var sb = new StringBuilder();
+            foreach (var g in UnityEngine.Object.FindObjectsOfType<Graphic>())
+            {
+                if (!g.isActiveAndEnabled || g.canvasRenderer.GetInheritedAlpha() < 0.02f) continue;
+                var canvas = g.canvas;
+                var cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.rootCanvas.worldCamera : null;
+                if (!RectTransformUtility.RectangleContainsScreenPoint(g.rectTransform, point, cam)) continue;
+                var r = g.rectTransform.rect;
+                if (r.width * r.height > 600 * 600) continue; // full-screen backgrounds
+                sb.Append("\n  ").Append(Path(g.transform)).Append(" (").Append(g.GetType().Name).Append(')');
+            }
+            Debug.Log("[Ro3Emu.Diag] pick " + args + ":" + sb);
         }
 
         /// <summary>Every transform whose name contains <paramref name="filter"/>: path, state, renderers.</summary>
