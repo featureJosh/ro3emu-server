@@ -85,13 +85,15 @@ namespace Ro3Emu.ClientHooks
         private static RectTransform _bar;
         private static readonly List<(Image glyph, TextMeshProUGUI label)> Prompts = new List<(Image, TextMeshProUGUI)>();
         private static string _shown;
+        private static bool _barHud;
 
         /// <summary>Shows the prompts (control path, label) at the bottom right, or hides the bar for none.</summary>
         public static void SetPrompts(IList<(string control, string label)> prompts)
         {
             string key = prompts == null ? "" : string.Join("|", prompts);
             float scale = Scale;
-            if (key == _shown && _bar != null && Mathf.Approximately(_bar.localScale.x, scale)) return;
+            if (key == _shown && _bar != null && Mathf.Approximately(_bar.localScale.x, scale) && _barHud == ControllerHud.Visible) return;
+            _barHud = ControllerHud.Visible;
             _shown = key;
             if (_bar == null)
             {
@@ -110,7 +112,7 @@ namespace Ro3Emu.ClientHooks
                 _bar.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             }
             _bar.localScale = new Vector3(scale, scale, 1f);
-            _bar.anchoredPosition = new Vector2(-24 * scale, 110 * scale); // above the stock HUD's bottom-right menu buttons
+            _bar.anchoredPosition = new Vector2(-24 * scale, (ControllerHud.Visible ? 185f : 110f) * scale); // above our HUD / the stock menu buttons
             int n = prompts?.Count ?? 0;
             _bar.gameObject.SetActive(n > 0);
             while (Prompts.Count < n)

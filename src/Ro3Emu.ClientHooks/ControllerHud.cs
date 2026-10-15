@@ -61,6 +61,9 @@ namespace Ro3Emu.ClientHooks
         private static int _frame;
         private static bool _shown;
 
+        /// <summary>Our HUD is on screen (the prompt bar moves above it).</summary>
+        public static bool Visible => _shown;
+
         /// <summary>From Controller.Tick every frame.</summary>
         internal static void Tick(bool on)
         {
