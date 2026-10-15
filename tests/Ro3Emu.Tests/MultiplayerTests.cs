@@ -165,6 +165,16 @@ public sealed class MultiplayerTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task NoticeListIsServedEmpty()
+    {
+        using var http = new HttpClient();
+        var json = await http.GetStringAsync(_http + Ro3Emu.Server.Http.SdkEndpoints.NoticeListPath + "?notice_type=1&language=en&channel_code=x");
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        Assert.Equal(200, doc.RootElement.GetProperty("code").GetInt32());
+        Assert.Equal(0, doc.RootElement.GetProperty("data").GetProperty("notice_list").GetArrayLength());
+    }
+
+    [Fact]
     public void DatabaseBackupWritesACopy()
     {
         var backup = (Ro3Emu.Server.Accounts.DatabaseBackup)Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions
