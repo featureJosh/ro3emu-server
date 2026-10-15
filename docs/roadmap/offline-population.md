@@ -25,7 +25,7 @@ complete real quests or populate private dungeons. Those are milestones below.
 | Order | Milestone | Main benefit | Depends on |
 |---|---|---|---|
 | 1 | Per-map population profiles and controls | The world has believable busy and quiet areas | Existing population lifecycle |
-| 2 | Activity roles, chat and player reactions | Bots feel present and varied | Profiles; shared chat/event delivery |
+| 2 | Randomized appearances, activities, chat and reactions | Bots look distinct and feel present | Profiles; client appearance data and chat/event delivery |
 | 3 | Temporary party companions | Solo players gain useful teammates | Bot-aware party roster and skill targeting |
 | 4 | Instance-aware dungeon populations | More adventurers in dungeons without corrupting encounters | Companion lifecycle and instance ownership |
 | 5 | Stronger combat and support AI | Teammates contribute across more content | Companion roles and reward attribution |
@@ -64,7 +64,17 @@ companions are a separate subset constrained by the client's party size; 24 adve
 **Acceptance:** two LAN players see the same city inhabitants; a remote map stays sparse; separate lines and
 instances remain isolated; lowering a target cleans up gradually; the global limit holds under all combinations.
 
-## 2. Activity roles, chat and reactions — high-value atmosphere
+## 2. Randomized appearances, activities, chat and reactions — high-value atmosphere
+
+- [ ] **Randomized appearance presets:** vary hairstyles, supported hair colors, faces where available, outfits,
+  visible weapons/equipment, headgear and cosmetics. Use valid exported client appearance IDs and respect
+  gender, job, level and model compatibility; avoid arbitrary combinations that fail to render.
+- [ ] Weight appearance pools by region and role: plain beginner gear, recognizable class equipment, town fashion,
+  and occasional distinctive adventurers. Make rare cosmetics rare and avoid nearby bots sharing identical looks.
+- [ ] Choose each bot's appearance once per identity seed and keep it stable during its lifetime, map transitions
+  and party recruitment. Persistent identity seeds in milestone 6 will preserve looks across later sessions.
+  Cosmetic variation should not silently grant items or change combat stats; functional gear is separate work.
+
 
 - [ ] Assign behavior profiles such as explorer, hunter, socializer, crafter, merchant and resting adventurer.
   Give towns more social roles and fields more hunters, with varied pauses and routes rather than synchronized loops.
@@ -84,7 +94,8 @@ Context packs should contain many alternatives; these examples should not become
 A cloud language model is not required. An optional local dialogue model can be explored much later if phrase packs
 prove insufficient, while the normal offline mode remains complete.
 
-**Acceptance:** conversation stays varied during a 30-minute session; reactions match real events; a LAN event
+**Acceptance:** a crowd has varied supported hairstyles/outfits/equipment, and a followed bot keeps its look;
+conversation stays varied during a 30-minute session; reactions match real events; a LAN event
 produces one response, not one per viewer; muted or disabled chat produces no messages.
 
 ## 3. Temporary party companions — most useful gameplay feature
@@ -138,7 +149,7 @@ commands under pressure; combat neither duplicates rewards nor steals ambient cl
 
 - [ ] Persist a small optional identity seed so familiar bots return with the same name, look, job and personality.
   Keep temporary actor IDs and party membership separate from that identity.
-- [ ] Expand and allow editing of the handle bank; vary outfit, hair, visible weapons and cosmetic choices by role/level.
+- [ ] Expand and allow editing of the handle bank and appearance pools; persist the appearance seeds introduced in milestone 2.
 - [ ] Add time-of-day routines, recurring local characters and occasional travelling groups with named destinations.
 - [ ] Add cross-map routes using valid portals and line/instance admission. Keep offline simulation lightweight
   and activate detailed behavior only where players can encounter it.
@@ -165,6 +176,6 @@ bots do not leak private-instance state or consume real-player admission slots.
   visibility, reward attribution and chat cooldowns; perform in-game and two-player LAN acceptance separately.
 - [ ] Keep defaults conservative, provide a clear off switch, and document implemented options as they ship.
 
-The next implementation should be milestone 1: area presets and exact map overrides. Chat/reactions are a good
-second increment. Party companions should be delivered as a complete roster/follow/ownership lifecycle before
+The next implementation should be milestone 1: area presets and exact map overrides. Randomized appearances and chat/reactions are good
+second increments. Party companions should be delivered as a complete roster/follow/ownership lifecycle before
 enabling dense private-dungeon combat.
