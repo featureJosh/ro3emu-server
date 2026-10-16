@@ -80,6 +80,13 @@ it exists** (see "How it is built").
 7. **Open issues:** the Options glyph reads poorly; camera speed/sign unverified; L3 OpenMap and other defaults
    unreviewed; English text/grammar pass (separate roadmap item).
 
+**2026-10-15 implementation update (not yet checked in game).** The controller hook now builds with a live PNG skin
+loader for HUD, wheel, prompts, glyphs, and keyboard art. The [art handoff](controller-art.md) and drawing template
+list supported file names and sizes. The radial menu now opens a Controller page that shows enabled game actions,
+rebinding, conflict warnings, and editable UI scale, glyph scale, camera speed, cursor speed, and dead zone. Both
+features still need a live client pass at 1080p and 4K. The remaining targeting, skill layers, rebuilt menus, and
+full play-session items below are still open.
+
 ## HUD polish (player feedback 2026-10-15)
 
 - [ ] **Glyph legibility:** glyphs have no background, so on a skill icon of the same colour they are hard to read.
@@ -106,7 +113,7 @@ The current look is procedural placeholders (`Shapes`: circles, rings, rounded s
 assets. Plan:
 - [ ] **Skin loader:** PNGs dropped into `<client>/ro3emu/skin/` override the procedural shapes by file name, without a
   rebuild (re-read on change like `controller.ini`). A missing file falls back to the placeholder; log which names were
-  found. Optional `skin.ini` for 9-slice borders and tints.
+  found. Loader is built but unverified in game; optional `skin.ini` for 9-slice borders and tints remains open.
 - [ ] **Asset list with sizes** (PNG with alpha). Draw at 4K, i.e. 2x the 1080p numbers below; the loader scales.
   Frames are 9-slice where noted.
   - HUD: `orb_frame` (300x300), `orb_glass` (shine, 300x300), `orb_fill_hp` / `orb_fill_sp` (276x276; liquid,
@@ -121,6 +128,7 @@ assets. Plan:
   - Font: optional TMP font (the game's font is used today).
 - [ ] **Animation hooks** for the art: press punch, cooldown-ready flash, low-HP pulse on the orb, wheel open/close.
 - [ ] Write the art spec as its own doc (`docs/roadmap/controller-art.md`) with a template sheet the player can draw on.
+  Draft and SVG template exist; review with the player's PNGs before checking this item off.
 
 ## How it is built
 

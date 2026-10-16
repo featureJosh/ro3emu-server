@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -65,6 +66,7 @@ namespace Ro3Emu.ClientHooks
             {
                 bool on = Enabled;
                 UpdateEdges();
+                if (on) ControllerSkin.Tick();
                 ControllerHud.Tick(on);
                 if (++_frame % 30 == 0)
                 {
@@ -74,19 +76,28 @@ namespace Ro3Emu.ClientHooks
                 }
                 var pad = Gamepad.current;
                 if (!on || pad == null || !(Application.isFocused || Diagnostics.IgnoreFocus)) { EndCamera(); UiNav.Tick(null, false); Interact.Tick(null, false); return; }
-                WheelAndCursorButton(pad);
-                if (Wheel.Open)
+                if (ControllerSettings.Open)
                 {
                     UiNav.Tick(pad, false);
-                    WheelPrompts.Clear();
-                    Wheel.Tick(pad, WheelPrompts);
-                    Overlay.SetPrompts(Wheel.Open ? WheelPrompts : null);
+                    ControllerSettings.Tick(pad);
                 }
-                else UiNav.Tick(pad, !_cursor);
-                bool menu = UiNav.Active || Wheel.Open;
+                else
+                {
+                    WheelAndCursorButton(pad);
+                    if (Wheel.Open)
+                    {
+                        UiNav.Tick(pad, false);
+                        WheelPrompts.Clear();
+                        Wheel.Tick(pad, WheelPrompts);
+                        Overlay.SetPrompts(Wheel.Open ? WheelPrompts : null);
+                    }
+                    else UiNav.Tick(pad, !_cursor);
+                }
+                bool menu = UiNav.Active || Wheel.Open || ControllerSettings.Open;
                 if (menu != _menu) { _menu = menu; EndCamera(); Sync(true); }
                 Interact.Tick(pad, !_menu && !_cursor);
-                if (_cursor) Cursor(pad);
+                if (ControllerSettings.Open) EndCamera();
+                else if (_cursor) Cursor(pad);
                 else if (!_menu) Camera(pad);
             }
             catch (Exception e)
@@ -190,6 +201,61 @@ namespace Ro3Emu.ClientHooks
         /// <summary>The first gamepad control bound to a game or controller action, or null.</summary>
         public static string FirstBinding(string action) =>
             !string.IsNullOrEmpty(action) && Binds.TryGetValue(action, out var list) && list.Count > 0 ? list[0] : null;
+
+        internal static List<string> ConfigurableActions()
+        {
+            var names = new HashSet<string>(Binds.Keys, StringComparer.OrdinalIgnoreCase);
+            var enabled = new List<InputAction>();
+            InputSystem.ListEnabledActions(enabled);
+            foreach (var action in enabled)
+                if (action.actionMap?.name == "RO3Current" || action.actionMap?.name == "RO3_Fixed") names.Add(action.name);
+            var sorted = new List<string>(names);
+            sorted.Sort(StringComparer.OrdinalIgnoreCase);
+            return sorted;
+        }
+
+        internal static string BindingConflict(string path, string except)
+        {
+            foreach (var pair in Binds)
+                if (!string.Equals(pair.Key, except, StringComparison.OrdinalIgnoreCase) && pair.Value.Contains(path))
+                    return pair.Key;
+            return null;
+        }
+
+        internal static void SaveSetting(string key, string value, bool replaceAll = false)
+        {
+            Load();
+            var lines = new List<string>(File.ReadAllLines(_path));
+            bool replaced = false;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i].Trim();
+                if (line.StartsWith("#") || line.Length == 0) continue;
+                int eq = line.IndexOf('=');
+                if (eq < 0 || !string.Equals(line.Substring(0, eq).Trim(), key, StringComparison.OrdinalIgnoreCase)) continue;
+                if (!replaced && value != null) { lines[i] = key + " = " + value; replaced = true; }
+                else if (replaceAll || value == null || !value.StartsWith(Pad, StringComparison.Ordinal))
+                { lines.RemoveAt(i); i--; }
+            }
+            if (!replaced && value != null) lines.Add(key + " = " + value);
+            var temporary = _path + ".tmp";
+            File.WriteAllLines(temporary, lines);
+            try { File.Replace(temporary, _path, null); }
+            catch (PlatformNotSupportedException) { File.Copy(temporary, _path, true); File.Delete(temporary); }
+            _loaded = DateTime.MinValue;
+            Load();
+            Sync(Enabled);
+        }
+
+        internal static void ResetSetting(string key)
+        {
+            var defaults = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            var numbers = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+            ControllerIni.Parse(ControllerIni.Defaults.Split('\n'), defaults, numbers);
+            string value = defaults.TryGetValue(key, out var paths) && paths.Count > 0 ? paths[0]
+                : numbers.TryGetValue(key, out var number) ? number.ToString(CultureInfo.InvariantCulture) : null;
+            SaveSetting(key, value, true);
+        }
 
         private static bool _reportedMissing;
         private static readonly HashSet<string> Pseudo = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

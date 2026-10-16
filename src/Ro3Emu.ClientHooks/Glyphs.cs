@@ -31,7 +31,7 @@ namespace Ro3Emu.ClientHooks
             if (control.StartsWith("leftStick/")) control = "leftStick";
             else if (control.StartsWith("rightStick/")) control = "rightStick";
             control = control.Replace('/', '-');
-            if (Sprites.TryGetValue(control, out var sprite)) return sprite;
+            if (Sprites.TryGetValue(control, out var sprite)) return ControllerSkin.Get("glyph_" + control, sprite);
             using (var stream = typeof(Glyphs).Assembly.GetManifestResourceStream("glyphs/" + control + ".png"))
             {
                 if (stream != null)
@@ -43,7 +43,8 @@ namespace Ro3Emu.ClientHooks
                     sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
                 }
             }
-            return Sprites[control] = sprite;
+            Sprites[control] = sprite;
+            return ControllerSkin.Get("glyph_" + control, sprite);
         }
 
         /// <summary>From Controller.Tick about once a second. ponytail: FindObjectsOfType scan, a registry from

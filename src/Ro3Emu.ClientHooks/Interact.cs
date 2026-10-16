@@ -86,6 +86,7 @@ namespace Ro3Emu.ClientHooks
                 bg.sprite = Shapes.RoundedRect;
                 bg.color = new Color(0.05f, 0.04f, 0.035f, 0.8f);
                 bg.raycastTarget = false;
+                ControllerSkin.Bind(bg, "interact_prompt", Shapes.RoundedRect);
                 _glyph = Overlay.Image("Glyph", _prompt, Color.white);
                 _glyph.preserveAspect = true;
                 _glyph.rectTransform.anchoredPosition = new Vector2(12f, 8f);

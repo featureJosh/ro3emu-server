@@ -102,6 +102,7 @@ namespace Ro3Emu.ClientHooks
                 var bg = _bar.gameObject.AddComponent<Image>();
                 bg.color = new Color(0.05f, 0.04f, 0.03f, 0.72f);
                 bg.raycastTarget = false;
+                ControllerSkin.Bind(bg, "prompt_bar", null);
                 var layout = _bar.gameObject.AddComponent<HorizontalLayoutGroup>();
                 layout.spacing = 12;
                 layout.padding = new RectOffset(10, 14, 3, 3);

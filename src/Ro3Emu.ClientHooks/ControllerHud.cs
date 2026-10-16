@@ -274,6 +274,8 @@ namespace Ro3Emu.ClientHooks
             _root.anchorMin = _root.anchorMax = _root.pivot = new Vector2(0.5f, 0f);
             _plate = Overlay.Image("Plate", _root, new Color(0.05f, 0.04f, 0.035f, 0.78f));
             _plateEdge = Overlay.Image("PlateEdge", _root, new Color(0.86f, 0.7f, 0.4f, 0.7f));
+            ControllerSkin.Bind(_plate, "plate", null);
+            ControllerSkin.Bind(_plateEdge, "plate_edge", null);
             _hpFill = Orb(-1, new Color(0.78f, 0.1f, 0.12f), out _hpText);
             _spFill = Orb(1, new Color(0.18f, 0.38f, 0.9f), out _spText);
             for (int i = 0; i < 8; i++) Skills.Add(NewSlot("Skill" + i, SkillSize, false));
@@ -319,11 +321,14 @@ namespace Ro3Emu.ClientHooks
             frame.sizeDelta = new Vector2(OrbSize, OrbSize);
             var back = Img("Back", frame, Shapes.Circle, new Color(0.04f, 0.03f, 0.03f, 0.85f), 0, 0, OrbSize);
             var fill = Img("Fill", frame, Shapes.Sphere, color, 6, 6, OrbSize - 12);
+            ControllerSkin.Bind(fill, side < 0 ? "orb_fill_hp" : "orb_fill_sp", Shapes.Sphere);
             fill.type = Image.Type.Filled;
             fill.fillMethod = Image.FillMethod.Vertical;
             fill.fillOrigin = (int)Image.OriginVertical.Bottom;
-            Img("Shine", frame, Shapes.Circle, new Color(1f, 1f, 1f, 0.12f), OrbSize * 0.26f, OrbSize * 0.52f, OrbSize * 0.3f);
-            Img("Ring", frame, Shapes.Ring, Gold, 0, 0, OrbSize);
+            var shine = Img("Shine", frame, Shapes.Circle, new Color(1f, 1f, 1f, 0.12f), 0, 0, OrbSize);
+            ControllerSkin.Bind(shine, "orb_glass", Shapes.Circle);
+            var ring = Img("Ring", frame, Shapes.Ring, Gold, 0, 0, OrbSize);
+            ControllerSkin.Bind(ring, "orb_frame", Shapes.Ring);
             label = Overlay.Text("Value", frame, 24);
             label.alignment = TextAlignmentOptions.Center;
             Place(label.rectTransform, 0, 0, OrbSize, OrbSize);
@@ -345,6 +350,7 @@ namespace Ro3Emu.ClientHooks
             slot.Cd.fillOrigin = (int)Image.Origin360.Top;
             slot.Cd.fillClockwise = false;
             slot.Frame = Img("Frame", slot.Rect, Shapes.RoundedRing, Gold, 0, 0, size);
+            ControllerSkin.Bind(slot.Frame, potion ? "potion_frame" : "slot_frame", Shapes.RoundedRing);
             slot.Flash = Img("Flash", slot.Rect, Shapes.RoundedRect, new Color(1f, 0.93f, 0.75f, 0f), 0, 0, size);
             slot.Flash.enabled = false;
             slot.CdText = Overlay.Text("Seconds", slot.Rect, size * 0.38f);

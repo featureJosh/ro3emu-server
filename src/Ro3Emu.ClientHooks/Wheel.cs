@@ -22,7 +22,7 @@ namespace Ro3Emu.ClientHooks
         {
             ("Bag", "OpenBag"), ("Character", "OpenRole"), ("Skills", "OpenSkill"), ("Quests", "OpenTask"),
             ("Map", "OpenMap"), ("Friends", "OpenFriend"), ("Guild", "OpenGuild"), ("Shop", "OpenShop"),
-            ("Auto Battle", "OpenAutoFight"), ("Settings", "ClosePanel"),
+            ("Auto Battle", "OpenAutoFight"), ("Settings", "ClosePanel"), ("Controller", "@controller-settings"),
         };
 
         private static readonly MethodInfo Started = Handler("Obf_jn"), Performed = Handler("Obf_Jn"), Canceled = Handler("Obf_kn");
@@ -41,6 +41,7 @@ namespace Ro3Emu.ClientHooks
         /// <summary>Runs a game input action as a key press would (started, performed, canceled).</summary>
         public static bool Run(string action)
         {
+            if (action == "@controller-settings") { ControllerSettings.Show(); return true; }
             var manager = HappyEngine.Base.SingletonMonoBehaviour<InputSystemManager>.Instance;
             if (manager == null || Started == null || Performed == null || Canceled == null)
             {
@@ -74,6 +75,7 @@ namespace Ro3Emu.ClientHooks
         /// <summary>From Controller.Tick while open; returns the prompts.</summary>
         internal static void Tick(Gamepad pad, List<(string, string)> prompts)
         {
+            RefreshArt();
             var stick = pad.rightStick.ReadValue();
             if (stick.magnitude < 0.5f) stick = pad.leftStick.ReadValue();
             if (stick.magnitude >= 0.5f)
@@ -123,9 +125,11 @@ namespace Ro3Emu.ClientHooks
             _root.localScale = Vector3.one * Overlay.Scale;
             var disc = Overlay.Image("Disc", _root, new Color(0.04f, 0.03f, 0.03f, 0.82f));
             disc.sprite = Shapes.Circle;
+            ControllerSkin.Bind(disc, "wheel_disc", Shapes.Circle);
             Place(disc.rectTransform, -Radius - 110f, -Radius - 110f, 2 * Radius + 220f, 2 * Radius + 220f);
             var ring = Overlay.Image("Ring", _root, new Color(0.86f, 0.7f, 0.4f, 0.8f));
             ring.sprite = Shapes.Ring;
+            ControllerSkin.Bind(ring, "wheel_ring", Shapes.Ring);
             Place(ring.rectTransform, -Radius - 110f, -Radius - 110f, 2 * Radius + 220f, 2 * Radius + 220f);
             _center = Overlay.Text("Center", _root, 34);
             _center.alignment = TextAlignmentOptions.Center;
@@ -148,14 +152,26 @@ namespace Ro3Emu.ClientHooks
 
         private static void Refresh()
         {
+            RefreshArt();
             for (int i = 0; i < Slices.Count; i++)
             {
                 bool on = i == _selected;
-                Slices[i].bg.color = on ? new Color(0.86f, 0.7f, 0.4f, 0.95f) : new Color(1f, 1f, 1f, 0.1f);
                 Slices[i].label.color = on ? new Color(0.1f, 0.07f, 0.03f) : new Color(0.96f, 0.92f, 0.82f);
                 Slices[i].bg.rectTransform.localScale = Vector3.one * (on ? 1.12f : 1f);
             }
             _center.text = _selected >= 0 ? Entries[_selected].label : "Menu";
+        }
+
+        private static void RefreshArt()
+        {
+            for (int i = 0; i < Slices.Count; i++)
+            {
+                bool selected = i == _selected;
+                var sprite = ControllerSkin.Get(selected ? "wheel_slice_selected" : "wheel_slice", Shapes.RoundedRect);
+                if (Slices[i].bg.sprite != sprite) Slices[i].bg.sprite = sprite;
+                Slices[i].bg.color = sprite != Shapes.RoundedRect ? Color.white
+                    : selected ? new Color(0.86f, 0.7f, 0.4f, 0.95f) : new Color(1f, 1f, 1f, 0.1f);
+            }
         }
 
         private static void Place(RectTransform rt, float x, float y, float w, float h)

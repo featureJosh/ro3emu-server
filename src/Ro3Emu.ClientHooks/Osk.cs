@@ -169,6 +169,8 @@ namespace Ro3Emu.ClientHooks
                 for (int c = 0; c < n; c++)
                 {
                     var key = Overlay.Image("Key", _panel, Color.white);
+                    ControllerSkin.Get("osk_key", null);
+                    ControllerSkin.Get("osk_key_focused", null);
                     float x = 24 + c * (keyW + Gap), y = 24 + (Lower.Length - r) * (Key + Gap);
                     Place(key.rectTransform, x, y, keyW, Key);
                     var label = Overlay.Text("Label", key.transform, 28);
@@ -194,7 +196,10 @@ namespace Ro3Emu.ClientHooks
                 for (int c = 0; c < Keys[r].Count; c++)
                 {
                     bool focus = r == _row && c == _col;
-                    Keys[r][c].bg.color = focus ? new Color(1f, 0.78f, 0.3f, 0.95f) : new Color(1f, 1f, 1f, r < Lower.Length ? 0.12f : 0.2f);
+                    var art = ControllerSkin.Get(focus ? "osk_key_focused" : "osk_key", null);
+                    Keys[r][c].bg.sprite = art;
+                    Keys[r][c].bg.color = art != null ? Color.white
+                        : focus ? new Color(1f, 0.78f, 0.3f, 0.95f) : new Color(1f, 1f, 1f, r < Lower.Length ? 0.12f : 0.2f);
                     Keys[r][c].label.color = focus ? new Color(0.1f, 0.07f, 0.03f) : new Color(0.96f, 0.92f, 0.82f);
                     Keys[r][c].label.text = r < Lower.Length ? (_shift ? Upper : Lower)[r][c].ToString()
                         : Bottom[c] == "Shift" && _shift ? "SHIFT" : Bottom[c];
