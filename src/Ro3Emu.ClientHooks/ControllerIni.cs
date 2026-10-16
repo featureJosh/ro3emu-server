@@ -23,7 +23,8 @@ namespace Ro3Emu.ClientHooks
 # Controller actions: MenuWheel (tap: radial menu), CursorMode (on the same button: hold 0.5 s; toggles the mouse
 # cursor), LeftClick / RightClick (in cursor mode),
 # CameraZoom (hold, then right stick up/down). In menus: MenuConfirm, MenuBack, MenuTabLeft, MenuTabRight
-# (D-pad / left stick move the focus, right stick scrolls).
+# (D-pad / left stick move the focus, right stick scrolls). In the skill window: MenuAssign (focused skill, then press a
+# skill button to bind it to that slot) and MenuUnassign (then press a skill button to unbind that slot).
 # Tuning: CameraSpeedX / CameraSpeedY (negative inverts), CursorSpeed (pixels per second), Deadzone (0-1),
 # GlyphScale (button glyph size relative to the key label it replaces), UiScale (size of our controller UI).
 
@@ -54,6 +55,8 @@ MenuConfirm = <Gamepad>/buttonSouth
 MenuBack = <Gamepad>/buttonEast
 MenuTabLeft = <Gamepad>/leftShoulder
 MenuTabRight = <Gamepad>/rightShoulder
+MenuAssign = <Gamepad>/buttonWest
+MenuUnassign = <Gamepad>/buttonNorth
 
 CameraSpeedX = 700
 CameraSpeedY = 400
