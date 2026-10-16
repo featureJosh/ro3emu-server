@@ -81,7 +81,7 @@ public sealed partial class TeamService
     private async Task RecordAndJoinAsync(Team team, long role)
     {
         if (team.Members.Count != 0)
-            await friends.RecordTeammatesAsync(role, team.Members);
+            await friends.RecordTeammatesAsync(role, Humans(team));
         Join(team, role);
     }
 }

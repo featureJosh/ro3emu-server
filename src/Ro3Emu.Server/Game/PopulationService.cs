@@ -7,7 +7,7 @@ using Ro3Emu.Server.Maps;
 namespace Ro3Emu.Server.Game;
 
 /// <summary>Optional ambient population. Placement and roaming are inferred offline-server policy.</summary>
-public sealed class PopulationService : IGameTicker
+public sealed partial class PopulationService : IGameTicker
 {
     // Disjoint from NPCs, monsters, stalls and tower pets; exact in the client's double UUID storage (< 2^53).
     private const long UidBase = 1L << 50;
@@ -54,19 +54,20 @@ public sealed class PopulationService : IGameTicker
 
     public void Tick(GameTime time)
     {
-        if (running || time.Now < nextTick || (!Enabled || Limit == 0) && bots.Count == 0) return;
+        if (running || time.Now < nextTick || (!Enabled || Limit == 0) && bots.Count == 0 && companions.Count == 0 && droppedCompanions.Count == 0) return;
         nextTick = time.Now + TimeSpan.FromMilliseconds(250);
         running = true;
         loop.TrackRuntimeDetached("offline population", async () =>
         {
-            try { await UpdateAsync(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); }
+            try { await UpdateAsync(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); await UpdateCompanionsAsync(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); }
             finally { running = false; }
         });
     }
 
-    public void RegisterCommands(GmCommands gm) => gm.Register("bots", "[on|0..100|off|status|reset|map 0..100/off/reset|chat off/quiet/normal/chatty|mute|unmute]", async (session, args) =>
+    public void RegisterCommands(GmCommands gm) => gm.Register("bots", "[on|0..100|off|status|reset|map 0..100/off/reset|chat off/quiet/normal/chatty|mute|unmute|recruit|dismiss [all]|follow|stay|assist|passive]", async (session, args) =>
     {
         string arg = args.FirstOrDefault()?.ToLowerInvariant() ?? "status";
+        if (await CompanionCommandAsync(session, arg, args)) return;
         if (arg == "chat")
         {
             if (args.Length != 2 || !PopulationChatter.ValidMode(args[1])) throw new ArgumentException();
@@ -299,9 +300,9 @@ public sealed class PopulationService : IGameTicker
 
     internal Dictionary<string, object?>? Profile(long uid, long version, int cluster)
     {
-        if (bots.FirstOrDefault(b => b.Uid == uid) is not { } bot) return null;
+        if ((bots.FirstOrDefault(b => b.Uid == uid) ?? CompanionActor(uid)) is not { } bot) return null;
         var info = new RoleAdditionBaseInfo { Career = bot.Career, Gender = bot.Gender, JobLevel = 1,
-            BornArea = 1, CantBeInvited = true, Offlinetime = -1 };
+            BornArea = 1, CantBeInvited = !Invitable(bot), Offlinetime = -1 };
         info.Appearances.Add(bot.Appearances);
         var fields = new Dictionary<string, object?> { ["Name"] = bot.Name, ["Level"] = bot.Level,
             ["Base"] = info.ToByteArray(), ["Online"] = true, ["OfflineTime"] = -1L, ["ClusterId"] = cluster,

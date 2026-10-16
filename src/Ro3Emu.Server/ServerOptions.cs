@@ -234,6 +234,7 @@ public sealed class OpenContentOptions
 public sealed class PopulationOptions
 {
     public PopulationChatOptions Chat { get; set; } = new();
+    public PopulationCompanionOptions Companions { get; set; } = new();
     public bool Enabled { get; set; }
     public int PerMap { get; set; } = 20;
     public int MaxTotal { get; set; } = 100;
