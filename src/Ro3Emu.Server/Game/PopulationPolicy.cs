@@ -9,6 +9,7 @@ internal sealed record PopulationMapSettings(string Profile, int Count, int MinL
 internal sealed class PopulationPolicy(GameData data, WorldData worldData, PopulationOptions options)
 {
     private readonly Dictionary<long, int> areaLevels = new();
+    public void Reset() => areaLevels.Clear(); // live reload can change DefaultAreaLevel
 
     public PopulationMapSettings Resolve(long scene, int? uniformCount = null)
     {

@@ -243,6 +243,12 @@ public sealed class PopulationOptions
     public bool UseMapProfiles { get; set; }
     public int DefaultAreaLevel { get; set; } = 5;
     public int MaxSpawnsPerTick { get; set; } = 8;
+    // Density (inferred offline policy): gradual automatic shrink, landmark clearance, companion reserve, live reload.
+    public int DespawnDelaySeconds { get; set; } = 10;
+    public int MaxDespawnsPerTick { get; set; } = 2;
+    public float LandmarkClearance { get; set; } = 4;
+    public int CompanionReserve { get; set; }
+    public bool ReloadOnChange { get; set; } = true;
     public Dictionary<long, PopulationMapOptions> Maps { get; set; } = new();
     public Dictionary<string, PopulationPreset> Profiles { get; set; } = new(StringComparer.OrdinalIgnoreCase)
     {

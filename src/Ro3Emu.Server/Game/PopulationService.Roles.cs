@@ -54,6 +54,7 @@ public sealed partial class PopulationService
         var npcs = map.Npcs.Where(n => n.Kind != WorldNpcKind.Portal && Distance2(bot.X, bot.Z, n.X, n.Z) < 140 * 140)
             .OrderBy(n => bot.Behavior == PopulationRole.Merchant && n.Kind == WorldNpcKind.Kafra ? 0 : 1).ThenBy(_ => random.Next()).Take(3).ToArray();
         MapPoint At(WorldNpc n) => new(n.X, n.Y, n.Z, 0);
+        float near = Math.Max(3, Clearance + 0.5f); // NPC rings start outside LandmarkClearance
         switch (bot.Behavior)
         {
             case PopulationRole.Explorer when random.Next(4) == 0:
@@ -65,12 +66,12 @@ public sealed partial class PopulationService
                 // Stand beside a known life-collection point without collecting; no items or quest state are produced.
                 foreach (var g in map.GatheringPoints.Where(g => Distance2(bot.X, bot.Z, g.Position.X, g.Position.Z) < 140 * 140).OrderBy(_ => random.Next()).Take(2))
                     if (NearPoint(map, nav, g.Position, 1.5f, 2.5f) is { } goal) yield return (goal, g.Position);
-                foreach (var n in npcs) if (NearPoint(map, nav, At(n), 3, 5) is { } goal) yield return (goal, At(n));
+                foreach (var n in npcs) if (NearPoint(map, nav, At(n), near, Math.Max(5, near + 1.5f)) is { } goal) yield return (goal, At(n));
                 break;
             case PopulationRole.Merchant:
                 // Idles near function NPCs (Kafra first) facing passers-by; it never opens a real trade. (inferred)
                 foreach (var n in npcs)
-                    if (NearPoint(map, nav, At(n), 3, 6) is { } goal) yield return (goal, goal with { X = goal.X * 2 - n.X, Z = goal.Z * 2 - n.Z });
+                    if (NearPoint(map, nav, At(n), near, Math.Max(6, near + 1.5f)) is { } goal) yield return (goal, goal with { X = goal.X * 2 - n.X, Z = goal.Z * 2 - n.Z });
                 break;
             case PopulationRole.Socializer or PopulationRole.Rester:
                 foreach (var n in npcs) if (random.Next(3) > 0 && NearPoint(map, nav, At(n), 5, 9) is { } goal) yield return (goal, null);
@@ -128,7 +129,7 @@ public sealed partial class PopulationService
     private bool TryRoute(PopulationUnit bot, NavGrid nav, MapPoint goal, float min = 3)
     {
         if (Distance2(bot.X, bot.Z, goal.X, goal.Z) < min * min) return false;
-        var path = PopulationNavigation.Route(nav, bot.Current, goal);
+        var path = Route(nav, bot.Current, goal);
         if (path.Count == 0) return false;
         bot.JourneyActive = true;
         foreach (var p in path) bot.Route.Enqueue(p);
@@ -148,7 +149,7 @@ public sealed partial class PopulationService
         return null;
     }
 
-    private static bool Clear(MapWorld map, float x, float z) => map.Npcs.All(n => n.Kind == WorldNpcKind.Portal
+    private bool Clear(MapWorld map, float x, float z) => ClearOfLandmarks(map, x, z) && map.Npcs.All(n => n.Kind == WorldNpcKind.Portal
         ? Distance2(x, z, n.X, n.Z) > 6 * 6 && Distance2(x, z, n.Arrival.X, n.Arrival.Z) > 6 * 6
         : Distance2(x, z, n.X, n.Z) > 1.5f * 1.5f && Distance2(x, z, n.Arrival.X, n.Arrival.Z) > 2 * 2);
 
