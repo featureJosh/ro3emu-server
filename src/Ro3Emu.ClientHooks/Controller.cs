@@ -104,6 +104,7 @@ namespace Ro3Emu.ClientHooks
                 bool menu = UiNav.Active || Wheel.Open || ControllerSettings.Open;
                 if (menu != _menu) { _menu = menu; EndCamera(); Sync(true); }
                 Interact.Tick(pad, !_menu && !_cursor);
+                if (!_menu && !_cursor && Pressed(pad, "QuestNav")) QuestNav.Go();
                 if (ControllerSettings.Open) EndCamera();
                 else if (_cursor) Cursor(pad);
                 else if (!_menu) Camera(pad);
@@ -267,7 +268,7 @@ namespace Ro3Emu.ClientHooks
 
         private static bool _reportedMissing;
         private static readonly HashSet<string> Pseudo = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuWheel", "Interact" };
+            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuWheel", "Interact", "QuestNav" };
 
         /// <summary>Every enabled Input System action: map, name, bindings (dev command "actions").</summary>
         internal static string DescribeActions()
