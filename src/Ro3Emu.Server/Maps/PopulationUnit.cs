@@ -19,6 +19,7 @@ public sealed class PopulationUnit : WorldUnit
     internal long TargetExpectedHp;
     internal bool VisitingNpc, JourneyActive;
     internal int HuntKills;
+    internal Game.PopulationRole Behavior; internal bool RoleIdle; internal MapPoint? LookAt; internal Game.PopulationCluster? Cluster;
     public long[] EquipmentLook { get; } = new long[7];
     public Dictionary<int, int> Appearances { get; } = new();
     public Dictionary<int, long> GearAttributes { get; } = new();

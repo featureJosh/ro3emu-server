@@ -7,7 +7,7 @@ using Ro3Emu.Server.Maps;
 namespace Ro3Emu.Server.Game;
 
 /// <summary>Optional ambient population. Placement and roaming are inferred offline-server policy.</summary>
-public sealed class PopulationService : IGameTicker
+public sealed partial class PopulationService : IGameTicker
 {
     // Disjoint from NPCs, monsters, stalls and tower pets; exact in the client's double UUID storage (< 2^53).
     private const long UidBase = 1L << 50;
@@ -97,6 +97,7 @@ public sealed class PopulationService : IGameTicker
         }
         var map = Settings(session.SceneEntry);
         await GmCommands.ReplyAsync(session, $"Population: {Count}/{Limit} total; map {session.SceneEntry} {map.Profile}, target {map.Count}, levels {map.MinLevel}-{map.MaxLevel}, quality cap {map.MaxQuality}; chat {chatter.Mode}, muted {session.BotChatMuted}. Changes last until restart.");
+        await GmCommands.ReplyAsync(session, await RoleStatusAsync(session.RuntimeMap));
     });
 
     internal async Task SetCountAsync(int? count)
@@ -173,6 +174,7 @@ public sealed class PopulationService : IGameTicker
                         NextWalkMs = now + random.Next(1000, 8000), VisitingNpc = id % 3 == 0,
                     };
                     loadouts.Apply(bot, settings.MaxQuality, id);
+                    AssignRole(bot, settings.Profile, id);
                     bot.Hp = bot.MaxHp;
                     bot.NormalSkill = skills?.NormalAttack(bot.Career) ?? 1000001;
                     bot.AttackRange = data.Row("SkillConfig", bot.NormalSkill) is { } normal ? Math.Max(2, GameData.Int(normal, "_iDistanceMax") / 100f) : 2;
@@ -193,7 +195,7 @@ public sealed class PopulationService : IGameTicker
             int routeBudget = 1; // Bound pathfinding admissions per pass, even at the population ceiling.
             foreach (var bot in bots)
             {
-                bool wasMoving = bot.Moving;
+                bool wasMoving = bot.Moving, turned = false;
                 bot.Advance(now);
                 if (bot.Dead)
                 {
@@ -211,10 +213,11 @@ public sealed class PopulationService : IGameTicker
                     bot.IdleChatContext = bot.VisitingNpc ? "npc" : "rest";
                     bot.ActivityUntilMs = now + random.Next(5000, 10000);
                     if (bot.VisitingNpc) { bot.HuntKills = 0; bot.VisitingNpc = false; }
+                    turned = RoleArrive(bot, now);
                 }
                 if (bot.HuntKills >= 3) bot.VisitingNpc = true;
                 if (bot.Target is { } target && !PopulationCanHunt(bot, target)) bot.Target = null;
-                if (bot.Target == null && !bot.VisitingNpc && bot.HuntKills < 3 && combat != null && now >= bot.ActivityUntilMs)
+                if (bot.Target == null && !bot.VisitingNpc && !bot.RoleIdle && bot.HuntKills < 3 && combat != null && now >= bot.ActivityUntilMs)
                 {
                     bot.Target = world.Map(bot.WorldScene).Near(bot.X, bot.Z, 25).OfType<MonsterUnit>()
                         .Where(m => PopulationCanHunt(bot, m) && Distance2(bot.X, bot.Z, m.X, m.Z) < 25 * 25)
@@ -265,7 +268,7 @@ public sealed class PopulationService : IGameTicker
                         else bot.Route.Clear();
                     }
                 }
-                if (wasMoving || bot.Moving)
+                if (wasMoving || bot.Moving || turned)
                     await world.MoveUnitAsync(bot, new MovementChangeNtf { Uid = bot.Uid,
                         TransType = MovementTransitionType.MoveTransNormal, MovementInfo = bot.Movement() });
             }
@@ -319,6 +322,7 @@ public sealed class PopulationService : IGameTicker
     {
         // Quest-like itinerary: visit a local NPC, travel to hunting grounds, kill a few monsters, return.
         // No real quest state or rewards are fabricated.
+        if (RoleJourney(bot, map, now)) return;
         var destinations = bot.VisitingNpc
             ? map.Npcs.Where(n => n.Kind != WorldNpcKind.Portal).Select(n => n.Arrival)
             : map.SpawnGroups.SelectMany(g => g.Points).Select(p => new MapPoint(p.X, p.Y, p.Z, p.Face));
