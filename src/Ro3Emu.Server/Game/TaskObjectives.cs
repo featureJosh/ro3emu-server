@@ -178,8 +178,9 @@ public sealed partial class TaskService
     private long ItemQuality(int entry) => data.Row("ItemConfig", entry) is { } row ? GameData.Int(row, "_iQuality") : -1;
 
     /// <summary>
-    /// The final 103024 target value describes the crafted item's equipment part, while the craft request carries
-    /// the recipe's equipment type. Weapon targets use part 2 and also accept two-handed weapons (part 1, inferred).
+    /// 103024's last parameter is the crafted item's ItemConfig _iEquipPart (TaskConfig: 2 weapons, 4 tops, 7 accessories;
+    /// EquipCraftConfig 2070 makes only part 7), not the recipe's _iEquipType (70) the craft request carries. Part 2 is
+    /// read as any weapon, two-handed part 1 included (inferred: the weapon recipes make both).
     /// </summary>
     private bool CraftPartMatches(int entry, long part)
     {
