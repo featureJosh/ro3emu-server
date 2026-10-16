@@ -28,7 +28,11 @@ public sealed partial class NewActivityTests
             {
                 var saved = DBNewActivityInfo.Parser.ParseFrom(Service<RoleStore>().LoadNewActivities(session.Role!.Id));
                 var state = saved.ActivityInfo[118].ActivityParam.PronteraDefense.GlobalInfo;
-                return state.CurRound == round && state.CurIntensity == intensity;
+                // The DB write precedes the session's in-memory swap (roles.CommitAsync callback), so wait for both
+                // before the assertions below read the session; waiting on the DB alone raced under load.
+                var live = session.NewActivities!.ActivityInfo[118].ActivityParam.PronteraDefense.GlobalInfo;
+                return state.CurRound == round && state.CurIntensity == intensity
+                    && live.CurRound == round && live.CurIntensity == intensity;
             });
             await OnLoop(() =>
             {

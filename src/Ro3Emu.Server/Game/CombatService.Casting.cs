@@ -58,6 +58,8 @@ public sealed partial class CombatService
 
     private async Task CastCoreAsync(GameSession s, CastSkillReq request)
     {
+        log.LogInformation("{Name} casts skill {SkillId} on {TargetId} (auto {Auto})",
+            s.Role?.Name, request.SkillId, request.TargetId, request.IsAutoCast);
         var req = request.Clone();
         var row = EffectiveSkillRow(s, req.SkillId);
         var owned = req.OpUnitId == 0 || req.OpUnitId == s.Role?.Id ? null
@@ -78,12 +80,25 @@ public sealed partial class CombatService
             else if (req.IsExtraSkill && owned == null && GameData.Int(row.Value, "_iExtraType") == 0) error = ErrorCodes.SkillRequirements;
         }
         var origin = owned?.Pos ?? s.Position;
+        if (error == 0 && owned == null && GameData.Int(row!.Value, "_iIfAutoAtk") == 2 && s.Attack is { } running
+            && running.SkillId == req.SkillId && running.Target.Uid == req.TargetId && CanHitMonster(s, running.Target))
+        {
+            // Clicking the monster already being auto-attacked keeps the running loop instead of cancelling the
+            // swing and starting over, which restarted the animation on every click (player report; inferred).
+            await s.SendGameAsync(UseSkill, new CastSkillRsp { SessionId = s.SkillCast?.Id ?? 0, IsAutoCast = req.IsAutoCast });
+            return;
+        }
         if (error == 0)
         {
             int group = (int)GameData.Int(row!.Value, "_iSkillID"), mode = (int)GameData.Int(row.Value, "_iMode");
             if (Math.Max(s.SkillCds.GetValueOrDefault(group), s.SkillModeCds.GetValueOrDefault((group, mode))) > Now) error = ErrorCodes.SkillCooldown;
             // Preserve the established cooldown refusal for a repeated cast, including during its action tail.
+            // A normal-attack swing never blocks: the auto-attack loop starts one every cycle, so treating it as busy
+            // refused every skill while auto-attacking (player report). Skills interrupt the swing (inferred).
             else if (s.SkillCast is { Cancelled: false } active && Now < active.StartMs + active.ChantMs + active.ActionMs
+                && GameData.Int(active.Row, "_iIsNormalAtk") != 1 && !CastMayBeInterrupted(active, group)) error = ErrorCodes.SkillBusy;
+            else if (s.SkillCast is { Cancelled: false } active2 && Now < active2.StartMs + active2.ChantMs + active2.ActionMs
+                && GameData.Int(active2.Row, "_iIsNormalAtk") != 1
                 && GameData.Int(row.Value, "_bCancelCast") == 0) error = ErrorCodes.SkillBusy;
             else error = ValidateTarget(s, row.Value, req, origin, owned == null ? WalkSlack(s) : 0);
         }
@@ -122,6 +137,12 @@ public sealed partial class CombatService
                 NextSwingMs = Now + SkillMs(s, row.Value) + Math.Max(0, GameData.Int(row.Value, "_iChantFix") + GameData.Int(row.Value, "_iChantVar")) + 1,
                 StartX = s.Position.X, StartZ = s.Position.Z };
         }
+        else if (owned == null && s.Attack is { } attack && CanHitMonster(s, attack.Target)
+            && (target == null || target.Uid == attack.Target.Uid))
+            // Only a skill on a different monster ends the auto-attack. One on the same monster, or a self/ally skill
+            // such as First Aid, pauses it and normal attacks resume afterwards (player report; inferred).
+            attack.NextSwingMs = Math.Max(attack.NextSwingMs, Now + SkillMs(s, row.Value)
+                + Math.Max(0, GameData.Int(row.Value, "_iChantFix") + GameData.Int(row.Value, "_iChantVar")) + 1);
         else s.Attack = null;
         if (GameData.Int(row.Value, "_iIfAutoAtk") == 2 && owned == null && playerTarget != null)
             eventAttacks[s] = new EventAttack(playerTarget, req.SkillId,
@@ -150,6 +171,8 @@ public sealed partial class CombatService
     // Refusal must not interrupt a different accepted cast: the client does not compare 31103.sessionId.
     private async Task RefuseCoreAsync(GameSession s, CastSkillReq req, int error, long parameter)
     {
+        log.LogInformation("{Name} cast of skill {SkillId} refused: error {Error} ({Parameter})",
+            s.Role?.Name, req.SkillId, error, parameter);
         var reply = new CastSkillRsp { Result = error, IsAutoCast = req.IsAutoCast };
         if (parameter != 0) reply.Params.Add(parameter);
         await s.SendGameAsync(UseSkill, reply);
@@ -377,6 +400,19 @@ public sealed partial class CombatService
         await buffs.SpendEnergyAsync(s, row);
         return Current();
     }
+
+    /// <summary>
+    /// Client rule (LC_Skill_RunTimeContext.SkillCanInterrupted / GetSkillCanInterrupted): by the running skill's
+    /// _iInterruptedType, 1 = any other skill may cut in but the same skill never restarts it, 2 = anything may cut in
+    /// only once the hit point has passed, every other value (0, 3, 4, 5, 99) = not interruptible. Without this a
+    /// zero-cooldown skill spammed faster than its action time restarted the cast before its hit (player report).
+    /// </summary>
+    private static bool CastMayBeInterrupted(ActiveSkillCast active, int incomingGroup) => GameData.Int(active.Row, "_iInterruptedType") switch
+    {
+        1 => GameData.Int(active.Row, "_iSkillID") != incomingGroup,
+        2 => active.Resolved,
+        _ => false,
+    };
 
     private async Task StartCastAsync(GameSession s, JsonElement row, CastSkillReq req, long id, SkillObject? actor = null)
     {

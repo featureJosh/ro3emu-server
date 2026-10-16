@@ -1,0 +1,499 @@
+# Lua config strings left after the full map (2026-10-15): UnitConfig names, DialogConfig, status / mode / energy names.
+弑神者	God Slayer
+奥丁	Odin
+流派图标	Build Icon
+超魔导士	High Wizard
+大法师	Arch Mage
+雷云子弹	Thundercloud Bullet
+（无需翻译）传送门	Teleporter (no translation needed)
+GVG机甲	GvG Madogear
+三人机甲	Three-Seat Madogear
+单人机甲	Single-Seat Madogear
+符文骑士	Rune Knight
+爬塔区域标记	Tower Climb Area Marker
+（无需翻译）房子人	House Man (no translation needed)
+阵地	Position
+高级镖车	Advanced Escort Cart
+大型镖车	Large Escort Cart
+裂隙危机1星传送门	Rift Crisis 1-Star Portal
+裂隙危机2星传送门	Rift Crisis 2-Star Portal
+裂隙危机3星传送门	Rift Crisis 3-Star Portal
+裂隙危机4星传送门	Rift Crisis 4-Star Portal
+裂隙危机5星传送门	Rift Crisis 5-Star Portal
+裂隙危机6星传送门	Rift Crisis 6-Star Portal
+狂暴哥布灵	Berserk Goblin
+蛇女伊斯	Isis
+白蚁幼虫不动怪	Stationary Andre Larva
+迷幻之王	Lord of Illusion
+曼陀罗魔花远程攻击	Mandragora Ranged Attack
+攻城战守卫	Siege Guard
+俄赛里斯鬼火	Osiris Will-o'-Wisp
+哥布林首领插枪	Goblin Leader Spear Plant
+巴风特法阵	Baphomet Magic Circle
+俄赛里斯子弹	Osiris Bullet
+MVP蜂后法阵	MVP Mistress Magic Circle
+mvp法老王棺材	MVP Pharaoh Coffin
+mvp法老王金字塔	MVP Pharaoh Pyramid
+MPV兽人酋长图腾	MVP Orc Lord Totem
+死灵法阵	Necromancy Magic Circle
+MVP德古拉法阵	MVP Dracula Magic Circle
+黑暗之王	Dark Lord
+深渊骑士	Abysmal Knight
+血腥骑士	Bloody Knight
+俄赛里斯爆炸法阵	Osiris Explosion Magic Circle
+俄赛里斯斗转法阵	Osiris Reversal Magic Circle
+幽灵船(临时特效)	Ghost Ship (temp effect)
+水龙卷(临时特效)	Water Tornado (temp effect)
+水刃(临时特效)	Water Blade (temp effect)
+黄金虫洞	Golden Wormhole
+沙尘暴40M	Sandstorm 40m
+沙尘暴80M	Sandstorm 80m
+蚁后沙尘暴	Maya Sandstorm
+黄金虫洞2	Golden Wormhole 2
+蚁后石柱空气墙特效	Maya Stone Pillar Invisible Wall Effect
+蜂巢5m	Beehive 5m
+一滩蜂蜜5m	Honey Puddle 5m
+蚁后石柱	Maya Stone Pillar
+冲锋特效	Charge Effect
+五人本巴风特	5-Player Dungeon Baphomet
+柱子	Pillar
+镰刀子弹-巴风特	Scythe Bullet - Baphomet
+柱子1	Pillar 1
+柱子2	Pillar 2
+柱子3	Pillar 3
+小Nessa	Little Nessa
+音游法阵	Rhythm Game Magic Circle
+跳舞位置圈	Dance Position Circle
+小Nessa循环跳舞	Little Nessa Dance Loop
+压缩空间	Compressed Space
+音游法阵变色	Rhythm Game Magic Circle Color Change
+死亡掉落箱	Death Drop Box
+物品丢弃箱	Item Discard Box
+吃鸡通用法阵1	Battle Royale Magic Circle 1
+吃鸡通用法阵2	Battle Royale Magic Circle 2
+吃鸡通用法阵3	Battle Royale Magic Circle 3
+吃鸡通用法阵4	Battle Royale Magic Circle 4
+吃鸡通用法阵5	Battle Royale Magic Circle 5
+吃鸡通用法阵6	Battle Royale Magic Circle 6
+吃鸡通用法阵7	Battle Royale Magic Circle 7
+吃鸡通用法阵8	Battle Royale Magic Circle 8
+吃鸡通用法阵9	Battle Royale Magic Circle 9
+吃鸡通用法阵10	Battle Royale Magic Circle 10
+仙人掌	Cactus
+木桶	Wooden Barrel
+摄像机NPC	Camera NPC
+赛季寻宝活动野外宝箱	Season Treasure Hunt Field Chest
+吃鸡-救护车	Battle Royale - Ambulance
+吃鸡-商店车	Battle Royale - Shop Truck
+吃鸡-身份牌	Battle Royale - ID Tag
+吃鸡-传送门（开启）	Battle Royale - Portal (Open)
+吃鸡-奇遇?号npc	Battle Royale - Encounter NPC ?
+吃鸡-传送门（关闭）	Battle Royale - Portal (Closed)
+彩虹锦鲤正确白圈	Rainbow Koi Correct White Circle
+彩虹锦鲤正确红圈	Rainbow Koi Correct Red Circle
+彩虹锦鲤错误白圈	Rainbow Koi Wrong White Circle
+彩虹锦鲤错误红圈	Rainbow Koi Wrong Red Circle
+暴怒枷锁	Shackles of Wrath
+蚀辉荆棘黑	Eclipse Thorns (Black)
+蚀辉荆棘白	Eclipse Thorns (White)
+懒惰之裁	Judgment of Sloth
+镜中魅影	Phantom in the Mirror
+法阵_暴风雪	Magic Circle: Storm Gust
+法阵_怒雷强击	Magic Circle: Lord of Vermilion
+法阵_暗之障壁	Magic Circle: Safety Wall
+法阵_光耀之堂	Magic Circle: Sanctuary
+法阵_火焰之壁	Magic Circle: Fire Wall
+法阵_泥沼地	Magic Circle: Quagmire
+法阵_火柱攻击	Magic Circle: Fire Pillar
+法阵_陨石术	Magic Circle: Meteor Storm
+法阵_崩裂术	Magic Circle: Heaven's Drive
+法阵_十字驱魔攻击	Magic Circle: Magnus Exorcismus
+法阵_进阶伤害增压	Magic Circle: Advanced Head Crush
+火龙火焰残留	Fire Dragon Flame Residue
+强化地雷陷阱BD	Enhanced Land Mine BD
+强化爆散陷阱BD	Enhanced Claymore Trap BD
+强化霜冻陷阱BD	Enhanced Freezing Trap BD
+强化定时爆炸陷阱BD	Enhanced Blast Mine BD
+法阵_天使波利伤害圈	Magic Circle: Angeling Damage Zone
+法阵_兽人英雄地面砍刀	Magic Circle: Orc Hero Ground Slash
+法阵_皮里恩减速区域	Magic Circle: Phreeoni Slow Zone
+法阵_蜂后减速区域	Magic Circle: Mistress Slow Zone
+法阵_圣光回廊	Magic Circle: Holy Light Corridor
+法阵_巨火龙陨石落下	Magic Circle: Great Fire Dragon Meteor Fall
+红泡泡	Red Bubble
+黄泡泡	Yellow Bubble
+绿泡泡	Green Bubble
+蓝泡泡	Blue Bubble
+Este海浪	Este Wave
+五人本飞刀-真子弹	5-Player Dungeon Throwing Knife - Real Bullet
+五人本飞刀-真子弹2	5-Player Dungeon Throwing Knife - Real Bullet 2
+法阵_新蚁后石化迷雾	Magic Circle: New Maya Petrifying Mist
+蚁后石化迷雾子弹	Maya Petrifying Mist Bullet
+法阵_陨石术2	Magic Circle: Meteor Storm 2
+法阵_陨石术3	Magic Circle: Meteor Storm 3
+法阵_陨石术4	Magic Circle: Meteor Storm 4
+法阵_陨石术5	Magic Circle: Meteor Storm 5
+法阵_陨石术6	Magic Circle: Meteor Storm 6
+法阵_陨石术7	Magic Circle: Meteor Storm 7
+法阵_光之障壁	Magic Circle: Pneuma
+十人首通附加模型_箱子	10-Player First Clear Extra Model - Chest
+十人首通附加模型_书本	10-Player First Clear Extra Model - Book
+十字刺客刃	Assassin Cross Blade
+灵气剑剑柄	Aura Blade Hilt
+灵气剑剑身完整	Aura Blade Full Blade
+一阶手推车	Tier 1 Pushcart
+大嘴鸟1	Peco Peco 1
+大嘴鸟2	Peco Peco 2
+大嘴鸟3	Peco Peco 3
+大嘴鸟4	Peco Peco 4
+巨龙	Dragon
+金鳞溯光	Golden Scale Backlight
+猫车	Cat Cart
+空气墙-红	Invisible Wall - Red
+空气墙-蓝	Invisible Wall - Blue
+天使波利法阵特效	Angeling Magic Circle Effect
+巨火龙（新）	Great Fire Dragon (New)
+恶魔波利法阵特效	Deviling Magic Circle Effect
+龙椁岛外围战法阵特效	Dragon Coffin Island Outer Battle Magic Circle Effect
+龙椁岛外围战传送阵特效	Dragon Coffin Island Outer Battle Teleport Circle Effect
+龙椁岛外围战怪物出生点	Dragon Coffin Island Outer Battle Monster Spawn Point
+P3鱼鳍	P3 Fish Fin
+三阶段鱼鳍	Phase 3 Fish Fin
+雕像激光打击子弹	Statue Laser Strike Bullet
+铃铛黑暗区域	Bell Dark Zone
+泡泡	Bubble
+抖动泡泡	Shaking Bubble
+竖琴冲击波	Harp Shockwave
+水柱	Water Pillar
+自然之神伊尔玛塔三阶段	Ilmata, God of Nature (Phase 3)
+阿尔玛基亚三阶段	Almagia (Phase 3)
+音符A	Note A
+音符B	Note B
+激光预警点	Laser Warning Point
+扩大冲击波	Expanding Shockwave
+大转盘内圈	Big Wheel Inner Ring
+大转盘外圈	Big Wheel Outer Ring
+大转盘指针	Big Wheel Pointer
+一排鱼鳍	Row of Fish Fins
+空腔水母三阶段	Hollow Jellyfish (Phase 3)
+风领主_风暴裂隙	Wind Lord - Storm Rift
+爱丽娥	Alio
+艾恩斯魔女	Eins Witch
+侦察巴西利斯克	Scout Basilisk
+红色音符法阵圈	Red Note Magic Circle
+蓝色音符法阵圈	Blue Note Magic Circle
+黄色音符法阵圈	Yellow Note Magic Circle
+绿色音符法阵圈	Green Note Magic Circle
+白色音符法阵圈	White Note Magic Circle
+地面初始白圈	Ground Initial White Circle
+地面未全占黄圈	Ground Partially Occupied Yellow Circle
+地面成功占绿圈	Ground Successfully Occupied Green Circle
+地面超人数占红圈	Ground Over-Capacity Red Circle
+法阵换色	Magic Circle Color Change
+法阵绿色保护罩	Magic Circle Green Shield
+4号boss	Boss No. 4
+3号boss	Boss No. 3
+黄乐器	Yellow Instrument
+蓝乐器	Blue Instrument
+法阵圈	Magic Circle
+法阵错误击退	Magic Circle Wrong Knockback
+指挥棒落地持续法阵	Baton Landing Persistent Magic Circle
+酒杯落地变大变小法阵	Goblet Landing Grow/Shrink Magic Circle
+鱼鳍子弹	Fish Fin Bullet
+伊尔玛塔1阶段	Ilmata Phase 1
+伊尔玛塔2阶段	Ilmata Phase 2
+阿尔玛基亚1阶段	Almagia Phase 1
+水墙子弹	Water Wall Bullet
+水柱子弹	Water Pillar Bullet
+水波纹冲击波法阵	Water Ripple Shockwave Magic Circle
+红色巨大音符	Giant Red Note
+蓝色巨大音符	Giant Blue Note
+雕像1空模型	Statue 1 Empty Model
+雕像2空模型	Statue 2 Empty Model
+酒杯球球	Goblet Ball
+酒杯小球球	Goblet Small Ball
+GVE炮台1	GvE Turret 1
+伊尔玛塔小分身	Ilmata Small Clone
+水涟漪子弹	Water Ripple Bullet
+海胆法阵	Sea Urchin Magic Circle
+海胆子弹	Sea Urchin Bullet
+水母口弹道子弹	Jellyfish Mouth Projectile Bullet
+紫色泡泡子弹	Purple Bubble Bullet
+金色符文山体1	Golden Rune Mountain 1
+水波纹冲击波法阵2	Water Ripple Shockwave Magic Circle 2
+GVE炮台2	GvE Turret 2
+GVE炮台3	GvE Turret 3
+二阶段指针法阵	Phase 2 Pointer Magic Circle
+滑梯海浪	Slide Wave
+空模型(不可选中)	Empty Model (Unselectable)
+弩炮可传送提示	Ballista Teleport Available Prompt
+蝙蝠子弹低	Bat Bullet Low
+蝙蝠子弹中	Bat Bullet Mid
+蝙蝠子弹高	Bat Bullet High
+旋转激光子弹	Rotating Laser Bullet
+蝙蝠子弹1	Bat Bullet 1
+蝙蝠子弹-能量球	Bat Bullet - Energy Orb
+蝙蝠子弹-能量球传送门	Bat Bullet - Energy Orb Portal
+地雷法阵	Land Mine Magic Circle
+滚石子弹	Rolling Stone Bullet
+弩箭子弹	Crossbow Bolt Bullet
+喷火器子弹	Flamethrower Bullet
+采集草丛高亮	Gathering Bush Highlight
+巨火龙	Great Fire Dragon
+地面箭头	Ground Arrow
+幽灵模式	Ghost Mode
+鸽子	Pigeon
+老鼠	Rat
+梦罗克卫兵	Morroc Guard
+天津町商人	Amatsu Merchant
+大魔法师	Grand Magician
+弓箭手教师	Archer Instructor
+乐园团教官 晤勒	Eden Group Instructor Wule
+老奶奶	Old Lady
+油腻男	Greasy Man
+斐扬卫兵	Payon Guard
+棕色马尾卡普拉	Brown Ponytail Kafra
+骑士团办事员	Knight Order Clerk
+棕色短发卡普拉	Brown Short-Haired Kafra
+橙色双马尾卡普拉	Orange Twin-Tailed Kafra
+乐园团教官 保亚	Eden Group Instructor Boya
+梦罗克商人缠头	Morroc Merchant (Turban)
+卢尼	Luni
+梦罗克游客	Morroc Tourist
+旅馆服务员	Inn Attendant
+佣兵物品销售商	Mercenary Item Vendor
+3D面包少女	3D Bread Girl
+淑女	Lady
+打洞NPC	Digging NPC
+裸女	Nude Woman
+比格	Beagle
+梦罗克商人女	Morroc Merchant (Female)
+服事女	Acolyte (Female)
+神秘黑衣人	Mysterious Man in Black
+吉芬卫兵	Geffen Guard
+魔物生态研究学者	Monster Ecology Research Scholar
+肌肉男	Muscle Man
+边牧	Border Collie
+刀疤脸男人	Scar-Faced Man
+售货机	Vending Machine
+苍蝇叔叔	Uncle Fly
+任务采集特效	Quest Gathering Effect
+圣殿骑士	Templar
+锹形虫外壳	Horn Shell
+基	Ki
+四只鸟	Four Birds
+动物残骸	Animal Remains
+秃鹫	Vulture
+蝴蝶	Butterfly
+鹿	Deer
+魔法师-职业	Mage - Job
+学生-职业	Student - Job
+补考生-职业	Retake Student - Job
+蚂蚁卵	Ant Egg
+护林员-职业	Ranger - Job
+商人-职业	Merchant - Job
+地图商贩-职业	Map Vendor - Job
+书本	Book
+乘务员	Attendant
+冒险团之树1阶段	Adv. Guild Tree Stage 1
+冒险团之树2阶段	Adv. Guild Tree Stage 2
+冒险团之树3阶段	Adv. Guild Tree Stage 3
+冒险团之树4阶段	Adv. Guild Tree Stage 4
+玛莎（新）	Martha (New)
+路易（新）	Louie (New)
+转职之书特效	Job Change Book Effect
+蛇蛋	Snake Egg
+蚂蚁脚印	Ant Footprints
+界律之钉-未激活	Nail of Order - Inactive
+界律之钉-激活状态	Nail of Order - Active
+粉发卡普拉	Pink-Haired Kafra
+支线任务-舞会-聚光灯	Side Quest - Ball - Spotlight
+支线任务-舞会-灯球蓝	Side Quest - Ball - Blue Light Orb
+支线任务-舞会-灯球紫	Side Quest - Ball - Purple Light Orb
+支线任务-舞会-灯球红	Side Quest - Ball - Red Light Orb
+主线任务-思念粒子装置	Main Quest - Memory Particle Device
+训练场木桩	Training Ground Training Dummy
+水浪	Water Wave
+火龙卷	Fire Tornado
+空模型（旗子、占领圈）	Empty Model (Flag, Capture Circle)
+阻挡物	Obstacle
+飞鸦子弹	Flying Crow Bullet
+高射炮子弹	Anti-Air Gun Bullet
+火箭炮子弹	Rocket Launcher Bullet
+炸弹波利子弹	Bomb Poring Bullet
+闪电子弹	Lightning Bullet
+火箭炮治疗子弹	Rocket Launcher Healing Bullet
+高射炮治疗子弹	Anti-Air Gun Healing Bullet
+引导箭头NPC	Guide Arrow NPC
+蔓型傀儡a形-猎手	Vine Puppet Type A - Hunter
+蔓型傀儡β型 - 守卫者	Vine Puppet Type B - Guardian
+蔓型傀儡β型 - 破坏者	Vine Puppet Type B - Destroyer
+骑士(骑龙)	Knight (Dragon Mount)
+猎人（骑狼）	Hunter (Wolf Mount)
+机械铁匠	Mechanic
+骑士(骑狮鹫)	Knight (Gryphon Mount)
+邪恶势力团成员首领	Forces of Evil Leader
+绳索钉	Rope Spike
+宝箱	Treasure Chest
+飞空艇炮火燃烧特效	Airship Cannon Fire Burn Effect
+飞空艇碰撞特效	Airship Collision Effect
+炸药桶	Explosive Barrel
+普通火种	Ordinary Kindling
+火堆底座（普通）	Campfire Base (Normal)
+火堆架子	Campfire Rack
+普通树木-椰树	Ordinary Wood - Coconut Palm
+轻盈树木-椰树	Light Wood - Coconut Palm
+坚实树木-椰树	Sturdy Wood - Coconut Palm
+坚硬铁木-椰树	Hard Ironwood - Coconut Palm
+神圣树木-椰树	Holy Wood - Coconut Palm
+普通树木-普通	Ordinary Wood - Common
+轻盈树木-普通	Light Wood - Common
+坚实树木-普通	Sturdy Wood - Common
+坚硬铁木-普通	Hard Ironwood - Common
+神圣树木-普通	Holy Wood - Common
+普通树木-杉木	Ordinary Wood - Fir
+轻盈树木-杉木	Light Wood - Fir
+坚实树木-杉木	Sturdy Wood - Fir
+坚硬铁木-杉木	Hard Ironwood - Fir
+神圣树木-杉木	Holy Wood - Fir
+烤火-烟花筒	Campfire - Firework Tube
+烤火观众1	Campfire Spectator 1
+烤火观众2	Campfire Spectator 2
+烤火观众3	Campfire Spectator 3
+烤火观众4	Campfire Spectator 4
+烤火观众5	Campfire Spectator 5
+烤火观众6	Campfire Spectator 6
+烤火观众7	Campfire Spectator 7
+烤火观众8	Campfire Spectator 8
+烤火观众9	Campfire Spectator 9
+烤火观众10	Campfire Spectator 10
+烤火观众11	Campfire Spectator 11
+烤火观众12	Campfire Spectator 12
+火堆底座（空）	Campfire Base (Empty)
+火堆底座（高级）	Campfire Base (Advanced)
+看台	Grandstand
+音符柱	Note Pillar
+海螺	Conch
+音乐球	Music Orb
+音符串	Note String
+采集光柱	Gathering Light Pillar
+你好	Hello
+你好，你滴任务完成啦！	Hello, your quest is complete!
+完成任务	Complete Quest
+找到你啦，OL	Found you, OL
+原来道具商人找我啊	So the Item Merchant was looking for me
+告诉奥利啦	Tell Oli
+谢谢你~	Thank you~
+不客气	You're welcome
+打倒怪物了	I defeated the monsters
+消灭敌人任务完成了~	The defeat-enemies quest is complete~
+对的	That's right
+不对	That's wrong
+开始冒险	Start Adventure
+那就先到外面打败3只波利吧。	Then head outside and defeat 3 Porings first.
+接受（完成目标）	Accept (Complete Objective)
+算了（不完成）	Never Mind (Don't Complete)
+欢迎来到普隆德拉南门！	Welcome to Prontera South Gate!
+这里是哪里？	Where am I?
+这里是普隆德拉南门哦，往北走就可以去普隆德拉和普隆德拉西门。	This is Prontera South Gate. Head north to reach Prontera and Prontera West Gate.
+谢谢	Thanks
+就是这里，快去打败怪物吧。	This is the place. Go defeat the monsters!
+请往这边走。	Please come this way.
+是否进入PVE副本？	Enter the PvE dungeon?
+确认进入	Confirm Entry
+匹配中.....	Matching.....
+后台匹配	Match in Background
+稍后人数足够后会自动进入副本	You will enter the dungeon automatically once enough players join
+是否进入PVP副本？	Enter the PvP dungeon?
+村子正在经历危机，你愿意帮我们打败大魔王吗？	The village is in crisis. Will you help us defeat the Demon King?
+当然愿意	Of course
+大魔王是什么？	What is the Demon King?
+那就拜托你了，请先到外面打败3只波利吧。	Then I'm counting on you. Please head outside and defeat 3 Porings first.
+愿意	I will
+你还没有打败波利呢？	You haven't defeated the Porings yet?
+我这就去	I'm on it
+你打败了波利，谢谢你。	You defeated the Porings. Thank you.
+确认交付	Confirm Delivery
+义不容辞	It's my duty
+暂时没时间	I don't have time right now
+开始战斗	Start Battle
+我还有其他事	I have other things to do
+我还有事	I have something to do
+没关系，我会一直等你同意。	That's okay. I'll keep waiting until you agree.
+你打败了大魔王，真是太感谢了你！	You defeated the Demon King! Thank you so much!
+完成这段对话就能交付任务了!	Finish this conversation to turn in the quest!
+我明白了	I understand
+副本名称	Dungeon Name
+副本目标	Dungeon Objective
+的第	's #
+阶段第	 phase, #
+盾击BD	Smite BD
+螺旋刺击BD	Spiral Pierce BD
+十字军爆魂	Crusader Soul Burst
+盾十字军普攻	Shield Crusader Basic Attack
+法师魔法书	Mage Spellbook
+S1元素法普攻	S1 Elemental Mage Basic Attack
+大主教圣痕	Archbishop Holy Stigma
+刺客黑色幻影层数	Assassin Dark Illusion Stacks
+刺客回旋十字斩层数	Assassin Cross Ripper Slasher Stacks
+顶奢龙能量	Luxury Dragon Energy
+炮台建造	Cannon Construction
+炮台上状态	On Cannon
+进入载具司机状态	Vehicle Driver
+鲲本上炮	Kun Dungeon: Man the Cannon
+护镖状态	Escorting
+新手教程上炮	Tutorial: Man the Cannon
+通用采集	General Gathering
+鲲本上炮1	Kun Dungeon: Man the Cannon 1
+鲲本上炮2	Kun Dungeon: Man the Cannon 2
+鲲本上炮3	Kun Dungeon: Man the Cannon 3
+赛季探索-加进度	Season Exploration - Add Progress
+赛季探索-弹琴小游戏	Season Exploration - Piano Minigame
+领土战-黑洞Boss状态	Territory War - Black Hole Boss State
+领土战-陷阱Boss状态	Territory War - Trap Boss State
+吃鸡复活状态	Battle Royale Revive State
+领土战-多人交互-仅单阵营可交互	Territory War - Multiplayer Interaction - Single Faction Only
+领土战-多人交互-所有阵营可交互	Territory War - Multiplayer Interaction - All Factions
+播片无敌状态	Cutscene Invincibility
+乘风而起	Ride the Wind
+和平模式	Peace Mode
+公会模式	Guild Mode
+全体模式	Free-for-All Mode
+点名	Mark Target
+子弹	Projectile
+施法	Cast
+召唤小怪	Summon Minions
+兽人酋长施法	Orc Lord Cast
+刀	Blade
+玩家放技能	Player Skill Cast
+隐身不隐藏特效	Stealth Without Hiding Effects
+GVG器械专用	GVG Siege Equipment Only
+禁止移动（程序用）	Movement Disabled (code use)
+禁止释放技能（程序用）	Skill Casting Disabled (code use)
+表情动作持续状态	Emote Action Sustain State
+表情动作准备状态	Emote Action Ready State
+【霸体】：免疫击退、击飞、僵直效果。\n异常状态表中【霸体】配置的禁止行为仅对蓝图中实现的【击飞】【击退】进行免疫。	[Endure]: Immune to knockback, knock-up and stagger effects.\nThe disabled actions configured for [Endure] in the abnormal status table only grant immunity to the [Knock-up] and [Knockback] implemented in blueprints.
+【免控】免疫击退、击飞、眩晕、冰冻、石化、沉默、定身、黑暗效果。\n异常状态表中【免控】配置的禁止行为仅对蓝图中实现的【击飞】【击退】进行免疫。\n对于眩晕、冰冻、石化、沉默、定身、黑暗效果的免疫通过buff逻辑中的bufftag（_kBuffCategory1）进行实现。	[Immunity] Immune to knockback, knock-up, stun, freeze, petrify, silence, root and blind effects.\nThe disabled actions configured for [Immunity] in the abnormal status table only grant immunity to the [Knock-up] and [Knockback] implemented in blueprints.\nImmunity to stun, freeze, petrify, silence, root and blind is implemented via the bufftag (_kBuffCategory1) in the buff logic.
+【免疫负面】：免疫所有负面效果。\n异常状态表中【免疫】配置的禁止行为仅对蓝图中实现的【击飞】【击退】进行免疫。\n对于其它负面效果（buff）的免疫通过buff逻辑中的bufftag（_kBuffCategory1）进行实现。	[Debuff Immunity]: Immune to all negative effects.\nThe disabled actions configured for [Immunity] in the abnormal status table only grant immunity to the [Knock-up] and [Knockback] implemented in blueprints.\nImmunity to other negative effects (buffs) is implemented via the bufftag (_kBuffCategory1) in the buff logic.
+通用交互状态	General Interaction State
+观赛不可被选中	Untargetable While Spectating
+吟唱免疫被打断	Cast Cannot Be Interrupted
+固定面向	Fixed Facing
+蒙面状态	Masked State
+击飞（强制）	Knock-up (Forced)
+击退（强制）	Knockback (Forced)
+冰冻（强制）	Freeze (Forced)
+石化（强制）	Petrify (Forced)
+眩晕（强制）	Stun (Forced)
+GVG水晶爆发	GVG Crystal Burst
+剧情用定身禁用技能	Story Root with Skills Disabled
+眩晕（俄赛里斯）	Stun (Osiris)
+GVG系统用NPC无法被攻击/buff	GVG System NPC Cannot Be Attacked/Buffed
+吃鸡胜利	Battle Royale Victory
+S1十人本2号boss变身	S1 10-Player Dungeon Boss 2 Transformation
+释放顶奢龙撒红包技能期间无敌	Invincible While Luxury Dragon Casts Red Envelope Skill
+彩虹锦鲤副本内禁道具技能	Item Skills Disabled in Rainbow Koi Dungeon
+无法转向(程序用)	Cannot Turn (code use)
+禁止复活(程序用)	Revive Disabled (code use)
+客户端播片免疫(程序用)	Client Cutscene Immunity (code use)
+GVG水晶专用	GVG Crystal Only

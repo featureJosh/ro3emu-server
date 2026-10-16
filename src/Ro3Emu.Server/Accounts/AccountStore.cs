@@ -22,6 +22,7 @@ public sealed partial class AccountStore : IDisposable
     private readonly Lazy<DbWriter> _writer;
     private readonly Lazy<DbReadPool> _readers;
     private readonly Game.GameLoop? _loop;
+    private readonly bool _requirePasswords;
     private readonly ILogger<AccountStore>? _log;
     private readonly object _runtimeGate = new();
     private bool _disposed;
@@ -40,6 +41,7 @@ public sealed partial class AccountStore : IDisposable
         if (metrics != null) metrics.DbAccess = AccessMetrics;
         _loop = loop;
         _log = log;
+        _requirePasswords = options.Value.RequirePasswords;
         Directory.CreateDirectory(options.Value.DataDir);
         _databasePath = Path.Combine(options.Value.DataDir, "ro3emu.db");
         _escrowCatalog = new Lazy<EconomyCatalog>(() =>
@@ -471,7 +473,7 @@ public sealed partial class AccountStore : IDisposable
     public async Task<bool> VerifyAsync(string name, string password)
     {
         var credentials = await ReadAsync<AccountCredentials?>(new AccountCredentialsRead(name)).ConfigureAwait(false);
-        return credentials != null && await MatchesAsync(password, credentials).ConfigureAwait(false);
+        return credentials != null && (!_requirePasswords || await MatchesAsync(password, credentials).ConfigureAwait(false));
     }
 
     public LoginResult Login(string name, string password)
@@ -483,7 +485,7 @@ public sealed partial class AccountStore : IDisposable
     public async Task<LoginResult> LoginAsync(string name, string password)
     {
         var existing = await ReadAsync<AccountCredentials?>(new AccountCredentialsRead(name)).ConfigureAwait(false);
-        if (existing != null) return await MatchesAsync(password, existing).ConfigureAwait(false) ? LoginResult.Ok : LoginResult.BadPassword;
+        if (existing != null) return !_requirePasswords || await MatchesAsync(password, existing).ConfigureAwait(false) ? LoginResult.Ok : LoginResult.BadPassword;
         byte[] salt = RandomNumberGenerator.GetBytes(16);
         byte[] hash = await Task.Run(() => AccountHash.Hash(password, salt)).ConfigureAwait(false);
         if (await WriteAsync<bool>(new AccountRegisterPlan(name, hash, salt, DateTime.UtcNow.ToString("O"))).ConfigureAwait(false))

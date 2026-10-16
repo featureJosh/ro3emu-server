@@ -24,10 +24,10 @@
 静音	Mute
 校验版本差异发生错误	Error while checking version differences
 客户端更新遇到异常，选择忽略可临时进入游戏，但可能会有体验问题	The client update ran into an error. Choose Ignore to enter the game for now, but you may run into issues.
-读取远程配置文件失败，也许是网络问题，请检查网络情况后重试....	Failed to read the remote config. This may be a network issue; check your connection and retry....
-下载资源包出错，也许是网络问题，请检查网络情况后重试....	Failed to download the resource pack. This may be a network issue; check your connection and retry....
+读取远程配置文件失败，也许是网络问题，请检查网络情况后重试....	Failed to read the remote config. This may be a network issue; check your connection and try again.
+下载资源包出错，也许是网络问题，请检查网络情况后重试....	Failed to download the resource pack. This may be a network issue; check your connection and try again.
 很抱歉，无法下载更新。您的设备存储空间不足。请释放一些空间后再试一次	Sorry, the update can't be downloaded. Your device is low on storage. Free up some space and try again.
-保存文件失败，也许是空间不足，请清理空间后重试....	Failed to save a file. You may be low on space; free some up and retry....
+保存文件失败，也许是空间不足，请清理空间后重试....	Failed to save a file. You may be low on space; free some up and try again.
 网络异常	Network Error
 检查到有客户端缓存文件不完整，是否清理缓存并重新下载？	Some client cache files are incomplete. Clear the cache and download again?
 检查到有客户端缓存文件不完整，请重新下载。	Some client cache files are incomplete. Please download again.

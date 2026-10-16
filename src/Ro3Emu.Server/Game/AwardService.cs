@@ -103,16 +103,19 @@ public sealed class AwardService(GameData data)
             if (groupId <= 0 || chance is < 0 or > 1_000_000 || rolls is < 1 or > 1000 || picks is < 1 or > 1000)
                 throw Fail($"DropPoolConfig {poolId} slot {slot} has unsupported range");
             var candidates = EligibleRows(groupId, progress);
-            long weight = candidates.Sum(r => GameData.Int(r, "_iWeights"));
-            if (weight <= 0) continue;
-            // (inferred) RewardService's current [group,chance-per-million,rolls,picks] interpretation.
+            // (inferred) The 4th tuple value is how many DISTINCT rows one roll takes, drawn by weight without
+            // replacement (DropPoolConfig 34 = [116, 100%, 1, 10] over exactly 10 rows; 31121 = [121121, .., 1, 10]
+            // over a career-filtered kit). Drawing with replacement granted ten copies of one row.
             for (int r = 0; r < rolls; r++)
             {
                 if (Random.Shared.NextInt64(1_000_000) >= chance) continue;
-                for (int p = 0; p < picks; p++)
+                var remaining = new List<JsonElement>(candidates);
+                for (int p = 0; p < picks && remaining.Count > 0; p++)
                 {
+                    long weight = remaining.Sum(c => GameData.Int(c, "_iWeights"));
+                    if (weight <= 0) break;
                     long choice = Random.Shared.NextInt64(weight);
-                    foreach (var candidate in candidates)
+                    foreach (var candidate in remaining)
                     {
                         choice -= GameData.Int(candidate, "_iWeights");
                         if (choice >= 0) continue;
@@ -124,6 +127,7 @@ public sealed class AwardService(GameData data)
                         int bind = PoolBindType(candidate, groupId);
                         ValidateGrant(entry, count, bind, 0);
                         grants.Add(new AwardGrant(entry, count, bind));
+                        remaining.Remove(candidate);
                         break;
                     }
                 }
@@ -133,10 +137,10 @@ public sealed class AwardService(GameData data)
 
     private List<JsonElement> EligibleRows(long groupId, RoleProgress? progress)
     {
-        if (data.Row("DropGroupConfig", groupId) is not { ValueKind: JsonValueKind.Array } rows)
+        if (data.Row("DropGroupConfig", groupId) is not { } rows)
             throw Fail($"missing DropGroupConfig {groupId}");
         var eligible = new List<JsonElement>();
-        foreach (var row in rows.EnumerateArray())
+        foreach (var row in GameData.GroupRows(rows))
         {
             long weight = GameData.Int(row, "_iWeights");
             if (weight <= 0) continue;

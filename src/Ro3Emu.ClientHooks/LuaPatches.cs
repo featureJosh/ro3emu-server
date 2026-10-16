@@ -50,6 +50,8 @@ namespace Ro3Emu.ClientHooks
         private static int _frame;
         // The controller class tables already wrapped in this LuaEnv (their modules load on first use of the UI).
         private static Obf_R.Obf_ff _global, _topBarClass, _evePanelClass;
+        /// <summary>The game LuaEnv's globals once the patches ran (for Diagnostics).</summary>
+        internal static Obf_R.Obf_ff Global => _global;
         private static Obf_R.Obf_Ef _topBarState, _topBarRefresh, _evePanelOriginal;
         // Kept alive here: Lua holds the pushed delegates only weakly through xLua's object pool.
         private static readonly SelfMethod TopBarStateWrapper = UpdateCountdownState, TopBarRefreshWrapper = RefreshCountdown,
@@ -90,6 +92,11 @@ namespace Ro3Emu.ClientHooks
                 var param = Module(manager, global, "publicparamconfig");
                 if (param != null) param.Obf_luA<string, object>("StallsNameCharacterLimit", (long)StallNameMaxLength);
                 _doneEnv = env;
+                CombatSettings.Install(global, Module(manager, global, "ui_sys_setmodewidgetctrl"),
+                    Module(manager, global, "lc_settinghelper"));
+                Controller.InstallModeSelect(global, Module(manager, global, "ui_sys_setmodewidgetctrl"));
+                if (ClickProbe.Enabled) ClickProbe.Install(global, Module(manager, global, "lc_actor_controlmove"));
+                ClickAttackTrace.Install(global, Module(manager, global, "lc_actor_controlmove"));
                 PatchCountdowns(manager, global);
                 var functionHelper = Module(manager, global, "lc_functionhelper");
                 FeedbackButton.Install(global, functionHelper);

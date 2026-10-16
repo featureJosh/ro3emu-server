@@ -19,6 +19,25 @@ public sealed class RoleSessionService(RoleStore roles, Data.GameData data, Buff
     private const long AttrSpeed = 113;
     private const long AttrBaseAtkSpeed = 115;
 
+    /// <summary>enum_SettingItemType.ContinuousAttackAfterTargetSelected.</summary>
+    private const int ClickToAttackSetting = 403001;
+    private static readonly ByteString ClickToAttackOn = ByteString.CopyFrom(0x08, 0x01);
+    private static readonly SettingBaseBattle DefaultBaseBattle = new()
+    {
+        EFixSkillChaseTypePC = 1, EFixSkillChaseTypeMobile = 1,
+        EDragSkillChaseTypePC = 1, EDragSkillChaseTypeMobile = 1,
+        EDragSkillDefaultReleaseTypePC = 3, EDragSkillDefaultReleaseTypeMobile = 3,
+        EChaseDistanceTypePC = 1, EChaseDistanceTypeMobile = 1,
+        FUserSetDistancePC = 12, FUserSetDistanceMobile = 12,
+        ETabSelectTargetConditionTypePC = 3, ETabSelectTargetConditionTypeMobile = 3,
+        ETabSelectTargetTypePC = 2, ETabSelectTargetTypeMobile = 2,
+        ELockSkillSelectType = 1,
+        ESkillWordRangePC = 1, ESkillWordRangeMobile = 1,
+        ESkillWordDensityPC = 1, ESkillWordDensityMobile = 1,
+        EFastSkillPC = 1,
+        ESelectTargetNormalAttackPC = 1,
+    };
+
     private const int ErrNameExist = 2;
     private const int ErrNameLengthInvalid = 32;
 
@@ -386,6 +405,9 @@ public sealed class RoleSessionService(RoleStore roles, Data.GameData data, Buff
     {
         var settings = roles.LoadSettings(roleId) is { } bytes ? DBSettingInfo.Parser.ParseFrom(bytes) : new DBSettingInfo();
         settings.WildAFKInfo ??= new SettingWildAFKInfo(); // OnHook's setting editor requires a real object.
+        if (!settings.ClientSetting.ContainsKey((int)SettingType.BaseBattle))
+            settings.ClientSetting[(int)SettingType.BaseBattle] = DefaultBaseBattle.ToByteString();
+        settings.ClientSetting.TryAdd(ClickToAttackSetting, ClickToAttackOn);
         return settings;
     }
 

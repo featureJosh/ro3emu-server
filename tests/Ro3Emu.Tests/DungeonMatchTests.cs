@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Romsg;
 using Ro3Emu.Bot;
 using Ro3Emu.Server;
+using Ro3Emu.Server.Data;
 using Ro3Emu.Server.Game;
 
 namespace Ro3Emu.Tests;
@@ -234,8 +235,12 @@ public sealed class DungeonMatchTests : IAsyncLifetime
     [ClientDataFact]
     public async Task ChickenRoutingCrossOwnerExclusionSwitchAndRoleCleanup()
     {
-        // TimedEventTests establish the exported Kafra window at this date/time; select it before role login.
-        clock.Set(new DateTimeOffset(2026, 11, 10, 16, 5, 0, TimeSpan.Zero));
+        // DailyActivityConfig id 114 (Kafra): _kDay [2,4,7], _kTime [1830,2000] in the clock's civil zone. 2026-11-10 is a
+        // Tuesday (day 2); five minutes in. The old fixed 16:05 UTC is 17:05 local, before the window opens.
+        var window = Service<GameData>().Row("DailyActivityConfig", 114)!.Value.GetProperty("_kTime");
+        int open = (int)GameData.Number(window[0])!.Value;
+        var local = new DateTime(2026, 11, 10, open / 100, open % 100 + 5, 0);
+        clock.Set(new DateTimeOffset(local, clock.LocalTimeZone.GetUtcOffset(local)));
         await using var alice = await InWorld("Alice");
         await Gm(alice, "!lvl 99");
         Assert.True(Service<TimedTodoSchedule>().IsOpen(114));

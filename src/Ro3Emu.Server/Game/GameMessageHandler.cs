@@ -6,6 +6,9 @@ namespace Ro3Emu.Server.Game;
 /// </summary>
 public sealed class GameMessageHandler(MsgCatalog catalog, IEnumerable<Messaging.IMessageModule> modules, ILogger<GameMessageHandler> log)
 {
+    /// <summary>RO3EMU_TRACE_MSGS=1 logs every received game message for client-input investigations.</summary>
+    private static readonly bool TraceMessages = Environment.GetEnvironmentVariable("RO3EMU_TRACE_MSGS") == "1";
+
     private Messaging.MessageRoutes? _routes;
     /// <summary>Every game message's single owner; built once, duplicates fail.</summary>
     internal Messaging.MessageRoutes Routes => _routes ??= BuildRoutes();
@@ -42,6 +45,7 @@ public sealed class GameMessageHandler(MsgCatalog catalog, IEnumerable<Messaging
     private async Task HandleCoreAsync(GameSession session, uint msgId, ReadOnlyMemory<byte> body)
     {
         Ro3Emu.Server.Diagnostics.MessageCoverage.Received(msgId);
+        if (TraceMessages) log.LogInformation("Trace msg {MsgId} {Name} from {Account}", msgId, catalog.Name(msgId), session.Account);
         await Routes.DispatchAsync(session, msgId, body, UnroutedAsync);
     }
 

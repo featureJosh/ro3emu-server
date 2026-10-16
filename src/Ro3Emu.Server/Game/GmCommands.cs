@@ -190,7 +190,8 @@ public sealed class GmCommands(IOptions<ServerOptions> options, GameData data, S
             case OpClearPack:
                 return await character.ClearBagAsync(s);
             case OpFullHpMp:
-                return "HP and SP are always full (no combat yet).";
+                await character.SetHpSpAsync(s, long.MaxValue, long.MaxValue); // clamped to max HP / SP
+                return "HP and SP restored.";
             case OpSetJob:
                 return await character.SetJobAsync(s, I(args[0]));
             default:

@@ -45,7 +45,7 @@ namespace Ro3Emu.Loc
         /// </summary>
         public static string Sid(string value, long sid)
         {
-            if (!string.IsNullOrEmpty(value) && value != "None" && !value.StartsWith("Not Find Key", StringComparison.Ordinal)) return value;
+            if (sid <= 0 || (!string.IsNullOrEmpty(value) && value != "None" && !value.StartsWith("Not Find Key", StringComparison.Ordinal))) return value; // sid <= 0 means "no sid": the game leaves those labels empty on purpose
             try
             {
                 string zh = null;
@@ -137,8 +137,35 @@ namespace Ro3Emu.Loc
             string norm = Normalize(text);
             if (!ReferenceEquals(norm, text) && _map.TryGetValue(norm, out var en)) return en;
             if (text.IndexOf('<') >= 0 || text.IndexOf('\n') >= 0) return Segments(text);
-            return MatchTemplate(text);
+            return MatchTemplate(text) ?? CjkRuns(text);
         }
+
+        /// <summary>
+        /// English sentences built around a raw Chinese name ("法术重击 is on cooldown.", "The 冰箭术 skill is ..."):
+        /// each run of Han/kana (with the full-width punctuation inside it) is mapped on its own; null when a run has
+        /// no entry or the text has no Latin letter.
+        /// </summary>
+        private static string CjkRuns(string text)
+        {
+            bool latin = false;
+            for (int i = 0; i < text.Length && !latin; i++) latin = (text[i] | 0x20) >= 'a' && (text[i] | 0x20) <= 'z';
+            if (!latin) return null;
+            var sb = new StringBuilder(text.Length * 2);
+            int p = 0;
+            while (p < text.Length)
+            {
+                if (!IsCjk(text[p])) { sb.Append(text[p++]); continue; }
+                int end = p;
+                while (end < text.Length && (IsCjk(text[end]) || (text[end] >= '＀' && text[end] <= '￯'))) end++;
+                if (!_map.TryGetValue(text.Substring(p, end - p), out var en)) return null;
+                sb.Append(en);
+                p = end;
+            }
+            return sb.ToString();
+        }
+
+        private static bool IsCjk(char c) =>
+            (c >= '぀' && c <= '鿿') || (c >= '⺀' && c <= '⿟') || (c >= '豈' && c <= '﫿');
 
         private static string Normalize(string s)
         {
@@ -171,7 +198,7 @@ namespace Ro3Emu.Loc
                 {
                     string core = run.Trim();
                     string en = null;
-                    if (!_map.TryGetValue(core, out en)) en = MatchTemplate(core);
+                    if (!_map.TryGetValue(core, out en)) en = MatchTemplate(core) ?? CjkRuns(core);
                     if (en == null) return null;
                     int lead = run.IndexOf(core, StringComparison.Ordinal);
                     sb.Append(run, 0, lead).Append(en).Append(run, lead + core.Length, run.Length - lead - core.Length);

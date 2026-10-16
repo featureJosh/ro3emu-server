@@ -358,7 +358,7 @@ what to include in a report or proposed change.
 
 ## Documentation
 
-- [`docs/guide/`](docs/guide): running a server: GM access, open content, feedback, launcher and patch repository
+- [`docs/guide/`](docs/guide): running a server: GM access, open content, feedback, launcher and patch repository, [Linux and the Asia client](docs/guide/linux.md)
 - [`docs/systems/`](docs/systems): how each system is implemented and which choices are inferred
 - [`docs/research/`](docs/research): client evidence behind the protocol and rules
 
@@ -372,3 +372,8 @@ RO3Emu is an independent research and interoperability project. It is not affili
 any publisher of Ragnarok Online. It does not include or distribute the game client, its data or its art; you need
 your own copy, and you are responsible for using it in line with the applicable laws and license terms. Ragnarok
 Online is a trademark of Gravity Co., Ltd.
+
+## Offline population
+
+Optional simulated players with longer travel, hunting and job skills: `!bots 20` in game, `!bots off` to remove them. Disabled by default; see
+[configuration, behavior and validation limits](docs/guide/offline-population.md).

@@ -97,6 +97,51 @@ public sealed class ChatService(GmCommands gm, FeedbackService feedback, GuildSt
         }
     }
 
+    /// <summary>Nearby ambient text uses normal Tencent pushes and the bot's UserDataService identity.
+    /// No history is retained: a later/faraway viewer must not replay proximity-only messages.</summary>
+    public async Task PublishPopulationAsync(Maps.PopulationUnit bot, string content, GameSession? subject = null, long subjectGeneration = 0, long subjectRole = 0, int subjectLevel = 0)
+    {
+        if (string.IsNullOrWhiteSpace(content) || content.Length > 180 || content.Any(char.IsControl)) return;
+        (GameSession Session, string? Group, long Generation)[] recipients;
+        lock (_sync)
+            recipients = bot.Viewers.Select(p => (Session: p, Group: PopulationChannel(bot, p), Generation: p.SceneGeneration))
+                .Where(p => p.Group != null).ToArray();
+        long messageId = Interlocked.Increment(ref _nextMessageId);
+        foreach (var (session, group, generation) in recipients)
+        {
+            lock (_sync)
+                if (bot.Removed || bot.Dead || session.SceneGeneration != generation || PopulationChannel(bot, session) != group
+                    || subject != null && !PopulationReactionStillValid(bot, subject, subjectGeneration, subjectRole, subjectLevel)) continue;
+            if (friends.Blocks(session.Role!.Id, bot.Uid)) continue;
+            var message = new TextChatMessage
+            {
+                MessageId = messageId.ToString(), SenderId = bot.Uid.ToString(), ReceiveId = group!,
+                SendTime = (ulong)DateTimeOffset.UtcNow.ToUnixTimeSeconds(), Content = content,
+            };
+            try { await DownAsync(session, Cmd.NotifyNewText, new NotifyNewTextChatMessage { Msg = message }); }
+            catch (Exception e) when (e is IOException or System.Net.Sockets.SocketException or ObjectDisposedException) { }
+        }
+    }
+
+    internal GameSession[] PopulationAudience(Maps.PopulationUnit bot)
+    {
+        lock (_sync) return bot.Viewers.Where(p => PopulationChannel(bot, p) != null).ToArray();
+    }
+
+    internal static bool PopulationReactionStillValid(Maps.PopulationUnit bot, GameSession subject, long generation, long role, int minimumLevel = 0) =>
+        subject.SceneGeneration == generation && subject.Role?.Id == role && PopulationChannel(bot, subject) != null
+        && PopulationReactions.Nearby(bot, subject) && (subject.Progress?.Level ?? subject.Role!.Level) >= minimumLevel;
+
+    // Caller holds the chat membership lock; pure helper also supports focused isolation tests.
+    internal static string? PopulationChannel(Maps.PopulationUnit bot, GameSession viewer)
+    {
+        if (bot.Removed || bot.Dead || viewer.Role == null || viewer.BotChatMuted || viewer.SceneLoading
+            || viewer.Handoff != null || viewer.RuntimeMap != bot.RuntimeMap || !bot.Viewers.Contains(viewer)
+            || MathF.Pow(viewer.Position.X - bot.X, 2) + MathF.Pow(viewer.Position.Z - bot.Z, 2) > 30 * 30) return null;
+        // The client can join either legacy or runtime channel spellings. Choose one to avoid duplicate pushes.
+        return viewer.ChatGroups.Where(MapChannel).Order(StringComparer.Ordinal).FirstOrDefault();
+    }
+
     /// <summary>After role select: open the chat functions (else every channel is inactive) and register for whispers.</summary>
     public async Task OnRoleEnteredAsync(GameSession session)
     {

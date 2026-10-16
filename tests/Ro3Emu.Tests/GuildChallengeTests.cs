@@ -320,7 +320,9 @@ public sealed class GuildChallengeTests : IAsyncLifetime
         Assert.True(Service<GuildChallengeStore>().Load(guild).Cycle < 0);
         await Gm(alice, "!guildchallenge close");
         Assert.False(Service<TimedTodoSchedule>().IsOpen(125));
-        clock.Now = new DateTimeOffset(2026, 10, 11, 20, 31, 0, TimeSpan.FromHours(2));
+        // The real Sunday window is data/config/DailyActivityConfig.json id 125: _kDay [7], _kTime [2100, 2130] (21:00-21:30),
+        // so 20:31 is outside it; 21:01 is inside.
+        clock.Now = new DateTimeOffset(2026, 10, 11, 21, 1, 0, TimeSpan.FromHours(2));
         Assert.True(Service<TimedTodoSchedule>().IsOpen(125));
         Assert.False((await Info(alice)).Data.DataInfo.DifficultyInfo[1].StageReward[1]);
         Assert.Equal(0, await Open(alice)); // the test clear did not consume the real Sunday occurrence
@@ -346,8 +348,8 @@ public sealed class GuildChallengeTests : IAsyncLifetime
     {
         var schedule = Service<TimedTodoSchedule>();
         var window = schedule.CurrentOrNext(125)!;
-        Assert.Equal(new DateTimeOffset(2026, 10, 11, 20, 30, 0, TimeSpan.FromHours(2)).ToUnixTimeSeconds(), window.Start);
-        Assert.Equal(5400, window.End - window.Start);
+        Assert.Equal(new DateTimeOffset(2026, 10, 11, 21, 0, 0, TimeSpan.FromHours(2)).ToUnixTimeSeconds(), window.Start);
+        Assert.Equal(1800, window.End - window.Start);
         Assert.False(window.Contains(window.Start - 1)); Assert.True(window.Contains(window.Start));
         Assert.False(window.Contains(window.End));
     }

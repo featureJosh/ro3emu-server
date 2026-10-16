@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Ro3Emu.ClientHooks
 {
@@ -10,7 +9,8 @@ namespace Ro3Emu.ClientHooks
     /// pump while a view is open.
     /// <list type="bullet">
     /// <item>Mode selection ("Select Mode", first world entry and Settings → PC Mode): the Mobile column (in development
-    /// in this build) is removed and Classic PC / Modern PC are centred, keeping the original spacing.</item>
+    /// in this build) becomes "Controller" (see Controller).</item>
+    /// <item>Login: no password row (single-player; HidePassword).</item>
     /// </list>
     /// </summary>
     public static class UiTweaks
@@ -20,26 +20,33 @@ namespace Ro3Emu.ClientHooks
         private const string MobileColumn = "PCMobile_RTransform";
 
         private static readonly HashSet<int> Done = new HashSet<int>();
-        private static int _frame;
+        private static int _frame, _lastFrame = -1;
 
         /// <summary>Called every frame; looks for the views every 10th frame (GameObject.Find only sees active objects).</summary>
         public static void Tick()
         {
+            // The pump (ServerImAdapter's per-frame call) can run more than once a frame; everything here is per frame.
+            if (Time.frameCount == _lastFrame) return;
+            _lastFrame = Time.frameCount;
             Diagnostics.AutoDump();
+            Diagnostics.PollCommandFile();
             TextFit.Tick();
+            Controller.Tick();
             if (++_frame % 10 != 0) return;
             try
             {
                 foreach (var name in ModeWidgets)
                 {
                     var widget = GameObject.Find(name);
-                    if (widget != null && Done.Add(widget.GetInstanceID())) HideMobileMode(widget.transform);
+                    if (widget != null && !Done.Contains(widget.GetInstanceID()) && RelabelMobileMode(widget.transform)) Done.Add(widget.GetInstanceID());
                 }
                 foreach (var name in StallWindows)
                 {
                     var window = GameObject.Find(name);
                     if (window != null && Done.Add(window.GetInstanceID())) WidenStallName(window.transform);
                 }
+                var login = GameObject.Find(LoginPanel);
+                if (login != null) HidePassword(login.transform);
                 if (Done.Count > 64) Done.Clear();
                 QuitButton.Tick();
                 LuaPatches.Tick();
@@ -49,6 +56,30 @@ namespace Ro3Emu.ClientHooks
             catch (Exception e)
             {
                 Debug.LogError("[Ro3Emu.UiTweaks] " + e);
+            }
+        }
+
+        private const string LoginPanel = "UI_Sys_LoginPanel(Clone)";
+        private const string NoPassword = "offline";
+
+        /// <summary>
+        /// Single-player: the server opens an account with any password (ServerOptions.RequirePasswords false in our
+        /// appsettings), but the client refuses an empty one ("Enter password"). The password row is hidden and its field
+        /// filled, so login is account + Start Game, also with a controller. Kept up every pump: the client can reset it.
+        /// ponytail: always hidden; a LAN server with RequirePasswords on needs this off (a client setting) when that comes.
+        /// </summary>
+        private static void HidePassword(Transform login)
+        {
+            foreach (var field in login.GetComponentsInChildren<TMPro.TMP_InputField>(true))
+            {
+                if (field.name != "Password_TInputField") continue;
+                if (string.IsNullOrEmpty(field.text)) field.text = NoPassword;
+                var row = field.transform.parent;
+                if (row != null && row.name == "Password_Img" && row.gameObject.activeSelf)
+                {
+                    row.gameObject.SetActive(false);
+                    Debug.Log("[Ro3Emu.UiTweaks] login: password row hidden (single-player)");
+                }
             }
         }
 
@@ -68,70 +99,80 @@ namespace Ro3Emu.ClientHooks
                 }
         }
 
-        private static void HideMobileMode(Transform widget)
+        /// <summary>The Mobile column becomes "Controller" (Controller.InstallModeSelect gives it its meaning). The card
+        /// widget is created inside the column by SelectMode, so this retries until its texts exist.</summary>
+        private static bool RelabelMobileMode(Transform widget)
         {
             var content = widget.Find(ModeList);
-            if (content == null) return;
+            if (content == null) return false;
             Transform mobile = null;
             foreach (var t in content.GetComponentsInChildren<Transform>(true))
                 if (t.name == MobileColumn) { mobile = t; break; }
-            if (mobile == null) return;
-            var row = mobile.parent;
-            var columns = new List<RectTransform>();
-            for (int i = 0; i < row.childCount; i++)
+            if (mobile == null) return false;
+            // Names logged in game (2026-10-14): PCModel_TTxt title, PCModelContent_TTxt blurb, PCMode01-03_TTxt the three
+            // feature captions, Txt_Null "In Development - Coming Soon" on the overlay that blocks the column.
+            Transform title = null, overlay = null;
+            int set = 0;
+            foreach (var text in mobile.GetComponentsInChildren<TMPro.TMP_Text>(true))
             {
-                var c = row.GetChild(i) as RectTransform;
-                if (c != null && c != mobile && c.gameObject.activeSelf) columns.Add(c);
-            }
-            float oldLeft = float.MaxValue, oldRight = float.MinValue;
-            foreach (var c in columns) Edges(c, ref oldLeft, ref oldRight);
-            Edges(mobile as RectTransform, ref oldLeft, ref oldRight);
-            mobile.gameObject.SetActive(false);
-
-            var group = row.GetComponent<HorizontalOrVerticalLayoutGroup>();
-            if (group != null)
-            {
-                // A layout group re-flows the remaining columns; centre them in the row.
-                group.childAlignment = TextAnchor.MiddleCenter;
-                var rowRect = row as RectTransform;
-                if (rowRect != null) LayoutRebuilder.ForceRebuildLayoutImmediate(rowRect);
-            }
-            else if (columns.Count > 0 && row is RectTransform rect)
-            {
-                // Hand-placed columns: move them together so their middle is the row's middle (spacing unchanged).
-                float min = float.MaxValue, max = float.MinValue;
-                foreach (var c in columns)
+                if (Labels.TryGetValue(text.name, out var label))
                 {
-                    float x = c.localPosition.x;
-                    min = Math.Min(min, x + c.rect.xMin);
-                    max = Math.Max(max, x + c.rect.xMax);
+                    if (text.name == "PCModelContent_TTxt") text.enableAutoSizing = true;
+                    text.text = label;
+                    set++;
                 }
-                float shift = rect.rect.center.x - (min + max) / 2f;
-                foreach (var c in columns) c.localPosition += new Vector3(shift, 0f, 0f);
+                if (text.name == "PCModel_TTxt") title = text.transform;
+                if (text.name == "Txt_Null") overlay = text.transform.parent;
             }
-            // The close (right) and back (left) buttons sit at the edges of the column set: follow the new edges.
-            float newLeft = float.MaxValue, newRight = float.MinValue;
-            foreach (var c in columns) Edges(c, ref newLeft, ref newRight);
-            var panel = widget.Find("Root/Content_RTransform/Pop_Center/Root/Pan_Content");
-            if (panel != null && columns.Count > 0)
+            // Walk up to the dark lock panel (Unlock_RImg/Pic_UnlockBg/Pan_Null_Dark/NullEmpty_GraphicSwitchG/...).
+            for (var p = overlay; p != null && p != mobile; p = p.parent) if (p.name == "Pan_Null_Dark") { overlay = p; break; }
+            if (overlay != null)
             {
-                var close = panel.Find("Close_Btn");
-                if (close != null) close.position += new Vector3(newRight - oldRight, 0f, 0f);
-                var back = panel.Find("Return_Btn");
-                if (back != null) back.position += new Vector3(newLeft - oldLeft, 0f, 0f);
+                Debug.Log("[Ro3Emu.UiTweaks] mode select overlay: " + Describe(overlay, mobile));
+                // The overlay node goes, unless it also holds the card itself (then only its text does).
+                if (overlay != mobile && (title == null || !title.IsChildOf(overlay))) overlay.gameObject.SetActive(false);
+                else foreach (var t in overlay.GetComponentsInChildren<TMPro.TMP_Text>(true)) if (t.name == "Txt_Null") t.gameObject.SetActive(false);
             }
-            Debug.Log("[Ro3Emu.UiTweaks] mode selection: Mobile removed, " + columns.Count + " column(s) centred" + (group != null ? " (layout group)" : ""));
+            // Whatever dims or locks the column.
+            foreach (var group in mobile.GetComponentsInChildren<CanvasGroup>(true))
+            {
+                group.alpha = 1f;
+                group.interactable = true;
+                group.blocksRaycasts = true;
+            }
+            foreach (var selectable in mobile.GetComponentsInChildren<UnityEngine.UI.Selectable>(true)) selectable.interactable = true;
+            if (set > 0)
+            {
+                Debug.Log("[Ro3Emu.UiTweaks] mode select column: " + Describe(mobile, mobile));
+                Controller.MakeColumnSelectable(mobile.gameObject);
+            }
+            if (set > 0) Debug.Log("[Ro3Emu.UiTweaks] mode select: Mobile column relabelled Controller (" + set + " text(s))");
+            return set > 0;
         }
 
-        private static readonly Vector3[] Corners = new Vector3[4];
-
-        /// <summary>Widens [left, right] (world x) by the rect's corners.</summary>
-        private static void Edges(RectTransform rect, ref float left, ref float right)
+        private static readonly Dictionary<string, string> Labels = new Dictionary<string, string>
         {
-            if (rect == null) return;
-            rect.GetWorldCorners(Corners);
-            left = Math.Min(left, Corners[0].x);
-            right = Math.Max(right, Corners[2].x);
+            { "PCModel_TTxt", "Controller" },
+            { "PCModelContent_TTxt", "For players who use a gamepad. Modern PC controls; remap in ro3emu/controller.ini" },
+            { "PCMode01_TTxt", "Stick Movement" },
+            { "PCMode02_TTxt", "Stick Camera" },
+            { "PCMode03_TTxt", "Target Lock Mode" },
+        };
+
+        /// <summary>Path from the column and the components of the node and its children, for the log.</summary>
+        private static string Describe(Transform node, Transform root)
+        {
+            string path = node.name;
+            for (var p = node.parent; p != null && p != root.parent; p = p.parent) path = p.name + "/" + path;
+            var parts = new List<string>();
+            foreach (var t in node.GetComponentsInChildren<Transform>(true))
+            {
+                var names = new List<string>();
+                foreach (var c in t.GetComponents<Component>()) if (c != null && !(c is Transform)) names.Add(c.GetType().Name);
+                parts.Add(t.name + "[" + string.Join(",", names) + "]");
+            }
+            return path + " :: " + string.Join(" ", parts);
         }
+
     }
 }

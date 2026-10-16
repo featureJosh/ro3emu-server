@@ -114,6 +114,9 @@ public sealed partial class DungeonTests
             role = (long)alice.Self!.Uuid;
             Assert.Equal(0, await Enter(alice));
             room = await Load(alice);
+            // The server unregisters a session whose disconnect handover hits RecoveryRequired (RoleLifecycleTests asserts
+            // sessions.All() is empty), so hold the GameSession from before the fault instead of re-resolving it.
+            var aliceSession = Session(alice);
             var faulted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var accounts = Service<AccountStore>();
             accounts.BeforeOwnedApplyForTest = label =>
@@ -130,11 +133,11 @@ public sealed partial class DungeonTests
             finally { accounts.BeforeOwnedApplyForTest = null; }
             source = $"dungeon/{Service<CharacterService>().RewardRealmId}/{room}/{role}";
             Assert.True(await Service<CharacterService>().RewardSourceCommittedAsync(source));
-            for (int i = 0; i < 100 && Session(alice).Owner?.State !=
+            for (int i = 0; i < 100 && aliceSession.Owner?.State !=
                      Ro3Emu.Server.Game.Ownership.RoleOwnerState.RecoveryRequired; i++) await Task.Delay(20);
-            Assert.Equal(Ro3Emu.Server.Game.Ownership.RoleOwnerState.RecoveryRequired, Session(alice).Owner!.State);
-            for (int i = 0; i < 100 && !Session(alice).Channel.PeerClosed; i++) await Task.Delay(20);
-            Assert.True(Session(alice).Channel.PeerClosed);
+            Assert.Equal(Ro3Emu.Server.Game.Ownership.RoleOwnerState.RecoveryRequired, aliceSession.Owner!.State);
+            for (int i = 0; i < 100 && !aliceSession.Channel.PeerClosed; i++) await Task.Delay(20);
+            Assert.True(aliceSession.Channel.PeerClosed);
             Assert.DoesNotContain(alice.Inbox.Snapshot(), packet => packet.IsGame(DungeonService.Result));
             Assert.Equal(1, FrozenRowCount(room, activated: 1, completed: 1));
             Assert.Empty(Service<DungeonObligationStore>().Pending(role));

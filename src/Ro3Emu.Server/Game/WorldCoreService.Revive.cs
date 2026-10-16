@@ -150,7 +150,9 @@ public sealed partial class WorldCoreService
             }
             if (committed) await character.ItemsChangedAsync(s, stats: false);
             await s.SendGameAsync(ReliveItem, new EntityReliveCostItemResp { Result = error });
-            if (committed)
+            // The debit and revive are durable; a handover that detached the session while the packets above were
+            // awaited (Role = null, RoleHandover.cs:100) leaves nobody to publish to, and the reconnect reloads the state.
+            if (committed && s.Role != null)
             {
                 await combat.PublishReviveAsync(s, null);
                 await dungeons.PublishExternalReviveAsync(s);

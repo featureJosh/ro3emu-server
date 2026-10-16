@@ -2,6 +2,9 @@ namespace Ro3Emu.Server;
 
 public sealed class ServerOptions
 {
+    /// <summary>Optional offline ambient player population.</summary>
+    public PopulationOptions Population { get; set; } = new();
+
     /// <summary>Address the client is told to connect to (server list gate addresses). Must be an IP literal.</summary>
     public string PublicHost { get; set; } = "127.0.0.1";
 
@@ -57,6 +60,12 @@ public sealed class ServerOptions
     /// Chinese; English titles need more. ClientHooks.LuaPatches sets the client's input limit to the same value.
     /// </summary>
     public int StallNameMaxLength { get; set; } = 24;
+
+    /// <summary>
+    /// Whether an existing account's password must match (the first login registers it). Off in our appsettings: for
+    /// single-player offline play any password, including none, opens the account; turn it on to share a server on a LAN.
+    /// </summary>
+    public bool RequirePasswords { get; set; } = true;
 
     /// <summary>
     /// The live season playbook (SeasonService). 101 is the only one this client has season content for; a value
@@ -219,4 +228,76 @@ public sealed class OpenContentOptions
     public bool ForcesActivity(long activityId) => Enabled && Activities.Contains(activityId);
     public bool OpensStageActivities => Enabled && SeasonStageActivities;
     public bool ServerDayFree => Enabled && IgnoreServerDay;
+}
+
+/// <summary>Optional ambient players; bounded per occupied public map/line and across the server.</summary>
+public sealed class PopulationOptions
+{
+    public PopulationChatOptions Chat { get; set; } = new();
+    public bool Enabled { get; set; }
+    public int PerMap { get; set; } = 20;
+    public int MaxTotal { get; set; } = 100;
+    public bool UseMapProfiles { get; set; }
+    public int DefaultAreaLevel { get; set; } = 5;
+    public int MaxSpawnsPerTick { get; set; } = 8;
+    public Dictionary<long, PopulationMapOptions> Maps { get; set; } = new();
+    public Dictionary<string, PopulationPreset> Profiles { get; set; } = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["city"] = new() { Count = 50 }, ["town"] = new() { Count = 30 },
+        ["field"] = new() { Count = 12 }, ["remote"] = new() { Count = 3 },
+    };
+}
+
+public sealed class PopulationPreset
+{
+    public int Count { get; set; } = 20;
+    public int MinLevel { get; set; } = 1;
+    public int MaxLevel { get; set; } = 100;
+    public int MaxEquipmentQuality { get; set; } = 6;
+}
+
+public sealed class PopulationMapOptions
+{
+    public bool Enabled { get; set; } = true;
+    public string? Profile { get; set; }
+    public int? Count { get; set; }
+    public int? AreaLevel { get; set; }
+    public int? MinLevel { get; set; }
+    public int? MaxLevel { get; set; }
+    public int? MaxEquipmentQuality { get; set; }
+}
+
+/// <summary>Editable offline flavor text; mode and cadence are inferred population policy.</summary>
+public sealed class PopulationChatOptions
+{
+    public string Mode { get; set; } = "quiet";
+    public bool GreetingsEnabled { get; set; } = true;
+    public bool LevelUpReactionsEnabled { get; set; } = true;
+    public int GreetingCooldownSeconds { get; set; } = 600;
+    public Dictionary<string, string[]> Phrases { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    internal static readonly IReadOnlyDictionary<string, string[]> DefaultPhrases = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["greeting"] = ["Hello, {player}!", "Hey {player}, good to see you!", "Safe travels, {player}!",
+            "Welcome, {player}!", "How's it going, {player}?", "Happy adventuring, {player}!", "Nice to meet you, {player}!",
+            "Hey {player}, enjoy your time here!", "Good day, {player}!", "See you on the road, {player}!"],
+        ["levelup"] = ["Congratulations on level {level}, {player}!", "Nice work, {player}! Level {level}!",
+            "Another level! Well done, {player}.", "Looking stronger, {player}!", "Keep it up, {player}!",
+            "Level {level} already? Nice, {player}!", "Great progress, {player}!", "Way to go, {player}!",
+            "Happy level-up, {player}!", "Well earned, {player}!"],
+        ["travel"] = ["Let's see where this path goes.", "Still a little way to go.", "I like taking the scenic route.",
+            "Time to stretch my legs.", "Wonder what's around the next corner.", "Taking a different route today.",
+            "A good day for a walk.", "There's always another place to explore.", "No need to rush.", "Onward!"],
+        ["npc"] = ["I'll stop here for a moment.", "Wonder if anyone has news.", "Just checking what's happening here.",
+            "This seems like a good meeting spot.", "I should look around before heading out.", "A quick stop, then back on the road.",
+            "Always something going on here.", "Taking a look around.", "Maybe I'll stay a little longer.", "Good place to catch my breath."],
+        ["hunt"] = ["Looking for a quiet hunting spot.", "I'll try a different patch of ground.", "Keeping an eye out for monsters.",
+            "Let's not pull too many at once.", "Time for a little practice.", "I'll check the clearing over there.",
+            "Better watch my footing out here.", "A short rest before the next fight.", "I could use a few more supplies.", "Staying alert out here."],
+        ["rest"] = ["Taking a breather.", "A little rest goes a long way.", "How's everyone's day going?", "Nice weather for adventuring.",
+            "Just sorting out my plans.", "I wonder where I'll head next.", "Glad to have a moment to relax.",
+            "Hope everyone's travels are going well.", "Enjoying the view for a bit.", "There's no hurry today."],
+        ["town"] = ["It's good to be back in town.", "Anyone else just passing through?", "I'll wander around a while.",
+            "Time to plan the next trip.", "This place feels lively today.", "Might meet some fellow adventurers here.",
+            "I like this part of town.", "A good spot to rest between journeys.", "Plenty of places to explore nearby.", "Taking it easy today."],
+    };
 }

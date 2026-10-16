@@ -345,11 +345,12 @@ public sealed class TowerTests : IAsyncLifetime
         await other.SendGameAsync(TowerService.ClaimFirstPass, new ClimbTowerClaimFirstPassRewardReq());
         var claim = await Next(other, TowerService.ClaimFirstPass, ClimbTowerClaimFirstPassRewardRes.Parser);
         Assert.Equal((0, 10L), (claim.Result, claim.ClaimedUpToLayer));
-        Assert.Equal(10, Count(other, 1250709));
+        // Floor-10 server-first milestone: AwardConfig 10011010 = [[1250709, 3, 0]] (via MultiverseGroupConfig 11010 _iValue_default).
+        Assert.Equal(3, Count(other, 1250709));
         Assert.Equal(0, Session(other).Tower!.LayerConfID); // honor is independent of personal clears
         await other.SendGameAsync(TowerService.ClaimFirstPass, new ClimbTowerClaimFirstPassRewardReq());
         Assert.Equal(ErrorCodes.Parameter, (await Next(other, TowerService.ClaimFirstPass, ClimbTowerClaimFirstPassRewardRes.Parser)).Result);
-        Assert.Equal(10, Count(other, 1250709));
+        Assert.Equal(3, Count(other, 1250709));
         // Replaying the floor cannot replace the recorded first pass.
         var replay = await EnterFloor(winner, 10, inside: true);
         await Kill(winner, Assert.Single(replay.Monsters).Uuid);
@@ -505,6 +506,9 @@ public sealed class TowerTests : IAsyncLifetime
                 position = final.Pos;
                 return Task.CompletedTask;
             });
+            // The server unregisters a session whose disconnect handover hits RecoveryRequired (RoleLifecycleTests asserts
+            // sessions.All() is empty), so hold the GameSession from before the fault instead of re-resolving it.
+            var aliceSession = Session(alice);
             var staged = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var faulted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             Func<GameSession, MonsterUnit, Task> failApply = (_, monster) =>
@@ -535,8 +539,8 @@ public sealed class TowerTests : IAsyncLifetime
                 await staged.Task.WaitAsync(Wait);
                 await faulted.Task.WaitAsync(Wait);
                 // The child reward permit aborts first; the parent cast then finalizes the paid death.
-                for (int i = 0; i < 100 && (!Session(alice).Channel.PeerClosed || !final.Dead); i++) await Task.Delay(20);
-                Assert.True(Session(alice).Channel.PeerClosed);
+                for (int i = 0; i < 100 && (!aliceSession.Channel.PeerClosed || !final.Dead); i++) await Task.Delay(20);
+                Assert.True(aliceSession.Channel.PeerClosed);
             }
             finally { hooks.Remove(failApply); }
             Assert.Equal(1, applyFaults);
@@ -545,7 +549,7 @@ public sealed class TowerTests : IAsyncLifetime
             Assert.True(await Service<CharacterService>().RewardSourceCommittedAsync(final.RewardSettlement.SourceKey));
             Assert.True(attempt.ClearCommitted);
             Assert.DoesNotContain(final.Uid, attempt.Killed);
-            Assert.Equal(RoleOwnerState.RecoveryRequired, Session(alice).Owner!.State);
+            Assert.Equal(RoleOwnerState.RecoveryRequired, aliceSession.Owner!.State);
             Assert.Equal(1, DBClimTower.Parser.ParseFrom(Service<RoleStore>().LoadTower(role)!).LayerConfID);
             Assert.Equal(5, Count(alice, 1250709));
             Assert.Equal(9, Count(alice, 1250701));

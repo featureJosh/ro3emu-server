@@ -83,7 +83,7 @@ const sids = new Map();
 for (const row of readTsv(path.join(root, 're', 'loc', 'prefab_text.tsv'))) {
   if (row.class !== 'auto-sid-missing') continue;
   const sid = row.sid.trim();
-  if (!/^\d+$/.test(sid) || sid === '0' || !row.text) continue;
+  if (!/^\d+$/.test(sid) || Number(sid) <= 0 || !row.text) continue;
   if (!sids.has(sid)) sids.set(sid, row.text);
 }
 const sidOut = path.join(root, 'data', 'loc', 'loc_sids.tsv');

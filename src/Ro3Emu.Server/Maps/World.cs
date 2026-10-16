@@ -682,6 +682,12 @@ public sealed class World(IAoiSink sink, GameLoop loop, ILogger<World> log)
         lock (_sync) return session.Observers.ToList();
     }
 
+    /// <summary>Snapshot of players actually admitted to the world, including reconnect grace.</summary>
+    public IReadOnlyList<GameSession> ActivePlayers()
+    {
+        lock (_sync) return _scenes.Values.SelectMany(p => p).ToArray();
+    }
+
     public IReadOnlyList<GameSession> PlayersIn(long sceneEntry)
     {
         lock (_sync) return _scenes.TryGetValue(sceneEntry, out var members) ? members.ToList() : [];

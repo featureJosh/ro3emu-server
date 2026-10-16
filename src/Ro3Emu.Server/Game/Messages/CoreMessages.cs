@@ -47,6 +47,11 @@ public sealed class CoreMessages(RoleSessionService roleSessions, ChatService ch
         {
             await session.SendGameAsync(2005, new ItemExchangeResp { Result = ErrorCodes.FeatureUnavailable });
         });
+        // POPUPIMAGE (Asia GMT login pop-up images): offline there are no operator campaigns, so none to show.
+        routes.Map(83271, "handler", async (session, msgId, body) =>
+        {
+            await session.SendGameAsync(83271, new PopupImageRes());
+        });
         routes.Map(WorldCoreService.TeleportObject, "handler", async (session, msgId, body) =>
         {
             // In the reverse dungeon (SceneService.MovesOnSurface) the client reports where it shows an NPC before every

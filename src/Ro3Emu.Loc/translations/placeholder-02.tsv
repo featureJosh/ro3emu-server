@@ -33,15 +33,15 @@ boss的饼	Boss's Pie
 已获得参赛资格	Qualified
 沙漠边缘	Desert's Edge
 推荐挑战人数：30	Recommended Players: 30
-这里是玩法说明内容区域游者头饰时空漫游者头饰时空漫游者头饰时空漫游者头饰时空漫游者头饰时空漫游者头饰时空漫游者头饰时空漫游者头饰时	Mode description area. Time Traveler Headgear, Time Traveler Headgear, Time Traveler Headgear, Time Traveler Headgear
+这里是玩法说明内容区域游者头饰时空漫游者头饰时空漫游者头饰时空漫游者头饰时空漫游者头饰时空漫游者头饰时空漫游者头饰时空漫游者头饰时	Mode description area. Time Wanderer Headgear, Time Wanderer Headgear, Time Wanderer Headgear, Time Wanderer Headgear
 洛基峰北面	North Loki Peak
 怪物陷阱	Monster Trap
 积分达到1000	Reach 1000 Points
 这里是商品名称这里是这里是 	Item Name Goes Here
 黑金	Black Gold
 购买申请	Purchase Request
-州府·名字三	Capital · Name C
-州府·名字二	Capital · Name B
+州府·名字三	Capital · Name 3
+州府·名字二	Capital · Name 2
 物资运输战绩	Supply Transport Record
 起点	Start
 爱买买，不买滚；爱买买，不 买滚；爱买买，不买滚；爱买 买，不买滚；	Buy it or move along; buy it or move along; buy it or move along; buy it or move along;
@@ -179,7 +179,7 @@ BOSS技能名	BOSS Skill Name
 形式：<color=#594E3D>组队</color>	Format: <color=#594E3D>Party</color>
 解锁条件说明文本	Unlock condition text
 名片名称名称	Profile Card Name
-您当前所属服务器与冒险团所属服务器不符\n请在2026.02.02前确认是否转移至冒险团所属服务器\n否则将自动退出该冒险团	Your server doesn't match your Adv. Guild's server.\nPlease confirm by 2026.02.02 whether to transfer to the Adv. Guild's server,\nor you will automatically leave the Adv. Guild
+您当前所属服务器与冒险团所属服务器不符\n请在2026.02.02前确认是否转移至冒险团所属服务器\n否则将自动退出该冒险团	Your server doesn't match your Adv. Guild's server.\nPlease confirm by 2026.02.02 whether to transfer to the Adv. Guild's server,\nor you will automatically leave the Adv. Guild.
 冒险团规则一冒险团规则一冒险团规则一冒险团规则一冒险团规则一冒险团规则一冒险团规则一冒险团规则一	Adv. Guild Rule 1. Adv. Guild Rule 1. Adv. Guild Rule 1. Adv. Guild Rule 1. Adv. Guild Rule 1. Adv. Guild Rule 1.
 招募剩余时间：05天58小时	Recruiting time left: 05d 58h
 <color=#F79833>玩家名称七个字</color> 加入了冒险团！！！<color=#F79833>玩家名称	<color=#F79833>Player Name</color> joined the Adv. Guild!!! <color=#F79833>Player Name
@@ -281,8 +281,8 @@ Your<#e3aa49>1</color><#549b4a>1</color>策划配置全部文本Your<#e3aa49>1</
 当前未搜到单排信息	No Solo Queue data found
 2025.09.01-2025.12.31(22天后结束）	2025.09.01-2025.12.31 (ends in 22 days)
 第X名	Rank X
-选月挑战者III	Moon Challenger III
-轩月挑战者 III	Moon Challenger III
+选月挑战者III	Dark Moon Challenger III
+轩月挑战者 III	Dark Moon Challenger III
 选择倒计时 ：58	Choose in: 58
 请选择<color=#97e553>1</color>/1个奇遇	Select <color=#97e553>1</color>/1 Adventure
 奇遇名称七个字	Adventure Name
@@ -359,11 +359,11 @@ Lv.50后可挑战	Challenge at Lv.50
 困难 . 休憩女神 	Hard . Resting Goddess
 <color=#ff993f> 玩家名字七个字</color>带领队伍获得首通！ \n所有玩家获得神圣祝福效果！	<color=#ff993f> Player Name</color> led the team to a First Clear! \nAll players gain Divine Blessing!
 五人本·蚂蚁皇后	5-Player · Ant Queen
-团队复活次数<#97e553>15次</color>以内	Team revives within <#97e553>15</color>
+团队复活次数<#97e553>15次</color>以内	Max <#97e553>15</color> team revives
 通关奖励次数：<color=#76c233>2</color>次 	Clear Rewards: <color=#76c233>2</color>
 蚂蚁皇后	Ant Queen
 此处为部位名称	Slot Name Here
-职业限制：盗贼系、弓箭手、猎人系	Class: Thieves, Archer, Hunter line
+职业限制：盗贼系、弓箭手、猎人系	Class: Thief line, Archer, Hunter line
 双剑	Dual Swords
 平衡	Balanced
 全身装备上每多一条特技，生命+60	+60 HP for each Stunt on equipped gear

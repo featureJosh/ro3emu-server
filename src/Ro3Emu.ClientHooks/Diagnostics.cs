@@ -28,6 +28,74 @@ namespace Ro3Emu.ClientHooks
                     case "panels":
                         Panels();
                         break;
+                    case "tree":
+                        Tree(parts.Length > 1 ? parts[1] : "UI_Sys_MainWidget_PC(Clone)");
+                        break;
+                    case "lua":
+                    case "luacall":
+                        Lua(parts[0] == "luacall", parts.Length > 1 ? parts[1] : "");
+                        break;
+                    case "focus":
+                        // "focus ignore": input (ours and the device's) keeps working while the window is in the background,
+                        // so cmd.txt test runs work while the developer is in another window.
+                        IgnoreFocus = parts.Length < 2 || parts[1] != "normal";
+                        Application.runInBackground = IgnoreFocus || Application.runInBackground;
+                        UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior = IgnoreFocus
+                            ? UnityEngine.InputSystem.InputSettings.BackgroundBehavior.IgnoreFocus
+                            : UnityEngine.InputSystem.InputSettings.BackgroundBehavior.ResetAndDisableNonBackgroundDevices;
+                        Debug.Log("[Ro3Emu.Diag] focus " + (IgnoreFocus ? "ignored" : "normal"));
+                        break;
+                    case "actions":
+                        Debug.Log("[Ro3Emu.Diag] actions: " + Controller.DescribeActions());
+                        break;
+                    case "select":
+                        if (parts.Length > 1) UiNav.Select(parts[1]);
+                        break;
+                    case "click":
+                        // "click <object name>": the first active object of that name gets the same pointer click UiNav sends,
+                        // so tests are not stuck on mouse-only widgets (buttons, ClickEvent links, cells).
+                        if (parts.Length > 1) ClickNamed(parts[1]);
+                        break;
+                    case "verbose":
+                        Verbose = parts.Length < 2 || parts[1] != "off";
+                        break;
+                    case "waitmenu":
+                        // "waitmenu <part of the menu name> [timeout seconds]": pause the queue until that menu has the pad.
+                        var w = parts.Length > 1 ? parts[1].Split(' ') : new[] { "" };
+                        _waitMenu = w[0];
+                        _waitUntil = Time.realtimeSinceStartup + (w.Length > 1 && float.TryParse(w[1], out float timeout) ? timeout : 60f);
+                        break;
+                    case "pick":
+                        Pick(parts.Length > 1 ? parts[1] : "");
+                        break;
+                    case "wait":
+                        _wait = parts.Length > 1 && int.TryParse(parts[1], out int frames) ? frames : 30;
+                        break;
+                    case "stick":
+                        // "stick <x> <y> <frames>": the virtual pad's left stick held there (walk), then centred.
+                        var v = (parts.Length > 1 ? parts[1] : "").Split(' ');
+                        if (v.Length >= 2 && float.TryParse(v[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float sx)
+                            && float.TryParse(v[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float sy))
+                        {
+                            if (_testPad == null) _testPad = UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Gamepad>("Ro3emuTestPad");
+                            var device = _testPad;
+                            device.MakeCurrent();
+                            UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.GamepadState { leftStick = new Vector2(sx, sy) });
+                            _release = () => UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.GamepadState());
+                            _releaseIn = v.Length > 2 && int.TryParse(v[2], out int hold) ? hold : 60;
+                            Debug.Log("[Ro3Emu.Diag] stick " + sx + "," + sy + " for " + _releaseIn + " frames");
+                        }
+                        break;
+                    case "pad":
+                    case "key":
+                        if (parts.Length > 1) Press(parts[0] == "pad", parts[1]);
+                        break;
+                    case "shot":
+                        string shot = System.IO.Path.Combine(Dir(), "shot.png");
+                        if (parts.Length > 1) shot = System.IO.Path.Combine(Dir(), "shot-" + parts[1] + ".png");
+                        ScreenCapture.CaptureScreenshot(shot);
+                        Debug.Log("[Ro3Emu.Diag] screenshot -> " + shot);
+                        break;
                     case "dumptex":
                         DumpTextures(parts.Length > 1 ? parts[1] : "Txt");
                         break;
@@ -47,6 +115,39 @@ namespace Ro3Emu.ClientHooks
             {
                 Debug.LogError("[Ro3Emu.Diag] " + line + " failed: " + e);
             }
+        }
+
+        private static void ClickNamed(string name)
+        {
+            Component best = null;
+            foreach (var rt in UnityEngine.Object.FindObjectsOfType<RectTransform>())
+            {
+                if (rt.name != name || !rt.gameObject.activeInHierarchy) continue;
+                var target = (Component)rt.GetComponent<Selectable>() ?? rt;
+                if (best == null || target is Selectable && !(best is Selectable)) best = target;
+            }
+            if (best == null) { Debug.Log("[Ro3Emu.Diag] click " + name + ": no active object of that name"); return; }
+            UiNav.Click(best);
+        }
+
+        /// <summary>"pick x y" (screenshot pixels, origin top-left): every visible UI graphic under that point.</summary>
+        private static void Pick(string args)
+        {
+            var xy = args.Split(' ');
+            if (xy.Length < 2 || !float.TryParse(xy[0], out float x) || !float.TryParse(xy[1], out float y)) return;
+            var point = new Vector2(x, Screen.height - y);
+            var sb = new StringBuilder();
+            foreach (var g in UnityEngine.Object.FindObjectsOfType<Graphic>())
+            {
+                if (!g.isActiveAndEnabled || g.canvasRenderer.GetInheritedAlpha() < 0.02f) continue;
+                var canvas = g.canvas;
+                var cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.rootCanvas.worldCamera : null;
+                if (!RectTransformUtility.RectangleContainsScreenPoint(g.rectTransform, point, cam)) continue;
+                var r = g.rectTransform.rect;
+                if (r.width * r.height > 600 * 600) continue; // full-screen backgrounds
+                sb.Append("\n  ").Append(Path(g.transform)).Append(" (").Append(g.GetType().Name).Append(')');
+            }
+            Debug.Log("[Ro3Emu.Diag] pick " + args + ":" + sb);
         }
 
         /// <summary>Every transform whose name contains <paramref name="filter"/>: path, state, renderers.</summary>
@@ -76,6 +177,147 @@ namespace Ro3Emu.ClientHooks
                 }
             }
             Debug.Log("[Ro3Emu.Diag] find '" + filter + "': " + hits + " hit(s)" + sb);
+        }
+
+        /// <summary>
+        /// Developer commands without chat: each line of &lt;client&gt;/ro3emu/cmd.txt is run like "!client &lt;line&gt;", then the
+        /// file is deleted. Polled about once a second from the frame pump; also works before world entry.
+        /// </summary>
+        /// <summary>Developer "focus ignore": controller input is handled while the window is in the background.</summary>
+        public static bool IgnoreFocus;
+
+        /// <summary>Developer "verbose": controller UI logs every move and press (for scripted test runs).</summary>
+        public static bool Verbose;
+
+        public static void PollCommandFile()
+        {
+            if (_release != null && --_releaseIn <= 0) { var r = _release; _release = null; r(); }
+            if (_waitMenu != null)
+            {
+                bool found = UiNav.MenuName.IndexOf(_waitMenu, StringComparison.OrdinalIgnoreCase) >= 0;
+                if (found || Time.realtimeSinceStartup > _waitUntil)
+                {
+                    Debug.Log("[Ro3Emu.Diag] waitmenu " + _waitMenu + (found ? ": " + UiNav.MenuName : ": timed out"));
+                    _waitMenu = null;
+                    _wait = 30; // let it finish opening
+                }
+            }
+            else if (_wait > 0) _wait--;
+            else if (Queue.Count > 0) Run(Queue.Dequeue());
+            if (++_pollFrame % 60 != 0) return;
+            string file = System.IO.Path.Combine(Dir(), "cmd.txt");
+            if (!File.Exists(file)) return;
+            string[] lines;
+            try { lines = File.ReadAllLines(file); File.Delete(file); }
+            catch (IOException) { return; } // still being written
+            foreach (var line in lines) if (line.Trim().Length > 0) Queue.Enqueue(line.Trim());
+        }
+
+        // cmd.txt lines run one per frame; "wait <frames>" pauses the queue.
+        private static readonly System.Collections.Generic.Queue<string> Queue = new System.Collections.Generic.Queue<string>();
+        private static int _pollFrame, _wait, _releaseIn;
+        private static string _waitMenu;
+        private static float _waitUntil;
+        private static Action _release;
+        private static UnityEngine.InputSystem.Gamepad _testPad;
+
+        /// <summary>"pad &lt;GamepadButton&gt;" (South, East, DpadUp, LeftShoulder, Start...) / "key &lt;Key&gt;" (Escape, B...):
+        /// pressed for 8 frames through the Input System, as if from the device.</summary>
+        private static void Press(bool pad, string name)
+        {
+            if (pad)
+            {
+                // A virtual pad of our own: a real DualSense streams full reports that would overwrite an injected press.
+                if (_testPad == null) _testPad = UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Gamepad>("Ro3emuTestPad");
+                var device = _testPad;
+                if (!Enum.TryParse(name, true, out UnityEngine.InputSystem.LowLevel.GamepadButton button)) { Debug.Log("[Ro3Emu.Diag] pad " + name + ": unknown button"); return; }
+                device.MakeCurrent();
+                UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.GamepadState().WithButton(button));
+                _release = () => UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.GamepadState());
+            }
+            else
+            {
+                var device = UnityEngine.InputSystem.Keyboard.current;
+                if (device == null || !Enum.TryParse(name, true, out UnityEngine.InputSystem.Key key)) { Debug.Log("[Ro3Emu.Diag] key " + name + ": no keyboard or unknown key"); return; }
+                UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.KeyboardState(key));
+                _release = () => UnityEngine.InputSystem.InputSystem.QueueStateEvent(device, new UnityEngine.InputSystem.LowLevel.KeyboardState());
+            }
+            _releaseIn = 8;
+            Debug.Log("[Ro3Emu.Diag] " + (pad ? "pad " : "key ") + name);
+        }
+
+        /// <summary>"lua a.b.c": a Lua global path's value; "luacall a.b.c [self]": calls it, with the table a.b as self
+        /// when the word self follows (a:c()).</summary>
+        private static void Lua(bool call, string args)
+        {
+            var global = LuaPatches.Global;
+            if (global == null) { Debug.Log("[Ro3Emu.Diag] lua: game Lua not ready"); return; }
+            var parts = args.Split(' ');
+            string path = parts[0];
+            object value;
+            if (!call) value = global.Obf_LuA<object>(path);
+            else
+            {
+                var fn = global.Obf_LuA<Obf_R.Obf_Ef>(path);
+                int dot = path.LastIndexOfAny(new[] { '.', ':' });
+                object self = parts.Length > 1 && parts[1] == "self" && dot > 0 ? global.Obf_LuA<object>(path.Substring(0, dot)) : null;
+                var results = fn == null ? null : (self != null ? fn.Obf_HuA(self) : fn.Obf_HuA());
+                value = results == null ? "(no function)" : string.Join(", ", Array.ConvertAll(results, r => r == null ? "nil" : r + ":" + r.GetType().Name));
+            }
+            Debug.Log("[Ro3Emu.Diag] " + (call ? "luacall " : "lua ") + path + " = " + (value == null ? "nil" : value + " (" + value.GetType().Name + ")"));
+        }
+
+        private static string Dir()
+        {
+            string dir = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), "ro3emu");
+            Directory.CreateDirectory(dir);
+            return dir;
+        }
+
+        /// <summary>
+        /// "tree &lt;name&gt; [depth]": the hierarchy under the first scene object named &lt;name&gt; (also inactive): active flag,
+        /// rect size and screen position, components, sprite / fill / text. Written to &lt;client&gt;/ro3emu/tree.txt.
+        /// </summary>
+        private static void Tree(string args)
+        {
+            // "name [depth]"; names of UI objects have no spaces.
+            var parts = args.Split(' ');
+            int depth = parts.Length > 1 && int.TryParse(parts[1], out int d) ? d : 6;
+            string name = parts[0];
+            Transform root = null;
+            foreach (var t in Resources.FindObjectsOfTypeAll<Transform>())
+                if (t.gameObject.scene.name != null && t.name == name) { root = t; if (t.gameObject.activeInHierarchy) break; }
+            var sb = new StringBuilder("tree '" + name + "' screen=" + Screen.width + "x" + Screen.height);
+            if (root == null) sb.Append(": not found");
+            else { sb.Append(" path=").Append(Path(root)); TreeNode(root, 0, depth, sb); }
+            File.WriteAllText(System.IO.Path.Combine(Dir(), "tree.txt"), sb.ToString());
+            Debug.Log("[Ro3Emu.Diag] " + (root == null ? sb.ToString() : "tree '" + name + "' -> ro3emu/tree.txt"));
+        }
+
+        private static readonly Vector3[] Corners = new Vector3[4];
+
+        private static void TreeNode(Transform t, int level, int depth, StringBuilder sb)
+        {
+            sb.Append('\n').Append(' ', level * 2).Append(t.name).Append(t.gameObject.activeSelf ? "" : " [off]");
+            if (t is RectTransform rt)
+            {
+                rt.GetWorldCorners(Corners);
+                var cam = rt.GetComponentInParent<Canvas>()?.worldCamera;
+                Vector2 a = RectTransformUtility.WorldToScreenPoint(cam, Corners[0]), b = RectTransformUtility.WorldToScreenPoint(cam, Corners[2]);
+                sb.Append(" size=").Append(rt.rect.size.ToString("F0")).Append(" screen=").Append(a.ToString("F0")).Append('-').Append(b.ToString("F0"));
+            }
+            foreach (var c in t.GetComponents<Component>())
+            {
+                if (c == null || c is Transform) continue;
+                sb.Append(' ').Append(c.GetType().Name);
+                if (c is Image img) sb.Append("(").Append(img.sprite != null ? img.sprite.name : "-").Append(img.type == Image.Type.Filled ? " fill=" + img.fillAmount.ToString("F2") : "").Append(")");
+                else if (c is RawImage raw) sb.Append("(").Append(raw.texture != null ? raw.texture.name : "-").Append(")");
+                else if (c is TMPro.TMP_Text tmp) sb.Append("(\"").Append(tmp.text.Replace("\n", " ")).Append("\")");
+                else if (c is Slider sl) sb.Append("(").Append(sl.value.ToString("F2")).Append(")");
+                else if (c is CanvasGroup cg) sb.Append("(a=").Append(cg.alpha.ToString("F2")).Append(")");
+            }
+            if (level >= depth) { if (t.childCount > 0) sb.Append(" +").Append(t.childCount); return; }
+            for (int i = 0; i < t.childCount; i++) TreeNode(t.GetChild(i), level + 1, depth, sb);
         }
 
         /// <summary>Open UI views: active objects named UI_Sys_* / UI_Com_* (the view prefabs' roots), outermost only.</summary>

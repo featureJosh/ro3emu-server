@@ -127,7 +127,7 @@ public sealed class FreshRealmTests : IAsyncLifetime
     public async Task OnDayOneTheSeasonIsInItsHiddenFirstStageAndTheServerSignalsOpenContent()
     {
         await using var alice = await InWorld("Alice");
-        await Gm("alice", "!lvl 60");
+        await Gm("alice", "!lvl 99"); // data/config/FunctionConfig.json id 69 _kOpenCondition 2000062 -> data/config/LC_ConditionList.json 2000062 m_kSubConditionList [1002, 99]: base level 99
         var season = await Next(alice, SeasonService.SeasonSync, DBSeasonInfoIncrement.Parser);
         long start = new DateTimeOffset(DateTime.Today).ToUnixTimeSeconds();
         Assert.Equal(101, season.Current.All.PlayBookId);
@@ -142,7 +142,7 @@ public sealed class FreshRealmTests : IAsyncLifetime
         Assert.Equal(0, GameData.Int(data.Row("MultiverseStage", 101002)!.Value, "_iHide"));
         Assert.InRange(now, time.StageTimeInfo[101001].StartTime, time.StageTimeInfo[101001].EndTime - 1);
         Assert.True(time.StageTimeInfo[101002].StartTime > now);
-        // Season 69 (level 50) is open, and the hook's "server opens content" signal holds from the first day: a
+        // Season 69 (level 99) is open, and the hook's "server opens content" signal holds from the first day: a
         // function no level reaches (7201, [1002,9999]) is reported open; the original never reports one.
         var open = await Next(alice, FunctionService.FunctionOpenSync, FunctionOpenInfoIncrement.Parser,
             m => m.FunctionOpenInfos.ContainsKey(69));

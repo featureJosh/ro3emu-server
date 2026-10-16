@@ -433,6 +433,8 @@ public sealed class GameSession(PhonestChannel channel, TrafficLog traffic)
 
     /// <summary>Chat groups this player joined (guarded by ChatService's lock).</summary>
     public HashSet<string> ChatGroups { get; } = new();
+    /// <summary>Session-local preference for optional ambient population chatter.</summary>
+    public bool BotChatMuted { get; set; }
 
     private bool CanPresent() => Owners?.AllowsPresentation(this) != false
         && (Owners?.Current?.CanPresent(this) ?? true);

@@ -130,6 +130,7 @@ public static class ServerHost
         builder.Services.AddSingleton<MsgCatalog>();
         builder.Services.AddSingleton<IAoiSink, GameAoiSink>();
         builder.Services.AddSingleton<World>();
+        builder.Services.AddSingleton<PopulationService>();
         builder.Services.AddSingleton<WorldData>();
         builder.Services.AddSingleton<SceneService>();
         builder.Services.AddSingleton<WorldEffectsService>();
@@ -325,6 +326,7 @@ public static class ServerHost
         // A committed dungeon clear counts toward quest target 101018 (story steps such as Payon Forest, the airship).
         var questTasks = app.Services.GetRequiredService<TaskService>();
         app.Services.GetRequiredService<DungeonService>().Completed.Add((s, scene, _) => questTasks.OnDungeonClearedAsync(s, scene));
+        app.Services.GetRequiredService<PopulationService>().RegisterCommands(app.Services.GetRequiredService<GmCommands>());
         app.Services.GetRequiredService<ReconnectService>(); // hooks the handover and registers !netdrop
         // Create the key before the first client connects, so ClientPatch can read the public half.
         app.Services.GetRequiredService<GateCrypto>();

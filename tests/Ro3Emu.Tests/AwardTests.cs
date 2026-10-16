@@ -107,6 +107,31 @@ public sealed class AwardTests : IAsyncLifetime
         Assert.All(check.Assets, asset => { Assert.Equal("0", asset.Residual); Assert.Equal("0", asset.LegResidual); });
     }
 
+    [Fact]
+    public void SparseDropGroupStillResolves()
+    {
+        // Task 10101210's award pool uses DropGroupConfig 121121, exported as an object (serials 1-7, 9 - no 8).
+        var awards = new AwardService(_app.Services.GetRequiredService<GameData>());
+        var grants = awards.ResolveForProgress(new RoleProgress { Level = 10, Career = 1100 }, 31121).Grants;
+        Assert.Contains(grants, g => g.Entry is 2020120 or 2030120 or 2050120 or 2500120);
+    }
+
+    [Theory]
+    [InlineData(3100, new[] { 2110120 })]                          // Archer: only serial 7 (bow) is job-eligible
+    [InlineData(2100, new[] { 2090120, 2500120 })]                 // serials 6 + 9
+    [InlineData(1100, new[] { 2020120, 2030120, 2050120, 2500120 })] // serials 2, 3, 4, 9
+    public void Task10101210RewardGrantsEachEligibleRowOnce(int career, int[] expected)
+    {
+        // DropPoolConfig 31121 slot 1 = [121121, 1000000, 1, 10]: up to 10 DISTINCT rows of the career kit, never ten copies.
+        var awards = new AwardService(_app.Services.GetRequiredService<GameData>());
+        for (int i = 0; i < 200; i++)
+        {
+            var grants = awards.ResolveForProgress(new RoleProgress { Level = 10, Career = career }, 31121).Grants;
+            Assert.Equal(expected.OrderBy(x => x), grants.Select(g => g.Entry).OrderBy(x => x));
+            Assert.All(grants, g => Assert.Equal(1, g.Count));
+        }
+    }
+
     [ClientDataFact]
     public void FixedPlaybookEmptyAndUnresolvedPolicies()
     {
@@ -120,7 +145,7 @@ public sealed class AwardTests : IAsyncLifetime
         Assert.Empty(awards.Resolve(null!, 31104).Grants); // novice trial's separate TaskConfig EXP remains
         Assert.Equal(new[] { new AwardGrant(102, 100), new AwardGrant(2, 2500) },
             awards.Resolve(null!, 2131).Grants.ToArray()); // declared but empty drop pool keeps its fixed grants
-        Assert.Throws<AwardResolutionException>(() => awards.Resolve(null!, 920160)); // absent group
+        Assert.Throws<AwardResolutionException>(() => awards.Resolve(null!, 920161)); // absent group: no MultiverseGroupConfig row 920161 (920160 is a valid fixed grant: _iValue_default 920160 -> AwardConfig 920160 _kAward [[920132,2000,1]])
         Assert.Throws<AwardResolutionException>(() => awards.Resolve(null!, 21)); // type 1, NPC drop route
         Assert.Throws<AwardResolutionException>(() => awards.Resolve(null!, 40007)); // multirow day selector
         Assert.Throws<AwardResolutionException>(() => awards.Resolve(null!, 1005)); // AwardConfig _kEXP

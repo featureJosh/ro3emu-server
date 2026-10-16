@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <Reference Include="mscorlib"><HintPath>$(ClientManaged)\mscorlib.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="netstandard"><HintPath>$(ClientManaged)\netstandard.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="netstandard" Condition="Exists('$(ClientManaged)\netstandard.dll')"><HintPath>$(ClientManaged)\netstandard.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="System"><HintPath>$(ClientManaged)\System.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="System.Core"><HintPath>$(ClientManaged)\System.Core.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
@@ -33,12 +33,19 @@
     <Reference Include="Happyengine.Network"><HintPath>$(ClientManaged)\Happyengine.Network.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Happyengine.Base.Runtime"><HintPath>$(ClientManaged)\Happyengine.Base.Runtime.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Phonest.ClientForUnity"><HintPath>$(ClientManaged)\Phonest.ClientForUnity.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Happyengine.UI.Framework"><HintPath>$(ClientManaged)\Happyengine.UI.Framework.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.InputSystem"><HintPath>$(ClientManaged)\Unity.InputSystem.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ScreenCaptureModule"><HintPath>$(ClientManaged)\UnityEngine.ScreenCaptureModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(ClientManaged)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Unity.TextMeshPro"><HintPath>$(ClientManaged)\Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.UI"><HintPath>$(ClientManaged)\UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.UIModule"><HintPath>$(ClientManaged)\UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
     <!-- English replacements for Chinese-text UI textures (TextureSwap), carried inside this DLL. -->
     <EmbeddedResource Include="Textures\*.png" LogicalName="textures/%(Filename)%(Extension)" />
+    <!-- PS5 button glyphs (Kenney Input Prompts 1.5, CC0, PlayStation Series/Double), named after Input System controls;
+         dpad-up = dpad/up. Baked with a dark stroke so they read on any icon:
+         magick in.png \( +clone -alpha extract -morphology Dilate Disk:6 -background "rgb(18,14,12)" -alpha shape \) +swap -compose over -composite out.png -->
+    <EmbeddedResource Include="Glyphs\*.png" LogicalName="glyphs/%(Filename)%(Extension)" />
     <Reference Include="UnityEngine.ImageConversionModule"><HintPath>$(ClientManaged)\UnityEngine.ImageConversionModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(ClientManaged)\UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>

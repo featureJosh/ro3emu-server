@@ -24,6 +24,7 @@ public sealed class EndToEndTests : IAsyncLifetime
             o.MicroGatePort = microPort;
             o.GameGatePort = gamePort;
             o.PublicHost = "127.0.0.1";
+            o.RequirePasswords = true; // appsettings turns it off for single-player; these tests cover passwords
         });
         await _app.StartAsync();
         _http = $"http://127.0.0.1:{httpPort}";

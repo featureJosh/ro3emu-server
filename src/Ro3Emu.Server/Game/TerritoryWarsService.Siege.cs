@@ -18,7 +18,7 @@ public sealed partial class TerritoryWarsService
     private long siegeTestClosedUntil;
 
     /// <summary>
-    /// DailyActivityConfig[115] gives the local Wednesday 20:30-21:30 occurrence. The GM override is
+    /// DailyActivityConfig[115] gives the local Wednesday 21:00-21:30 occurrence. The GM override is
     /// an ephemeral test aid (inferred), deliberately outside the durable Territory Wars state.
     /// </summary>
     private TimedTodoSchedule.Occurrence? SiegeWindow()

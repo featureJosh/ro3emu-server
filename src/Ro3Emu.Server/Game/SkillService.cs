@@ -27,6 +27,7 @@ public sealed class SkillService
     private readonly RoleStore roles;
     private readonly ILogger<SkillService> log;
     private Dictionary<(int Group, int Level), int>? _rowIds;
+    private Dictionary<int, int>? _normalAttackFallbacks;
     private Dictionary<int, int>? upgradedGroupByBase;
 
     /// <summary>Combat-owned dynamic queue eligibility (LC_DynamicParamMgr).</summary>
@@ -56,10 +57,25 @@ public sealed class SkillService
         ? (int)GameData.Int(row, "_iMaxLevel") : 0;
 
     /// <summary>The career's normal attack: JobConfig._kSkillNormalID (a row id).</summary>
-    public int NormalAttack(int career) =>
-        data.Row("JobConfig", career) is { } job && job.TryGetProperty("_kSkillNormalID", out var n) && n.ValueKind == JsonValueKind.Array && n.GetArrayLength() > 0
-            ? n[0].GetInt32()
-            : 1000001;
+    public int NormalAttack(int career)
+    {
+        if (data.Row("JobConfig", career) is { } job
+            && job.TryGetProperty("_kSkillNormalID", out var n) && n.ValueKind == JsonValueKind.Array
+            && n.GetArrayLength() > 0 && data.Row("SkillConfig", n[0].GetInt32()) is not null)
+            return n[0].GetInt32();
+
+        // The Asia JobConfig points Mage careers at 1200001, but that SkillConfig row is absent. The client
+        // still receives that id in CurrentNormalAttackSkillId and throws in InitSkillInputData because its
+        // m_kSkillData is nil. Fall back to the nearest career's actual normal-attack row (Mage: 1299901).
+        _normalAttackFallbacks ??= data.Table("SkillConfig").Values
+            .Where(r => GameData.Int(r, "_iJob") > 0 && GameData.Int(r, "_iIsNormalAtk") == 1
+                && GameData.Int(r, "_iMode") == 0)
+            .GroupBy(r => (int)GameData.Int(r, "_iJob"))
+            .ToDictionary(g => g.Key, g => (int)GameData.Int(g.OrderBy(r => GameData.Int(r, "_iID")).First(), "_iID"));
+        foreach (int candidateCareer in CareerChain(career).AsEnumerable().Reverse())
+            if (_normalAttackFallbacks.TryGetValue(candidateCareer, out int fallback)) return fallback;
+        return 1000001;
+    }
 
     internal int Rank(int career) => (int)(data.Row("JobConfig", career) is { } job ? Math.Max(1, GameData.Int(job, "_iJobRank")) : 1);
 

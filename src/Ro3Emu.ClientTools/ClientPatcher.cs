@@ -17,7 +17,16 @@ public static class ClientPatcher
     private const string ServerListPathAndQuery = "/serverlist/v2/168/serverlist.json?inline=true&force_refresh=true";
     private const string PemMarker = "-----BEGIN RSA PUBLIC KEY-----";
 
-    private static readonly string[] PatchedFiles = ["Happyengine.Network.dll", "Assembly-CSharp.dll", "Phonest.Common.dll", "Happyengine.Base.Runtime.dll", "Unity.TextMeshPro.dll", "HUD.dll", "HappyEngine.Resource.dll", "UnityEngine.UI.dll"];
+    private static readonly string[] CoreFiles = ["Happyengine.Network.dll", "Assembly-CSharp.dll", "Phonest.Common.dll", "Happyengine.Base.Runtime.dll", "Unity.TextMeshPro.dll", "HUD.dll", "HappyEngine.Resource.dll", "UnityEngine.UI.dll"];
+
+    /// <summary>Only in some builds (the Asia recovery client); patched when present.</summary>
+    private static readonly string[] OptionalFiles = ["RO3.AsiaProfile.dll", "RO3.ClientSecurity.dll"];
+
+    private static string[] PatchedFiles = CoreFiles;
+
+    /// <summary>Asia build: notice and notice-image origins, otherwise fetched from the official hosts.</summary>
+    private const string OriginalNoticeOrigin = "https://server.playragnarok3.com";
+    private const string OriginalNoticeImageOrigin = "https://update.playragnarok3.com";
 
     /// <summary>--verbose: GS_Debug.ShowLog always true, so the Lua debug logs (Lua_Debug reads it) reach Player.log.</summary>
     public static bool VerboseLogs { get; set; }
@@ -41,6 +50,7 @@ public static class ClientPatcher
         var managed = ManagedDir(clientDir);
         var backup = BackupDir(clientDir);
         Directory.CreateDirectory(backup);
+        PatchedFiles = [.. CoreFiles, .. OptionalFiles.Where(f => File.Exists(Path.Combine(managed, f)) || File.Exists(Path.Combine(backup, f)))];
         foreach (var file in PatchedFiles)
         {
             var saved = Path.Combine(backup, file);
@@ -60,6 +70,11 @@ public static class ClientPatcher
             new(OriginalServerListUrl, serverBaseUrl + ServerListPathAndQuery, Exact: true),
             new(PemMarker, pem, Exact: false),
         };
+        if (PatchedFiles.Contains("RO3.AsiaProfile.dll"))
+        {
+            rules.Add(new(OriginalNoticeOrigin, serverBaseUrl, Exact: true));
+            rules.Add(new(OriginalNoticeImageOrigin, serverBaseUrl, Exact: true));
+        }
         hooksDll ??= DefaultHooksDll();
         if (!File.Exists(hooksDll)) throw new FileNotFoundException("build src/Ro3Emu.ClientHooks first", hooksDll);
         File.Copy(hooksDll, Path.Combine(managed, HooksFile), overwrite: true);
@@ -79,6 +94,8 @@ public static class ClientPatcher
                 "HUD.dll" => m => TextSink.PatchHud(m, locDll),
                 "HappyEngine.Resource.dll" => m => TextSink.PatchLauncher(m, locDll),
                 "UnityEngine.UI.dll" => m => ImageSwapPatch.Patch(m, hooksDll),
+                "RO3.AsiaProfile.dll" => IgnoreRegionProfile,
+                "RO3.ClientSecurity.dll" => DisableLaunchGuards,
                 _ => null,
             };
             RewriteStrings(clientDir, file, rules, extra);
@@ -93,7 +110,7 @@ public static class ClientPatcher
     {
         var managed = ManagedDir(clientDir);
         var backup = BackupDir(clientDir);
-        foreach (var file in PatchedFiles)
+        foreach (var file in CoreFiles.Concat(OptionalFiles))
         {
             var saved = Path.Combine(backup, file);
             if (!File.Exists(saved)) continue;
@@ -189,6 +206,43 @@ public static class ClientPatcher
         vil.Append(vil.Create(OpCodes.Ldc_I4_1));
         vil.Append(vil.Create(OpCodes.Ret));
         return "chat -> ServerImAdapter";
+    }
+
+    /// <summary>
+    /// Asia build: RecoveryRegionProfile.Parse accepts only the official HTTPS hosts, so region-profile.ini cannot point
+    /// at us. Load() returns null instead, which every caller treats as "no profile": the NA URL literals (rewritten by the
+    /// rules above) are used, chat is not disabled and any server IM app id is accepted.
+    /// </summary>
+    private static string IgnoreRegionProfile(ModuleDefinition module)
+    {
+        var profile = module.GetType("HappyEngine.RecoveryRegionProfile") ?? throw new InvalidOperationException("RecoveryRegionProfile not found");
+        ReturnConstant(profile.Methods.Single(m => m.Name == "Load"), OpCodes.Ldnull);
+        return "RecoveryRegionProfile.Load -> null";
+    }
+
+    /// <summary>
+    /// LauncherProofGuard (kills the game unless RO3AsiaLauncher hands it a proof over an inherited Win32 pipe, which a
+    /// Linux launcher cannot do under Wine/Proton) and SingleInstanceGuard become no-ops.
+    /// </summary>
+    private static string DisableLaunchGuards(ModuleDefinition module)
+    {
+        foreach (var name in new[] { "RO3.ClientSecurity.LauncherProofGuard", "RO3.ClientSecurity.SingleInstanceGuard" })
+        {
+            var type = module.GetType(name) ?? throw new InvalidOperationException(name + " not found");
+            ReturnConstant(type.Methods.Single(m => m.Name == "Enforce"), null);
+        }
+        return "LauncherProofGuard.Enforce, SingleInstanceGuard.Enforce -> no-op";
+    }
+
+    /// <summary>Replaces a method body with "return;" or "return &lt;constant&gt;;".</summary>
+    private static void ReturnConstant(MethodDefinition method, OpCode? load)
+    {
+        method.Body.Instructions.Clear();
+        method.Body.ExceptionHandlers.Clear();
+        method.Body.Variables.Clear();
+        var il = method.Body.GetILProcessor();
+        if (load is { } op) il.Append(il.Create(op));
+        il.Append(il.Create(OpCodes.Ret));
     }
 
     /// <summary>The hooks DLL ships inside this tool (EmbeddedResource); a repo build is the fallback for development.</summary>

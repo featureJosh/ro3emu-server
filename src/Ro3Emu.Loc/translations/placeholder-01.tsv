@@ -65,7 +65,7 @@ Rolename邀请组队(3/5) 翻译预留两行	Rolename invites you to a party (3/
 图腾名字内容	Totem Name
 您所在公会未获得参赛资格	Your guild did not qualify
 怪物名字七个字	Monster Name
-被禁言的玩家，将无法开麦，无法在房间内发送消息	Muted players can't use the mic or send messages in the room
+被禁言的玩家，将无法开麦，无法在房间内发送消息	Muted players can't use the mic or send messages in the room.
 麦序成员:   5/10	Mic Queue:   5/10
 名片装扮名称	Profile Card Style Name
 永久激活	Permanently Active
@@ -113,7 +113,7 @@ Rolename邀请组队(3/5) 翻译预留两行	Rolename invites you to a party (3/
 摊位名字七个字	Stall Name
 清仓大甩卖！	Clearance Sale!
 流派名称七个字	Build Name
-总伤害  1500M (46.1M/S)	Total DMG  1500M (46.1M/S)
+总伤害  1500M (46.1M/S)	Total DMG  1500M (46.1M/s)
 通关奖励次数：<color=#76c233>2</color>次      共享奖励次数：<color=#76c233>2</color>次	Clear Rewards: <color=#76c233>2</color>      Shared Rewards: <color=#76c233>2</color>
 物理攻击+63物理攻击+63物理攻击	Physical ATK +63 Physical ATK +63
 蓄力冲锋，能抗能打,蓄力冲锋能抗能打,蓄力冲锋。	Charge in, tank and hit hard. Charge in, tank and hit hard.
@@ -123,7 +123,7 @@ Rolename邀请组队(3/5) 翻译预留两行	Rolename invites you to a party (3/
 召唤<sprite name="lottery_small_1.png"><sprite name="lottery_small_0.png">次	Summon <sprite name="lottery_small_1.png"><sprite name="lottery_small_0.png">x
 召唤<i><size=44>1</size></i>次	Summon <i><size=44>1</size></i>x
 召唤<sprite name="lottery_big_5"><sprite name="lottery_big_0">次	Summon <sprite name="lottery_big_5"><sprite name="lottery_big_0">x
-[主线]任务名字七个字	[Main]Quest Name
+[主线]任务名字七个字	[Main] Quest Name
 组队训练，磨合团队组队训练	Team training to build teamwork
 五人挑战	5-Player Challenge
 当前Base等级上限：89级	Current Base Lv. Cap: 89
@@ -142,11 +142,11 @@ Rolename邀请组队(3/5) 翻译预留两行	Rolename invites you to a party (3/
 问鼎	Champion
 爆伤减免	Crit DMG Reduction
 技能名字	Skill Name
-多人组队在同一野外地图挂机打怪会有额外经验加成	Parties idle-hunting on the same field map get bonus EXP
+多人组队在同一野外地图挂机打怪会有额外经验加成	Parties idle-hunting on the same field map get bonus EXP.
 图片中<color=#ff993f>不要出现文字</color>,用符号代替中文不超过3行,多语言不超过4行,视觉限定最宽宽宽度。  \n\n重点字色仅在必要时使用,建议不超过总文	Images must <color=#ff993f>contain no text</color>; use symbols instead. Max 3 lines in Chinese, 4 in other languages, within the visual max width.  \n\nUse highlight colors only when necessary, ideally under the total text
 周一凌晨5点更新次数	Attempts reset Mondays at 5:00 AM
 描述文本	Description
-请输入招募宣言	Enter introduction
+请输入招募宣言	Enter recruitment message
 招募宣言招募宣言招募宣言招募宣言招募宣言招募宣言招募宣言招募宣言招募宣\n言招募宣言招募宣言招募宣言招募宣言招募宣言招募宣言招募宣言招募宣言招募\n宣言招募宣言招募宣言招募宣言	Introduction text, introduction text, introduction text,\nintroduction text, introduction text, introduction text,\nintroduction text, introduction text
 奇迹，生长，	Miracle, Growth,
 这里是道具名称	Item Name Here
@@ -207,7 +207,7 @@ Rolename邀请组队(3/5) 翻译预留两行	Rolename invites you to a party (3/
 玩家名称名称名	Player Name
 攻城大营 2/4	Siege Camp 2/4
 积分奖励	Point Rewards
-据点战-战场选择	Stronghold War - Battlefield
+据点战-战场选择	Stronghold War - Battlefield Select
 剩余<color=#fe993f>15</color>天	<color=#fe993f>15</color> days left
 太阳之火的恩泽	Blessing of the Sun's Fire
 攻击力+60	ATK +60
@@ -232,7 +232,7 @@ Rolename邀请组队(3/5) 翻译预留两行	Rolename invites you to a party (3/
 图文说明	Illustrated Guide
 吉芬森林	Geffen Forest
 每日：0/30	Daily: 0/30
-20:20开始	Starts 20:20
+20:20开始	Starts at 20:20
 旗帜已被玩家名字七个字夺的字夺的	Flag captured by Player Name
 每日登录游戏	Log in daily
 第3天	Day 3
@@ -325,7 +325,7 @@ xx天	xx days
 参赛资格	Eligibility
 队伍列表	Team List
 沉睡黎明	Sleeping Dawn
-一般活跃:<#7e7361>7000<周活跃<35000</color>	Average: <#7e7361>7000<Weekly Activity<35000</color>
+一般活跃:<#7e7361>7000<周活跃<35000</color>	Moderately Active: <#7e7361>7000<Weekly Activity<35000</color>
 解散规则：连续2周，周活跃评级均为<#c27b47>非常不活跃</color>，则公会将在第3周的周一5点自动解散（公会创建后，从下周开始计算）1111111	Disband rule: if weekly activity is rated <#c27b47>Very Inactive</color> 2 weeks in a row, the guild auto-disbands at 5:00 on Monday of week 3 (counting starts the week after creation)1111111
 非常不活跃：<#7e7361>周活跃<7000</color> 	Very Inactive: <#7e7361>Weekly Activity<7000</color>
 非常活跃:<#594e3d>周活跃>91000</color>	Very Active: <#594e3d>Weekly Activity>91000</color>

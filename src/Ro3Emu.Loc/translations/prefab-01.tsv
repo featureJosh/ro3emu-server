@@ -1,0 +1,557 @@
+名字版-名字	Nameplate - Name
+名字版-NpcStall	Nameplate - NpcStall
+技能名	Skill Name
+本次登陆不再显示	Don't show again this session
+无	None
+当前	Current
+卡片	Card
+确认	Confirm
+部位：	Slot:
+点击空白处关闭	Tap the blank area to close
+唯一效果	Unique Effect
+提醒	Notice
+请在下方输入个性签名巴拉巴拉	Enter your signature here
+在此输入您的签名信息	Enter your signature here
+返回	Back
+公会	Guild
+包含以上副属性	Includes the sub-stats above
+副属性选择	Select Sub-stat
+招募宣言:	Recruitment Message:
+宠物	Pet
+灵魂残响	Soul Echo
+神术图腾	Divine Totem
+属性	Stats
+每日5：00更新当日数据	Data updates daily at 5:00
+总评分	Total Score
+怪物掉落：	Monster Drops:
+前往魔物处	Go to Monster
+物品名称七个字	Item Name Placeholder
+购买	Buy
+公会福利-红包	Guild Benefit - Red Packet
+单价:	Unit Price:
+获得:	Obtained:
+兑换礼包	Exchange Gift Pack
+品质	Quality
+筛选	Filter
+未解锁	Locked
+灵巧	Dexterity
+不再显示	Don't show again
+获取途径	How to Obtain
+已完成	Completed
+奖励	Rewards
+时尚达人等级奖励	Fashionista Level Rewards
+成就名称等级奖励	Achievement Level Rewards
+阶段	Stage
+总成就升级	Total Achievement Upgrade
+总成就P点数:	Total Achievement P Points:
+必做任务	Required Quests
+敬请期待	Coming Soon
+排行榜	Leaderboard
+全服奖励	Server-wide Rewards
+造成伤害:	Damage Dealt:
+排名	Rank
+弃权	Forfeit
+亲爱的同学,恭喜您被选中参与答题盛典参与答题盛典将会获得诸多奖励快来参与吧!!亲爱的同学,恭喜您被选中参与答题盛典参与答题盛典	Dear adventurer, congratulations on being chosen for the Quiz Gala! Join in to earn plenty of rewards!
+奖励预览	Reward Preview
+你被选中啦！	You've been chosen!
+Ro天才幸运星	RO Genius Lucky Star
+击杀	Kills
+积分	Points
+助攻	Assists
+时间	Time
+当前未搜到信息	No information found
+模拟对抗战	Mock Battle
+立即前往	Go Now
+完成7日任务得	Complete the 7-day quests to get
+星期一	Monday
+创始人	Founder
+(再次点击左侧界面结束语音输入)	(Tap the left panel again to end voice input)
+开启招募	Open Recruitment
+可选择最多六个招募标签	Choose up to six recruitment tags
+发起结义	Start Sworn Brotherhood
+修改服务器	Change Server
+创建	Create
+前往结义	Go to Sworn Brotherhood
+已完成	Completed
+尚未加入冒险团	You haven't joined an Adventure Guild yet
+删除	Delete
+合计:	Total:
+暂无符合条件的搜索结果	No results match your search
+还原	Restore
+拍卖品已被抢光，感谢您 的积极参与！可配置。	The auction items are sold out. Thank you for taking part!
+操作	Actions
+巡逻攻击	Patrol Attack
+凌晨五点自动回城并关闭自动挂机	Automatically return to town at 5 AM and turn off auto-battle
+复活后自动开启自动挂机	Automatically turn on auto-battle after reviving
+同时满足以下条件的装备会自动分解	Equipment meeting all of the following conditions is dismantled automatically
+请在左侧选择需要出售的道具	Select the items to sell on the left
+分解可获得以下材料	Dismantling yields the following materials
+当前无可分解道具	No items to dismantle
+请在左侧选择需要分解的道具	Select the items to dismantle on the left
+分解	Dismantle
+批量操作	Bulk Actions
+出售可获得	Selling yields
+轻按选中出售物品，长按查看物品说明	Tap to select items to sell, hold to view item details
+展开	Expand
+地图信息	Map Info
+详情信息	Details
+点击标点可前往寻路	Tap a marker to auto-travel there
+选择要替换的羁绊(点击或拖动)	Select the Bond to replace (tap or drag)
+没有羁绊	No Bonds
+二级按钮	Secondary Button
+(未上阵)	(Not equipped)
+效果	Effect
+暂无上阵羁绊	No Bonds equipped
+升级	Upgrade
+收藏效果	Collection Effect
+点击进入典藏界面	Tap to open the Collection
+武器	Weapon
+暂无可用卡片	No cards available
+收藏属性	Collection Stats
+完成	Done
+进阶提升	Advancement Boost
+卡片进阶	Card Advancement
+卡片返还	Card Refund
+未选中任何卡片	No card selected
+以筛选最低单价	Filter by lowest unit price
+已筛选最低单价	Filtering by lowest unit price
+提交奖励	Submission Reward
+帮助装载货物	Help load cargo
+帮助提交	Help Submit
+装载	Load
+提交5个贡献可发车	Submit 5 contributions to depart
+<color=#7e7361>云游商队货物</color>1-4	<color=#7e7361>Wandering Caravan Cargo</color> 1-4
+输出	Output
+视频加载中...	Loading video...
+助力	Assist
+成就任务	Achievement Quests
+输入房间名称策划配置预留文本	Enter room name (reserved placeholder text)
+请输入房间名称搜索	Enter a room name to search
+房间类型	Room Type
+语音类型	Voice Type
+当前没有房间	No rooms right now
+还没有发过消息	No messages sent yet
+赠礼对象	Gift Recipient
+房间名称	Room Name
+请输入房间名称	Enter room name
+转让	Transfer
+房间设置	Room Settings
+搜索房间	Search Rooms
+输入房间名称	Enter room name
+发言模式：全员发言	Speaking mode: Everyone can speak
+搜索玩家	Search Players
+房间成员	Room Members
+输入内容	Enter text
+[举报]	[Report]
+创建房间	Create Room
+清除记录	Clear History
+踢出频道	Kick from Channel
+被禁言的玩家，将无法开麦，无法在房间内发送消息。	Muted players cannot use the mic or send messages in the room.
+举报名称：	Reported Name:
+穿戴	Equip
+职业:	Job:
+拒绝	Decline
+不显示时间	Don't show time
+等级以下的生生人私聊	Private chats from strangers below this level
+拒绝 ：	Decline:
+确认选择	Confirm Selection
+段位	Rank
+最高当局伤害	Highest Damage in a Match
+请选择流派	Select a Build
+领取奖励	Claim Rewards
+本周任务	Weekly Quests
+任务已完成，请领取奖励	Quest complete, claim your reward
+任意完成一个即可领奖	Complete any one to claim the reward
+观战中...	Spectating...
+货币总上限：	Currency Cap:
+本周累计：	Accumulated This Week:
+吃鸡币累计规则	Winner-Takes-All Coin Rules
+单打独斗描述巴拉巴拉	Solo battle description placeholder
+每周一、三、五 18:00-19:00开启	Opens every Mon, Wed and Fri 18:00-19:00
+吃鸡币累计	Winner-Takes-All Coin Accumulated
+单打独斗描述巴拉巴拉单打独斗描述巴拉巴拉单打独斗描述巴拉巴拉	Solo battle description placeholder
+最高生存时长：	Longest Survival:
+第一次数：	Times in 1st:
+流派名称	Build Name
+最高单局伤害：	Highest Damage in One Match:
+建新角色	Create New Character
+已达到当前最高层数	Maximum floor reached
+难度衰减:	Difficulty Reduction:
+困难	Hard
+宠物爬塔	Pet Tower
+暂无昨日挑战记录	No challenge record for yesterday
+已通关	Cleared
+通关一层后\n次日开启扫荡奖励	Clear a floor to unlock\nsweep rewards the next day
+获得Zeny	Obtain Zeny
+消耗圣迹水晶	Consume Sacred Relic Crystal
+不在提示	Don't show again
+伤害	Damage
+放弃	Give Up
+货币累计	Currency Accumulated
+商城	Shop
+已达到最大价格	Maximum price reached
+点击查看拍卖详情	Tap to view auction details
+总得分:	Total Score:
+定位选择后，后续挑战将默认为该选择	Your role selection becomes the default for later challenges
+荣耀挑战	Glory Challenge
+推荐配置：	Recommended Setup:
+首通团队	First Clear Team
+羁绊增幅：	Bond Boost:
+通关奖励	Clear Rewards
+荣耀商店	Glory Shop
+地图标点	Map Markers
+收起	Collapse
+倒计时：29s	Countdown: 29s
+关闭（10）	Close (10)
+本次没有达成额外挑战目标	Bonus challenge goal not achieved this time
+五人本挑战	5-Player Dungeon Challenge
+打造一定出紫色以上的装备	Crafting always yields purple or better equipment
+打造出的<color=#df7f2a>橙色</color>和<color=#d65a45>红色</color>品质装备是未鉴定状态,鉴定后获得随机属性	<color=#df7f2a>Orange</color> and <color=#d65a45>Red</color> quality equipment is crafted unidentified and gains random stats once identified
+品阶	Grade
+暂无好友申请	No friend requests
+点击输入玩家名可搜索	Tap to enter a player name to search
+编辑群聊名称...	Edit group chat name...
+暂无相关好友	No matching friends
+亲密度:	Intimacy:
+服服	Fufu
+亲密等级：	Intimacy Level:
+亲密等级加成效果：	Intimacy Level Bonus Effects:
+好友度：	Friendship:
+送礼	Send Gift
+请输入该群名称...	Enter group name...
+成员数量：	Members:
+搜索玩家名称或Id	Search player name or ID
+输入文本...	Enter text...
+结婚礼服	Wedding Dress
+全部删除	Delete All
+功能暂未开启	Feature not yet available
+生命值	HP
+暴击	Crit
+助战	Support
+智力	INT
+赛季天赋	Season Talents
+状态	Status
+点击输入搭配码	Tap to enter build code
+协助搭配列表为空11	Assist build list is empty
+素质点	Stat Points
+方案名称	Build Name
+关联系统方案后可替换协助方案	Link a system build to replace the assist build
+点击进入装备搭配	Tap to open Equipment Builds
+请选择右侧天赋方案	Select a talent build on the right
+空状态	Empty
+被替换的流派方案	Build to be replaced
+剩余点数	Remaining Points
+敏剑加点	AGI Swordsman Build
+他人建议列表为空	Others' suggestion list is empty
+出生等级说明	Starting Level Info
+头衔奖励预览	Title Reward Preview
+待解锁	To Unlock
+任务进度	Quest Progress
+头衔晋升	Title Promotion
+晋升后获得	Promotion Rewards
+恭喜您已经完成所有成长徽章经历!\n可永久关闭头衔系统	Congratulations on completing all Growth Badge milestones!\nYou can permanently turn off the Title system
+请选择体验方式	Select an experience mode
+活动列表	Activity List
+修改名称	Change Name
+改名后7天内无法再次修改	Cannot rename again within 7 days
+公会曾用名：	Former Guild Names:
+改名	Rename
+职务任命	Assign Position
+(发起公会召集后，所有公会成员将收到召集消息，并传送至您的位置)	(After a guild summons, all members receive the summon message and are teleported to your location)
+创建消耗：	Creation Cost:
+自动同意相应申请	Automatically approve applications
+天使投资人榜单	Angel Investor Ranking
+拍卖分红共计	Total Auction Dividends
+拍卖奖励已自动发放至邮箱	Auction rewards were sent to your mailbox automatically
+每周一活跃分红奖励重置	Weekly active dividend rewards reset every Monday
+所属玩法：<color=#594e3d>玩法一</color>	Gameplay: <color=#594e3d>Mode One</color>
+公会物资:	Guild Supplies:
+公会竞拍:	Guild Auction:
+公会威望:	Guild Prestige:
+公会资金:	Guild Funds:
+公会活跃:	Guild Activity:
+公会贡献:	Guild Contribution:
+公会拍卖进行中.....	Guild auction in progress.....
+点击输入玩家信息	Tap to enter player info
+当前没有好友	No friends right now
+拖放成員	Drag members here
+保存徽章	Save Badge
+励志最多可输入20个字	Up to 20 characters
+来,你尽管来,反正买不了吃亏,买不了上当,反正来都来,反正孩子还小,反正大过年 的,反正人都走了 来,你尽管来,反正买不了吃亏,买不了上当	Come on in, you can't lose by buying, you won't be fooled, you're here anyway, the kid is still young, it's New Year anyway, everyone has left anyway
+成功合并后，被合入方会直接解散，合并后新成员的职位需要重新设置	After a successful merge, the absorbed guild is disbanded and the new members' positions must be reassigned
+邀请公会名称	Invited Guild Name
+本周共献	Contributed This Week
+邀请24小时内未响应将自动失效	Invitations expire if not answered within 24 hours
+在线人数:	Online:
+公会人数:	Guild Members:
+自动同意	Auto-approve
+取消创建	Cancel Creation
+24小时内响应人数满3人即可响应成功，响应成功后，响应成员自动任职为理事	Once 3 members respond within 24 hours, the call succeeds and responding members automatically become Officers
+当前未搜索到公会信息	No guild found
+点击空白处关闭	Tap the blank area to close
+您是公会精英,推荐进入主战场	You're a guild elite. The main battlefield is recommended.
+暂无荣耀记录文本描述	No Glory records (description placeholder)
+结果	Result
+历史战绩	Match History
+我的公会名字	My Guild Name
+投入助燃剂	Add Fuel
+治疗	Healing
+内围	Inner Ring
+外围	Outer Ring
+还未有玩家上榜	No players on the leaderboard yet
+通过阶段奖励已发放	Stage-clear rewards have been sent
+点击任意区域关闭界面（5S）	Tap anywhere to close (5s)
+内场挑战开启后无法返回外场内场挑战开启后无法返回外场内场	Once the inner-field challenge begins, you cannot return to the outer field
+龙椁岛外围战	Dragon Coffin Island Outer Battle
+“几十年过去了，	"Decades have passed,
+必做	Required
+排名奖励	Rank Rewards
+龙椁岛外围战攻略	Dragon Coffin Island Outer Battle Guide
+暂无可接受任务	No quests available
+完成以下目标:	Complete the following goals:
+已超时	Timed out
+挑战困难模式有丰厚的奖励，挑战困难模式有丰厚的挑战困难模式有丰厚的奖励，挑战困难模式有丰厚的挑战困难模式有丰厚的奖励，挑战困难模式有丰厚的	Challenge Hard mode for generous rewards
+巨大的鲲	Giant Kun
+玩法准备阶段可手动开启跳过。	The preparation phase can be skipped manually.
+立即开启	Start Now
+制作人歼灭战	Producer Annihilation Battle
+下次刷新	Next Refresh
+在危机四伏的地图上，与其它冒险者同台竞争，最终击败yu的团队，将获得如下奖励：	On this perilous map, compete with other adventurers. The team that lands the final blow earns these rewards:
+点击首领图标前往争夺！	Tap the boss icon to go contest it!
+自带技能最多为	Innate skills up to
+研究进度	Research Progress
+集齐5个章节可获得	Collect all 5 chapters to receive
+待开启	To Be Opened
+普通卡片收藏数量:	Normal Card Collection:
+暂无相应书籍	No matching books
+卡牌属性	Card Stats
+点击搜索	Tap to search
+地区	Region
+图鉴点:	Collection Points:
+各职业职称与等级独立，来回转职各等级不受影响	Job titles and levels are independent per job; switching jobs does not affect levels
+暂无	None yet
+请选择替换的技能	Select a skill to replace
+职称附加技能加成	Title Bonus Skills
+主要产出：	Main Output:
+每周次数：	Weekly Attempts:
+暂时无公告	No announcements for now
+新	New
+游戏公告	Game Announcements
+更改地区	Change Region
+下载中...	Downloading...
+如果退出，需重新进行排队，请谨慎选择	If you quit, you will have to queue again. Choose carefully.
+点击勾选动作后可加入收藏，长按动作可预览。	Tick an action to add it to Favorites; hold to preview.
+请选择一个动作,设置成为待机动作	Select an action to set as your idle action
+退出观看	Stop Watching
+锁定快捷栏技能	Lock Hotbar Skills
+协助	Assist
+筹备奖励	Preparation Rewards
+晚会祝福	Gala Blessing
+收听（仅收听不发言）	Listen (listen only, no speaking)
+发言（自由语音交流）	Speak (free voice chat)
+静音（关闭语音播放）	Mute (turn off voice playback)
+当前无通知	No notifications
+锁定	Lock
+全搜集奖励	Full Collection Reward
+坐骑	Mount
+所有MVP共用奖励次数\n每日5点刷新奖励次数	All MVPs share reward attempts\nReward attempts refresh daily at 5 AM
+每日5点刷新奖励次数	Reward attempts refresh daily at 5 AM
+当日剩余领取次数:	Claims left today:
+货物码放	Cargo Stacking
+运单目标	Waybill Target
+新手活动	Beginner Events
+战斗胜利	Battle Victory
+服务器等级:	Server Level:
+剩余奖励次数：	Reward attempts left:
+形式:	Format:
+宝箱获取进度	Chest Progress
+下次玩法开启	Next event opens
+参与等级:	Required Level:
+下波刷新时间	Next wave in
+剩余奖励次数	Reward Attempts Left
+最高累计24小时	Max 24 hours stored
+队友共享击杀数：	Teammate shared kills:
+最高可标记4个魔物，请选择替换	Mark up to 4 monsters. Choose one to replace.
+开启1个	Open 1
+当前周期内加长宝箱是	Extended chests this cycle are
+开启全部	Open All
+开始远征	Start Expedition
+返回冒险	Return to Adventure
+出没地图	Spawn Map
+研读加成	Study Bonus
+巅峰点	Peak Points
+这个人很懒，什么什么什么什什么也没留森岛帆高玩儿	This person is lazy and left nothing
+请输入签名	Enter signature
+前置星盘点数不足，本组巅峰等级已失效	Not enough prerequisite Star Chart points. This Peak level group is inactive.
+巅峰等级及天赋数据将在跨赛季时重置	Peak levels and talent data reset when the season changes
+右键镶嵌	Right-click to socket
+突破已满，剩余碎片可分解	Breakthrough maxed. Remaining shards can be dismantled.
+未获得	Not obtained
+左键长按指针，拖动鼠标设置温度	Hold left click on the pointer and drag to set the temperature
+协力属性	Synergy Stats
+收藏技能在宠物突破时升级	Collected skills level up when the pet breaks through
+属性加成给玩家描述文本	Stat bonuses description for players (placeholder)
+激活属性技能总加成	Total bonus from activated stat skills
+炼金记事	Alchemy Journal
+获得<color=#c26b47>金色宠物</color>时，占<color=#c26b47>金色宠物</color>概率的50.00%	When you obtain a <color=#c26b47>Gold Pet</color>, it accounts for 50.00% of the <color=#c26b47>Gold Pet</color> chance
+概率占比	Probability Share
+炼金房升级	Alchemy Room Upgrade
+炼金概率说明	Alchemy Probability Info
+在炼金系统中,玩家可通过消耗指定材料进行炼金抽取,有概率获得不不同品质的宠物。抽取结果由基础概率与炼金\n房等级加成共同决定\n在不考虑任何额外加成的情况下,各品质宠物的基础获取概率如下:\n·普通品质:60%\n·稀有品质:30%\n·史诗品质:9%\n·传说品质:1%\n实际抽取时,系统将根据炼金房等级对上述概率进行动态调整。	In the Alchemy system, players spend specified materials to draw pets of various qualities.\nThe result is determined by the base probability together with the Alchemy Room level bonus.\nWith no extra bonuses, the base chances by quality are:\n- Common: 60%\n- Rare: 30%\n- Epic: 9%\n- Legendary: 1%\nWhen drawing, the system adjusts these chances dynamically according to the Alchemy Room level.
+全部可能出现的宠物	All Possible Pets
+全部可能出现的物品	All Possible Items
+时间（UTC+8）	Time (UTC+8)
+炼金历史记录	Alchemy History
+可查询90日内的寻访记录,查询结果约有30分钟左右延迟。以下时间仅针对管理员所在服务器时区显示。	Draw records from the past 90 days can be viewed, with about a 30-minute delay. Times are shown in the administrator's server time zone.
+炼金	Alchemy
+升级完成	Upgrade Complete
+兑换商城	Exchange Shop
+普通卡池	Normal Pool
+炼金记录	Alchemy Records
+新手寻觅限次：	Beginner draw limit:
+日寻觅限次：	Daily draw limit:
+10连享受80%折	10-pull at 20% off
+召唤 10 次	Summon 10 Times
+点击召唤敌人	Tap to summon enemies
+取消操作	Cancel
+发布以下信息至组队频道	Post the following to the party channel
+在此输入招募信息	Enter recruitment info here
+战力要求:	Power Requirement:
+等级要求:	Level Requirement:
+属性加点	Allocate Stats
+长按可快速加点	Hold to allocate quickly
+未开放	Not Available
+生活技能	Life Skills
+力量	STR
+<color=#faab5e> 最终</color>占领王城的公会获得问鼎奖励	<color=#faab5e> The final</color> guild to occupy the Royal City earns the Pinnacle reward
+所有任务进度将在<color=#c26b47> 赛季结束时</color>进行结算	All quest progress will be settled <color=#c26b47>at season end</color>
+赛季成就结算	Season Achievement Settlement
+征战者结算	Conqueror Settlement
+驻扎公会：21	Garrisoned Guilds: 21
+已通过线索活动获得	Obtained through clue events
+感谢你提供的音乐能量，请收下这份小小的回馈	Thank you for the music energy, please accept this small gift
+在活动期间完成音乐能量目标,进度条达成即可向女神许愿且获取超多奖励.	Complete the music energy goal during the event; when the bar is full you can make a wish to the Goddess for big rewards.
+全服累积能量	Server-wide Accumulated Energy
+可领取	Claimable
+女神的序曲II	Goddess's Prelude II
+活动描述文本活动描述文本。有可能超过两行。\n\r活动期间完成任务，可获得奖励！	Event description placeholder, may exceed two lines.\nComplete quests during the event to earn rewards!
+查看排行榜	View Leaderboard
+根据<color=#c06a46> 荣誉值排行</color>发放个人奖励	Personal rewards are given by <color=#c06a46>Honor ranking</color>
+累计挖宝	Treasure Dug
+你还未加入公会	You haven't joined a guild
+奖励档位预测	Reward Tier Preview
+霸业奖励	Supremacy Rewards
+奖励道具	Reward Items
+公会排名/状态霸业名额	Guild Rank / Status Supremacy Slots
+公会排名奖励	Guild Rank Rewards
+<color=#c26b47> 先结算者</color>根据公会占领积分排名获得逐鹿奖励\n<color=#c26b47> 先霸业者</color>根据先结算占领积分排名获得逐鹿奖励	<color=#c26b47> Earlier settlers</color> receive Contest rewards by guild occupation score ranking\n<color=#c26b47> Earlier supremacy winners</color> receive Contest rewards by early-settlement occupation score ranking
+逐鹿奖励	Contest Rewards
+<color=#c26b47> 先结算者</color>根据公会占领积分排名获得逐鹿奖励\n<color=#c26b47> 先霸业者</color>根据先结算占领积分排名获得逐鹿奖励	<color=#c26b47> Earlier settlers</color> receive Contest rewards by guild occupation score ranking\n<color=#c26b47> Earlier supremacy winners</color> receive Contest rewards by early-settlement occupation score ranking
+贡献排名	Contribution Rank
+霸王凭证	Overlord Token
+拖动音符或点击可点亮音符进行解锁	Drag or tap notes to light and unlock them
+解锁往迹绘卷还可立即获得	Unlocking the Chronicle Scroll also instantly grants
+解锁往迹绘卷	Unlock Chronicle Scroll
+公会贡献排行	Guild Contribution Ranking
+捐赠充能	Donate Energy
+点击前往查看	Tap to view
+贡献商店	Contribution Shop
+预留说明文本预留说明文本预留说明文本预留说明文本预留说明文本	Reserved description text
+预留说明文字,预留说明文字预留说明文字预留说明文字预留说明文字 留说明文字	Reserved description text
+距赛季结束	Time Until Season End
+活动期间完成<color=#c27b47>残响养成任务</color>，可获得奖励！	Complete the <color=#c27b47>Echo cultivation quests</color> during the event to earn rewards!
+每日UTC0点刷新任务	Quests refresh daily at UTC 0
+中期结算挑战任务	Mid-term Settlement Challenge Quests
+用于引出新系统、新功能、新玩 法介绍,带剧情表演性质。最多 3行文字。建议不连续超过3段话	Introduces new systems, features and gameplay with a story presentation. Up to 3 lines of text; avoid more than 3 paragraphs in a row.
+前往挖宝	Go Dig for Treasure
+食用	Eat
+下阶奖励	Next Tier Reward
+预购中...	Pre-ordering...
+拍卖记录	Auction Records
+模式选择	Mode Select
+样式1	Style 1
+（拖拽镜头：Shift+鼠标右键）	(Drag camera: Shift + Right Mouse Button)
+名字版位置	Nameplate Position
+显示范围	Display Range
+显示密度	Display Density
+暂无设置功能！	No settings available yet!
+13天	13 days
+请选择蚀刻部位	Select an etching slot
+出自邀请广大冒险者共同参与召唤仪式，可加快召唤速度，仪式时间最长5小时	Invite fellow adventurers to join the summoning ritual to speed it up; the ritual lasts up to 5 hours
+暂无上榜	No one on the leaderboard
+请输入商品名字	Enter item name
+长按助能协助	Hold to assist with energy
+免费刷新5/5	Free refresh 5/5
+备战结束后即可开始标记据点	Outposts can be marked once preparation ends
+载具	Vehicle
+职业B	Job B
+职业A	Job A
+重置本转加点	Reset Job Stat Points
+剩余技能点	Remaining Skill Points
+切换流派	Switch Build
+仅在组队或匹配参与玩法时，作为您在队伍中的定位标识显示	Shown only as your role marker in the party when grouping or matchmaking
+流派说明：	Build Description:
+拖动左侧技能至技能阵列	Drag skills from the left into the skill array
+可选天赋	Available Talents
+所有前置天赋点满级可选择	Selectable when all prerequisite talents are maxed
+未解锁文本	Locked text
+暂无属性加成	No stat bonuses yet
+可选	Available
+残响共振	Echo Resonance
+暂无材料	No materials
+残响共振预览	Echo Resonance Preview
+欢迎光临小店\n商品任意挑选哦!	Welcome to the shop\nPick anything you like!
+仅保存当次交易记录	Only the current transaction record is saved
+前往查看>>	View Now>>
+确认附魔	Confirm Enchant
+暂时没有可用附魔卷轴	No enchant scrolls available
+没有合适装备	No suitable equipment
+赛季精炼激活	Season Refinement Activation
+时间限制：1天	Time limit: 1 day
+复活中...	Reviving...
+队伍数量:	Party Count:
+目前还没有找到当事人	No one found yet
+目标：	Goal:
+活动结束时，未领取奖励将自动发放至邮箱	Unclaimed rewards are sent to your mailbox when the event ends
+普通物资车	Standard Supply Cart
+还可以押送22辆	22 more carts can be escorted
+还可以押送22辆	22 more carts can be escorted
+高级物资车	Premium Supply Cart
+接取运输车	Accept Transport Cart
+参考详情	Reference Details
+需押送次数：	Escorts Needed:
+公会物资量：	Guild Supplies:
+运输地图：	Transport Map:
+参与人数：<color=#967846>7/8</color>	Participants: <color=#967846>7/8</color>
+本周公会缴纳总量：<color=#967846>42685</color>	Guild total contributed this week: <color=#967846>42685</color>
+本周缴纳	Contributed This Week
+缴纳量对比	Contribution Comparison
+人均缴纳量：<color=#967846>4,565</color>	Average per member: <color=#967846>4,565</color>
+未达成	Not achieved
+测试资格证	Test Qualification Certificate
+活动描述文本活动描述文本活动描述文本活动描述文本 活动描述本活动描述文本活动描述文本活动描述	Event description placeholder
+活动描述文本活动描述文本活动描述文本活动描述文本活动描述本活动描述文本活动描述文本活动描述	Event description placeholder
+鉴定10件	Identify 10
+暂无神术图腾	No Divine Totems
+合成属性，技能随机，请合理体验	Stats are combined and skills are random, plan accordingly
+原始图腾	Original Totem
+该属性已达满值	This stat is at its maximum
+请选择洗炼属性	Select a stat to refine
+暂无预购	No pre-orders
+防具	Armor
+在售：0	For sale: 0
+开设摊位	Open Stall
+点击物品进行上架	Tap an item to list it
+商品卖光了	Items sold out
+没有人在卖呐！	Nobody is selling!
+物品下架	Remove Item
+当前状态	Current Status
+当前审核时间最短为:	Current minimum review time:
+物品上架	List Item
+1.道具上架时收取7%摊位费\n2.最低10铜币\n3.最高5,000,000铜币	1. A 7% stall fee is charged when listing\n2. Minimum 10 Copper\n3. Maximum 5,000,000 Copper
+摊位费说明	Stall Fee Info
+1.这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里\n\n2.是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍\n\n3.卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这\n\n4.里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容这里是拍卖说明的文案内容	1. Auction rules placeholder.\n\n2. Auction rules placeholder.\n\n3. Auction rules placeholder.\n\n4. Auction rules placeholder.
+挑战等级	Challenge Level
+穿戴中	Equipped
+上马	Mount
+保存该方案	Save This Build
