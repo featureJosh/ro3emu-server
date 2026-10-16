@@ -7,7 +7,7 @@ using Ro3Emu.Server.Maps;
 namespace Ro3Emu.Server.Game;
 
 /// <summary>Optional ambient population. Placement and roaming are inferred offline-server policy.</summary>
-public sealed class PopulationService : IGameTicker
+public sealed partial class PopulationService : IGameTicker
 {
     // Disjoint from NPCs, monsters, stalls and tower pets; exact in the client's double UUID storage (< 2^53).
     private const long UidBase = 1L << 50;
@@ -54,24 +54,27 @@ public sealed class PopulationService : IGameTicker
 
     public void Tick(GameTime time)
     {
+        ApplyPendingReload();
         if (running || time.Now < nextTick || (!Enabled || Limit == 0) && bots.Count == 0) return;
         nextTick = time.Now + TimeSpan.FromMilliseconds(250);
         running = true;
         loop.TrackRuntimeDetached("offline population", async () =>
         {
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
             try { await UpdateAsync(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()); }
-            finally { running = false; }
+            finally { NotePass(started); running = false; }
         });
     }
 
-    public void RegisterCommands(GmCommands gm) => gm.Register("bots", "[on|0..100|off|status|reset|map 0..100/off/reset|chat off/quiet/normal/chatty|mute|unmute]", async (session, args) =>
+    public void RegisterCommands(GmCommands gm) => gm.Register("bots", "[on|0..100|off|status|stats|reset|map 0..100/off/reset|chat off/quiet/normal/chatty|mute|unmute]", async (session, args) =>
     {
         string arg = args.FirstOrDefault()?.ToLowerInvariant() ?? "status";
+        if (arg == "stats" && args.Length == 1) { await GmCommands.ReplyAsync(session, await StatsAsync(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())); return; }
         if (arg == "chat")
         {
             if (args.Length != 2 || !PopulationChatter.ValidMode(args[1])) throw new ArgumentException();
             await gate.WaitAsync();
-            try { chatter.Mode = args[1].ToLowerInvariant(); }
+            try { chatter.Mode = args[1].ToLowerInvariant(); chatOverridden = true; }
             finally { gate.Release(); }
         }
         else if (arg is "mute" or "unmute")
@@ -97,12 +100,13 @@ public sealed class PopulationService : IGameTicker
         }
         var map = Settings(session.SceneEntry);
         await GmCommands.ReplyAsync(session, $"Population: {Count}/{Limit} total; map {session.SceneEntry} {map.Profile}, target {map.Count}, levels {map.MinLevel}-{map.MaxLevel}, quality cap {map.MaxQuality}; chat {chatter.Mode}, muted {session.BotChatMuted}. Changes last until restart.");
+        await GmCommands.ReplyAsync(session, await DensityStatusAsync(session));
     });
 
     internal async Task SetCountAsync(int? count)
     {
         await gate.WaitAsync();
-        try { overrideCount = count; enabledOverride = null; if (count == null) { mapCounts.Clear(); chatter.Mode = options.Chat.Mode.ToLowerInvariant(); } }
+        try { overrideCount = count; enabledOverride = null; trimNow = true; if (count == null) { mapCounts.Clear(); chatter.Mode = options.Chat.Mode.ToLowerInvariant(); chatOverridden = false; } }
         finally { gate.Release(); }
         await UpdateAsync(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
     }
@@ -110,7 +114,7 @@ public sealed class PopulationService : IGameTicker
     internal async Task SetMapCountAsync(long scene, int? count)
     {
         await gate.WaitAsync();
-        try { if (count is { } value) mapCounts[scene] = Math.Clamp(value, 0, 100); else mapCounts.Remove(scene); }
+        try { if (count is { } value) mapCounts[scene] = Math.Clamp(value, 0, 100); else mapCounts.Remove(scene); trimNow = true; }
         finally { gate.Release(); }
         await UpdateAsync(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
     }
@@ -133,7 +137,7 @@ public sealed class PopulationService : IGameTicker
                 .ToDictionary(g => g.Key, g => g.ToArray());
             var targets = occupied.Keys.ToDictionary(runtime => runtime,
                 runtime => Settings(runtime.SceneEntry).Count is var count && count > 0 && worldData.Map(runtime.SceneEntry)?.Nav != null ? count : 0);
-            var budgets = AllocateBudget(targets, Limit);
+            var budgets = AllocateBudget(targets, AmbientLimit);
             // Reclaim empty maps and old neighbourhoods before assigning the global budget.
             foreach (var bot in bots.ToArray())
             {
@@ -141,25 +145,24 @@ public sealed class PopulationService : IGameTicker
                     !players.Any(p => Distance2(bot.X, bot.Z, p.Position.X, p.Position.Z) < 220 * 220))
                     await RemoveAsync(bot);
             }
-            // Trim before spawning so reductions never temporarily exceed the new limit.
-            foreach (var group in bots.GroupBy(b => b.RuntimeMap).ToArray())
-                foreach (var bot in group.Skip(budgets.GetValueOrDefault(group.Key)).ToArray()) await RemoveAsync(bot);
-            foreach (var bot in bots.Skip(Limit).ToArray()) await RemoveAsync(bot);
+            // Trim before spawning: the hard ceiling at once, budget shrink gradually (PopulationService.Density.cs).
+            await TrimAsync(budgets, occupied, now);
             if (!Enabled || Limit == 0) { chatter.Clear(); return; }
             int[] careers = Careers.Where(c => data.Row("JobConfig", c) is { } row && GameData.Int(row, "_iUnitB") > 0 && GameData.Int(row, "_iUnitG") > 0).ToArray();
             int spawned = 0, spawnLimit = Math.Clamp(options.MaxSpawnsPerTick, 1, 100);
             foreach (var (runtime, players) in occupied)
             {
                 // Missing navigation means no safe placement; never guess around walls or on another floor.
-                if (worldData.Map(runtime.SceneEntry)?.Nav is not { } nav) continue;
+                if (worldData.Map(runtime.SceneEntry) is not { Nav: { } nav } mapWorld) continue;
+                if (SpawnHeld(runtime, now)) continue; // hysteresis: no refill right after a gradual shrink
                 var settings = Settings(runtime.SceneEntry) with { Count = budgets.GetValueOrDefault(runtime) };
                 int have = bots.Count(b => b.RuntimeMap == runtime);
-                int attempts = Math.Min(settings.Count - have, Limit - bots.Count) * 8;
-                for (int attempt = 0; have < settings.Count && bots.Count < Limit && spawned < spawnLimit && attempt < attempts; attempt++)
+                int attempts = Math.Min(settings.Count - have, AmbientLimit - bots.Count) * 8;
+                for (int attempt = 0; have < settings.Count && bots.Count < AmbientLimit && spawned < spawnLimit && attempt < attempts; attempt++)
                 {
                     var player = players[have % players.Length];
                     var anchor = new MapPoint(player.Position.X, player.Position.Y, player.Position.Z, 0);
-                    if (PointNear(nav, anchor, 4, 24) is not { } point) continue;
+                    if (PointNear(nav, anchor, 4, 24, mapWorld) is not { } point) continue;
                     long id = ++serial;
                     int level = random.Next(settings.MinLevel, settings.MaxLevel + 1);
                     var allowedCareers = level < 10 ? careers.Where(c => c == 1000).ToArray() : careers;
@@ -246,7 +249,7 @@ public sealed class PopulationService : IGameTicker
                     else if (!bot.Moving && routeBudget > 0)
                     {
                         routeBudget--;
-                        var path = PopulationNavigation.Route(nav, bot.Current, new(enemy.X, enemy.Y, enemy.Z, 0));
+                        var path = Route(nav, bot.Current, new(enemy.X, enemy.Y, enemy.Z, 0));
                         if (path.Count > 0) bot.WalkTo(path[0], now); else bot.Target = null;
                     }
                 }
@@ -271,7 +274,10 @@ public sealed class PopulationService : IGameTicker
             }
             if (chat != null)
                 foreach (var line in chatter.Plan(bots, scene => Settings(scene).Profile, now, chat.PopulationAudience))
+                {
+                    NoteChat(now);
                     await chat.PublishPopulationAsync(line.Bot, line.Text, line.Subject, line.SubjectGeneration, line.SubjectRole, line.SubjectLevel);
+                }
         }
         finally { gate.Release(); }
     }
@@ -323,11 +329,12 @@ public sealed class PopulationService : IGameTicker
             ? map.Npcs.Where(n => n.Kind != WorldNpcKind.Portal).Select(n => n.Arrival)
             : map.SpawnGroups.SelectMany(g => g.Points).Select(p => new MapPoint(p.X, p.Y, p.Z, p.Face));
         var choices = destinations.Where(p => Distance2(bot.X, bot.Z, p.X, p.Z) is > 25 * 25 and < 140 * 140)
-            .OrderBy(_ => random.Next()).Take(3).ToArray();
+            .OrderBy(_ => random.Next()).Select(p => bot.VisitingNpc ? VisitSpot(map, p) : p).OfType<MapPoint>()
+            .Where(p => ClearOfLandmarks(map, p.X, p.Z)).Take(3).ToArray();
         foreach (var goal in choices)
         {
             if (map.Nav!.WalkHeight(goal.X, goal.Z, bot.Y) is not { } y) continue;
-            var path = PopulationNavigation.Route(map.Nav, bot.Current, goal with { Y = y });
+            var path = Route(map.Nav, bot.Current, goal with { Y = y });
             if (path.Count == 0) continue;
             bot.JourneyActive = true;
             foreach (var p in path) bot.Route.Enqueue(p);
@@ -337,8 +344,8 @@ public sealed class PopulationService : IGameTicker
         {
             double angle = random.NextDouble() * Math.Tau;
             float distance = random.Next(35, 100), x = bot.X + (float)Math.Sin(angle) * distance, z = bot.Z + (float)Math.Cos(angle) * distance;
-            if (map.Nav!.WalkHeight(x, z, bot.Y) is not { } y) continue;
-            var path = PopulationNavigation.Route(map.Nav, bot.Current, new(x, y, z, 0));
+            if (map.Nav!.WalkHeight(x, z, bot.Y) is not { } y || !ClearOfLandmarks(map, x, z)) continue;
+            var path = Route(map.Nav, bot.Current, new(x, y, z, 0));
             if (path.Count == 0) continue;
             bot.JourneyActive = true;
             foreach (var p in path) bot.Route.Enqueue(p);
@@ -353,14 +360,14 @@ public sealed class PopulationService : IGameTicker
         await world.RemoveUnitAsync(bot);
     }
 
-    private MapPoint? PointNear(NavGrid nav, MapPoint origin, float min, float max)
+    private MapPoint? PointNear(NavGrid nav, MapPoint origin, float min, float max, MapWorld? map = null)
     {
         for (int i = 0; i < 8; i++)
         {
             float angle = random.NextSingle() * MathF.Tau, distance = min + random.NextSingle() * (max - min);
             float x = origin.X + MathF.Sin(angle) * distance, z = origin.Z + MathF.Cos(angle) * distance;
             if (nav.WalkHeight(x, z, origin.Y) is { } y && MathF.Abs(y - origin.Y) <= NavGrid.WalkHeightTolerance &&
-                nav.CanWalk(origin.X, origin.Y, origin.Z, x, z)) return new(x, y, z, 0);
+                nav.CanWalk(origin.X, origin.Y, origin.Z, x, z) && ClearOfLandmarks(map, x, z)) return new(x, y, z, 0);
         }
         return null;
     }
