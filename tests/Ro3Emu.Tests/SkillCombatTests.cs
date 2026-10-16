@@ -202,6 +202,60 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         }
     }
 
+    // Player report: spamming a zero-cooldown skill faster than its action time restarted the cast before its hit.
+    // Client rule: LC_Skill_RunTimeContext.SkillCanInterrupted (_iInterruptedType 1: not by the same skill; 2: not before the hit point).
+    private async Task AssertSecondPressRefusedAndFirstHits(string job, int group, int skillId)
+    {
+        await using var alice = await InWorld("Alice");
+        await Gm("alice", $"!job {job}"); await Teach("alice", group);
+        var target = await Target("alice");
+        await alice.SendGameAsync(CombatService.UseSkill, new CastSkillReq { SkillId = skillId, TargetId = target.Uid });
+        var first = await Next(alice, CombatService.UseSkill, CastSkillRsp.Parser);
+        Assert.Equal(0, first.Result);
+        await Task.Delay(100);
+        await alice.SendGameAsync(CombatService.UseSkill, new CastSkillReq { SkillId = skillId, TargetId = target.Uid });
+        Assert.Equal(ErrorCodes.SkillBusy, (await Next(alice, CombatService.UseSkill, CastSkillRsp.Parser, r => r.Result != 0)).Result);
+        var hit = await Next(alice, CombatService.SkillHit, SkillHitInfo.Parser, p => p.SessionId == first.SessionId);
+        Assert.True(Assert.Single(hit.Dsts).Damage > 0);
+        Assert.DoesNotContain(alice.Inbox.Snapshot(), e => e.IsGame(CombatService.SkillEnd)
+            && SkillEndNotify.Parser.ParseFrom(e.Body) is { SessionId: var id, Type: SkillEndNotify.Types.SkillEndType.Interrupted } && id == first.SessionId);
+    }
+
+    [Fact]
+    public Task SpammedPublicCooldownSkillKeepsItsCastAndHits() => AssertSecondPressRefusedAndFirstHits("2100", 13003, 1300301); // Double Strafe, type 1, _iPubCD
+
+    [Fact]
+    public Task SpammedSkillWithoutAnyCooldownKeepsItsCastAndHits() => AssertSecondPressRefusedAndFirstHits("1100", 11001, 1100101); // Bash, _iCD 0, type 2
+
+    [Fact]
+    public async Task PublicCooldownGroupIsEnforcedForSiblingSkill()
+    {
+        await using var alice = await InWorld("Alice");
+        await Gm("alice", "!job 1100"); await Teach("alice", 11302); await Teach("alice", 14001);
+        var target = await Target("alice");
+        await alice.SendGameAsync(CombatService.UseSkill, new CastSkillReq { SkillId = 1130201, TargetId = target.Uid }); // _iCD 0, _iPubCD 200 on group 14001
+        Assert.Equal(0, (await Next(alice, CombatService.UseSkill, CastSkillRsp.Parser)).Result);
+        await alice.SendGameAsync(CombatService.UseSkill, new CastSkillReq { SkillId = 1400101, TargetId = target.Uid });
+        Assert.Equal(ErrorCodes.SkillCooldown, (await Next(alice, CombatService.UseSkill, CastSkillRsp.Parser, r => r.Result != 0)).Result);
+    }
+
+    [Fact]
+    public async Task DifferentSkillStillInterruptsATypeOneCast()
+    {
+        await using var alice = await InWorld("Alice");
+        await Gm("alice", "!job 2100"); await Teach("alice", 13003); await Teach("alice", 12004);
+        var target = await Target("alice");
+        await alice.SendGameAsync(CombatService.UseSkill, new CastSkillReq { SkillId = 1300301, TargetId = target.Uid });
+        var first = await Next(alice, CombatService.UseSkill, CastSkillRsp.Parser);
+        Assert.Equal(0, first.Result);
+        await Task.Delay(100);
+        // A different skill is still allowed to cut in on a type-1 cast.
+        await alice.SendGameAsync(CombatService.UseSkill, new CastSkillReq { SkillId = 1200401, TargetId = target.Uid });
+        var second = await Next(alice, CombatService.UseSkill, CastSkillRsp.Parser, r => r.SessionId != first.SessionId);
+        Assert.Equal(0, second.Result);
+        await Next(alice, CombatService.SkillEnd, SkillEndNotify.Parser, e => e.SessionId == first.SessionId && e.Type == SkillEndNotify.Types.SkillEndType.Interrupted);
+    }
+
     [Fact]
     public async Task AcceptedCastHitsAndPassiveUnownedAndWrongActorAreRefused()
     {
