@@ -23,7 +23,7 @@ namespace Ro3Emu.ClientHooks
     /// </summary>
     public static class Wheel
     {
-        private enum Kind { Action, Function, Mail, Party, Controller }
+        private enum Kind { Action, Function, Mail, Party, Controller, QuestNav }
 
         /// <summary>key: an input action name (Kind.Action), or an enum_FunctionType name (Kind.Function).</summary>
         private sealed class Entry
@@ -45,10 +45,11 @@ namespace Ro3Emu.ClientHooks
         private static readonly Entry[] Entries =
         {
             Act("Bag", "OpenBag"), Act("Character", "OpenRole"), Act("Skills", "OpenSkill"), Act("Quests", "OpenTask"),
+            new Entry("Go to Quest", Kind.QuestNav),
             Act("Map", "OpenMap"), new Entry("Party", Kind.Party), Act("Friends", "OpenFriend"), Act("Guild", "OpenGuild"),
-            Act("Shop", "OpenShop"), Act("Auto Battle", "OpenAutoFight"),
+            Act("Shop", "OpenShop"),
 
-            Act("Equip Growth", "OpenEquipGrowth"), Fn("Equip Craft", "EquipMake"), Act("Talents", "OpenTalent"),
+            Act("Auto Battle", "OpenAutoFight"), Act("Equip Growth", "OpenEquipGrowth"), Fn("Equip Craft", "EquipMake"), Act("Talents", "OpenTalent"),
             Act("Cards", "OpenCard"), Act("Pets", "OpenPet"), Fn("Mounts", "Mount"), Act("Totems", "OpenTotem"),
             Act("Soul Echo", "OpenSoulEcho"), Act("Wardrobe", "OpenWardrobe"), Act("Collection", "OpenCollection"),
 
@@ -181,6 +182,7 @@ namespace Ro3Emu.ClientHooks
             {
                 case Kind.Action: Run(entry.Key); break;
                 case Kind.Controller: ControllerSettings.Show(); break;
+                case Kind.QuestNav: QuestNav.Go(); break;
                 case Kind.Function:
                     // The function menu's own click: UI_Sys_MainFunctionMenuWidgetBaseCtrl.lua:1083 -> OpenFunctionPanelDefault(id).
                     CallLua("LC_FunctionHelper.OpenFunctionPanelDefault", FunctionId(entry));

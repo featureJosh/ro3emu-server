@@ -22,6 +22,8 @@ namespace Ro3Emu.ClientHooks
 # ActionPageLeft ActionPageRight GamePlaySkill_01..03.
 # Controller actions: MenuWheel (tap: radial menu), CursorMode (on the same button: hold 0.5 s; toggles the mouse
 # cursor), LeftClick / RightClick (in cursor mode),
+# QuestNav (auto-path to the tracked quest, like clicking it in the quest tracker; default: the DualSense touchpad
+# press, <Gamepad>/touchpadButton, the one control the defaults leave free; also in the radial menu as Go to Quest),
 # CameraZoom (hold, then right stick up/down). In menus: MenuConfirm, MenuBack, MenuTabLeft, MenuTabRight
 # (D-pad / left stick move the focus, right stick scrolls). In the skill window: MenuAssign (focused skill, then press a
 # skill button to bind it to that slot) and MenuUnassign (then press a skill button to unbind that slot).
@@ -48,6 +50,7 @@ ClosePanel = <Gamepad>/start
 OpenMap = <Gamepad>/leftStickPress
 CameraZoom = <Gamepad>/rightStickPress
 MenuWheel = <Gamepad>/select
+QuestNav = <Gamepad>/touchpadButton
 CursorMode = <Gamepad>/select
 LeftClick = <Gamepad>/buttonSouth
 RightClick = <Gamepad>/buttonEast
