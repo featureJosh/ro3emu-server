@@ -41,6 +41,7 @@ namespace Ro3Emu.ClientHooks
         private static float _zoomLast, _scroll;
         private static Vector2 _cursorRest;
 
+        private static bool _loggedForce;
         private static bool Saved => _enabled ??= PlayerPrefs.GetInt(PrefKey, 0) == 1;
 
         /// <summary>Cursor mode is on (the pad drives the mouse).</summary>
@@ -71,6 +72,7 @@ namespace Ro3Emu.ClientHooks
             try
             {
                 bool on = Enabled;
+                if (Forced && !_loggedForce) { _loggedForce = true; Debug.Log("[Ro3Emu.Controller] controller mode forced by RO3EMU_FORCE_CONTROLLER (saved: " + (Saved ? 1 : 0) + ")"); }
                 UpdateEdges();
                 if (on) ControllerSkin.Tick();
                 ControllerHud.Tick(on);
@@ -515,7 +517,7 @@ namespace Ro3Emu.ClientHooks
                 list.Obf_luA<long, Obf_R.Obf_ff>(ControllerMode, card);
                 card.Obf_luA<string, long>("m_iMode", ControllerMode);
             }
-            if (Enabled && (mode == null || Same(mode, _fashion))) _select.Obf_HuA(self, ControllerMode);
+            if (Saved && (mode == null || Same(mode, _fashion))) _select.Obf_HuA(self, ControllerMode);
         }
     }
 }
