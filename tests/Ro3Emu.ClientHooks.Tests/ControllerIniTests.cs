@@ -7,7 +7,7 @@ public class ControllerIniTests
     {
         "MoveForward", "MoveBackward", "MoveLeft", "MoveRight", "OpenMap", "InteractiveSkill_01", "FastPickUp", "SwitchTarget",
         "NormalSkill_01", "NormalSkill_02", "NormalSkill_03", "NormalSkill_04", "NormalSkill_05", "Direction_Up",
-        "Direction_Down", "ShortCut_1", "ShortCut_2", "ClosePanel", "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuWheel",
+        "Direction_Down", "ShortCut_1", "ShortCut_2", "ClosePanel", "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuWheel",
     };
 
     [Fact]
@@ -16,7 +16,7 @@ public class ControllerIniTests
         var binds = new Dictionary<string, List<string>>();
         var tune = new Dictionary<string, float>();
         ControllerIni.Parse(ControllerIni.Defaults.Split('\n'), binds, tune);
-        Assert.Equal(27, binds.Count);
+        Assert.Equal(29, binds.Count);
         foreach (var (action, paths) in binds)
         {
             Assert.Contains(action, Known);

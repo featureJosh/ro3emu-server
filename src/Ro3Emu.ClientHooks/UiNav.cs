@@ -53,10 +53,11 @@ namespace Ro3Emu.ClientHooks
         internal static void Tick(Gamepad pad, bool enabled)
         {
             if (_escDown) { ReleaseEscape(); }
-            if (!enabled || pad == null) { Close(); return; }
+            if (!enabled || pad == null) { SkillBinding.Cancel(); Close(); return; }
             if (Diagnostics.Verbose && pad.buttonSouth.isPressed) Debug.Log("[Ro3Emu.UiNav] dbg south: panel=" + (_panel?.name ?? "-") + " guide=" + (_guide != null) + " osk=" + Osk.Open + " focus=" + (_focus?.name ?? "-") + " edge=" + Controller.Edge(pad.buttonSouth, true));
             if (++_frame % 10 == 0) Scan(); // ponytail: FindObjectsOfType<Canvas> every 10th frame; panel open/close events if it costs
-            if (_panel == null) { Close(); return; }
+            if (_panel == null) { SkillBinding.Cancel(); Close(); return; }
+            if (SkillBinding.Active && !SkillBinding.InSkillPanel(FocusPanel)) SkillBinding.Cancel(); // the skill window is gone or covered
             if (Osk.Open)
             {
                 HideRing();
@@ -314,6 +315,12 @@ namespace Ro3Emu.ClientHooks
 
         private static void Input(Gamepad pad)
         {
+            if (SkillBinding.Active) { SkillBinding.Tick(pad, Pressed(pad, "MenuBack", "buttonEast")); return; } // a skill button binds, ○ cancels
+            if (SkillBinding.InSkillPanel(FocusPanel))
+            {
+                if (Pressed(pad, "MenuAssign", "buttonWest")) { SkillBinding.Start(_focus, false); return; }
+                if (Pressed(pad, "MenuUnassign", "buttonNorth")) { SkillBinding.Start(null, true); return; }
+            }
             var dir = Direction(pad);
             if (dir != Vector2.zero)
             {
@@ -554,6 +561,13 @@ namespace Ro3Emu.ClientHooks
 
         private static void Prompts()
         {
+            if (SkillBinding.Active)
+            {
+                PromptList.Clear();
+                SkillBinding.AddPrompts(PromptList);
+                Overlay.SetPrompts(PromptList);
+                return;
+            }
             var stock = StockPrompts.For(_panel);
             if (stock != null)
             {
@@ -572,6 +586,12 @@ namespace Ro3Emu.ClientHooks
                 PromptList.Add((Control("MenuTabRight", "rightShoulder"), "Tabs"));
             }
             if (ScrollFor(_focus) != null) PromptList.Add(("<Gamepad>/rightStick/up", "Scroll"));
+            if (SkillBinding.InSkillPanel(FocusPanel))
+            {
+                if (SkillBinding.CanBind(_focus)) PromptList.Add((Control("MenuAssign", "buttonWest"), "Bind"));
+                PromptList.Add((Control("MenuUnassign", "buttonNorth"), "Unbind"));
+                SkillBinding.AddPrompts(PromptList); // a refusal ("Pick a skill that can be bound"), for a moment
+            }
             Overlay.SetPrompts(PromptList);
         }
     }

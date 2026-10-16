@@ -24,7 +24,7 @@ namespace Ro3Emu.ClientHooks
     /// </summary>
     public static class ControllerHud
     {
-        private const string SkillWidget = "UI_Sys_Main_JoyStickSkillWidget_PC(Clone)";
+        internal const string SkillWidget = "UI_Sys_Main_JoyStickSkillWidget_PC(Clone)";
         private const string PropsWidget = "UI_Sys_Main_PropsWidget_PC(Clone)";
         private const string AvatarWidget = "UI_Sys_Main_AvatarInfoWidget_PC(Clone)";
 
@@ -34,7 +34,7 @@ namespace Ro3Emu.ClientHooks
             "buttonWest", "buttonNorth", "buttonEast", "buttonSouth", "leftShoulder", "leftTrigger", "rightTrigger", "rightShoulder",
         };
 
-        private static readonly FieldInfo KeyField = typeof(InputBinderBase).GetField("m_inputKey", BindingFlags.NonPublic | BindingFlags.Instance);
+        internal static readonly FieldInfo KeyField = typeof(InputBinderBase).GetField("m_inputKey", BindingFlags.NonPublic | BindingFlags.Instance);
 
         private sealed class Source
         {
