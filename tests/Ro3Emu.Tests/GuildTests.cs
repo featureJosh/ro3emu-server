@@ -88,7 +88,7 @@ public sealed partial class GuildTests : IAsyncLifetime
         return full.Guid;
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task ThreePlayersApplyInviteTransferLeaveAndDissolveOverWire()
     {
         await using var alice = await InWorld("Alice");
@@ -185,7 +185,7 @@ public sealed partial class GuildTests : IAsyncLifetime
         Assert.Null(app.Services.GetRequiredService<GuildStore>().Get(guildId));
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task BuildingUpgradeUsesPersistedContributionAndConfiguredMinutes()
     {
         await using var alice = await InWorld("Alice");
@@ -240,7 +240,7 @@ public sealed partial class GuildTests : IAsyncLifetime
             x => x.Build?.BuildingID == 1 && x.Build.Level == 2)).Build.Level);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task ManagementRejectsUnprivilegedEditsAndOfficerKickThenPersistsOfflineKick()
     {
         await using var alice = await InWorld("Alice");
@@ -292,7 +292,7 @@ public sealed partial class GuildTests : IAsyncLifetime
             x => x.Base?.Notice == "Meet tonight")).Base.Notice);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task PrecreateHelpersTransitionAndRecruitmentPushOverWire()
     {
         await using var founder = await InWorld("Founder");
@@ -325,7 +325,8 @@ public sealed partial class GuildTests : IAsyncLifetime
         Assert.Equal(0, list.Result);
         Assert.Equal(pre.Guid, Assert.Single(list.Data).Guild.Guid);
 
-        foreach (var helper in new[] { helper1, helper2, helper3 })
+        // GuildResponsePeopleLimit 3 counts the founder: two responders found the guild.
+        foreach (var helper in new[] { helper1, helper2 })
         {
             await helper.SendGameAsync(GuildService.HelperOpe, new GuildCreateHelperOpeReq { GuildIds = { pre.Guid } });
             var rsp = await Next(helper, GuildService.HelperOpe, GuildCreateHelperOpeResp.Parser);
@@ -334,7 +335,9 @@ public sealed partial class GuildTests : IAsyncLifetime
         }
         var normal = await Next(founder, GuildService.Full, GuildFullInfoNtf.Parser,
             x => x.Guid == pre.Guid && x.Status == GuildStatus.Normal);
-        Assert.Equal(4, normal.MemberInfo.Count);
+        Assert.Equal(3, normal.MemberInfo.Count);
+        await helper3.SendGameAsync(GuildService.HelperOpe, new GuildCreateHelperOpeReq { GuildIds = { pre.Guid } });
+        Assert.False(Assert.Single((await Next(helper3, GuildService.HelperOpe, GuildCreateHelperOpeResp.Parser)).HelperResult).Success);
 
         await helper1.SendGameAsync(ChatService.JoinChannel, new JoinChatChannelReq { GroupId = "@TGS#_8_0" });
         Assert.Equal(0, (await Next(helper1, ChatService.JoinChannel, JoinChatChannelRsp.Parser)).Result);
@@ -351,7 +354,7 @@ public sealed partial class GuildTests : IAsyncLifetime
         Assert.Equal(ErrorCodes.Cooldown, (await Next(founder, GuildService.Recruit, GuildRecruitResp.Parser)).Result);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task BlackMarketListsTradesRecordsAndEnforcesBalancesOverWire()
     {
         await using var seller = await InWorld("Seller");
@@ -405,7 +408,7 @@ public sealed partial class GuildTests : IAsyncLifetime
         Assert.Empty(store.LoadMarket().Stalls);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task DissolvedSellerStallDoesNotBlockOtherSamePriceSeller()
     {
         await using var orphan = await InWorld("Orphan");
@@ -459,7 +462,7 @@ public sealed partial class GuildTests : IAsyncLifetime
         Assert.Equal(10, store.Get(buyerId)!.Materials);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task BatchKickRollsBackEveryMemberWhenSecondPersonalWriteFailsThenRevokesChatOnRetry()
     {
         await using var alice = await InWorld("Alice");
@@ -525,7 +528,7 @@ public sealed partial class GuildTests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task RenamePaymentIsAtomicAndAQueuedRenameCannotResurrectDissolvedGuild()
     {
         await using var alice = await InWorld("Alice");

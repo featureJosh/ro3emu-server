@@ -126,7 +126,7 @@ public sealed class DungeonMatchTests : IAsyncLifetime
         Assert.Equal(new[] { 0, 1 }, DungeonMatchService.PickGroupIndices([2, 3, 1], 5));
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task SelectionCancellationSoloVoteDeclineAndDeadline()
     {
         await using var alice = await InWorld("Alice");
@@ -186,7 +186,7 @@ public sealed class DungeonMatchTests : IAsyncLifetime
         Assert.False(Service<DungeonMatchService>().Owns(Session(alice)));
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task TwoAndThreePersonPartiesMatchReadyAndEnterOneInstance()
     {
         await using var alice = await InWorld("Alice");
@@ -232,7 +232,7 @@ public sealed class DungeonMatchTests : IAsyncLifetime
         Assert.NotEqual(0, teamIds.Single());
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task ChickenRoutingCrossOwnerExclusionSwitchAndRoleCleanup()
     {
         // DailyActivityConfig id 114 (Kafra): _kDay [2,4,7], _kTime [1830,2000] in the clock's civil zone. 2026-11-10 is a

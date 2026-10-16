@@ -21,9 +21,12 @@ namespace Ro3Emu.ClientHooks
     /// window ends more than a year away (PatchCountdowns). Lua functions cannot be written here, so the replaced
     /// methods are C# delegates (SelfMethod) that xLua calls like Lua functions.</item>
     /// <item>The menu's Feedback entry gets a text panel that sends bug reports to the server (FeedbackButton).</item>
+    /// <item>"/pass" in chat opens the season task panel with the pass challenges (PassChallenges).</item>
     /// <item>For our open-content policy: the client's own server-day checks (season cards, guild challenge difficulties)
     /// follow what the server reports instead of the day count from the real opening time, and the season page opens in
     /// the season's hidden first week (ServerDayGates).</item>
+    /// <item>Map config modules this build does not ship (Dracula's Lair, the territory maps) go into package.loaded
+    /// before any scene needs them (MapModules).</item>
     /// </list>
     /// </summary>
     public static class LuaPatches
@@ -69,6 +72,7 @@ namespace Ro3Emu.ClientHooks
                 env = EnvOf(manager, out string why);
                 if (env == null) { Report(why); return; }
                 var global = ((Obf_R.Obf_Cf)env).Obf_A;
+                MapModules.Install(env, global); // own once-per-LuaEnv guard; needs only package.loaded
                 if (ReferenceEquals(env, _doneEnv)) { ServerDayGates.Probe(); return; }
                 _topBarClass = _evePanelClass = null;
                 // GlobalRequire sets LC_ItemShowHelper once the game's modules are up; before that, requiring is unsafe.
@@ -96,6 +100,7 @@ namespace Ro3Emu.ClientHooks
                 PatchCountdowns(manager, global);
                 var functionHelper = Module(manager, global, "lc_functionhelper");
                 FeedbackButton.Install(global, functionHelper);
+                PassChallenges.Install(global);
                 ServerDayGates.Install(global, functionHelper, Module(manager, global, "lc_conditiondefine"),
                     global.Obf_RuA<Obf_R.Obf_ff>("LC_SeasonHelper") ?? Module(manager, global, "lc_seasonhelper"),
                     global.Obf_RuA<Obf_R.Obf_ff>("LC_SeasonExplorationHelper") ?? Module(manager, global, "lc_seasonexplorationhelper"));

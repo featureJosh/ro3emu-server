@@ -99,7 +99,7 @@ public sealed class Cd13eOwnerTests : IAsyncLifetime
         Assert.Equal(ErrorCodes.Parameter, (await Next(bot, DungeonService.SetGuide, MultiDungeonSetJobPositionGuideFlagResp.Parser)).Result);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task MilestoneWaitsForCommitAndSerializesTimerAndGmWhileAnotherRoleProgresses()
     {
         await using var alice = await Enter("Alice");
@@ -148,7 +148,7 @@ public sealed class Cd13eOwnerTests : IAsyncLifetime
         Assert.Equal(3, Count(role)); Assert.Equal(1, Claims());
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task MilestoneLedgerFailureRollsBackGoodsAndSourceAndRetryGrantsOnce()
     {
         await using var bot = await Enter("Alice"); var s = Session(bot); long role = s.Role!.Id;
@@ -169,7 +169,7 @@ public sealed class Cd13eOwnerTests : IAsyncLifetime
         Assert.Equal(3, Count(role)); Assert.Equal(1, Claims());
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task AdmittedMilestoneFinishesBeforeRoleHandoverReleasesItsOwner()
     {
         await using var bot = await Enter("Alice"); var s = Session(bot); long role = s.Role!.Id;

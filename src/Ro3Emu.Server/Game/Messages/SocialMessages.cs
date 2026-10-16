@@ -4,14 +4,40 @@ using Romsg;
 
 namespace Ro3Emu.Server.Game;
 
-public sealed partial class GameMessageHandler
+/// <summary>Chat, teams, friends, guilds and their caravan, challenge, campfire and home, emblems.</summary>
+public sealed class SocialMessages(ChatService chat, TeamService teams, EmblemService emblems, GuildService guilds, GuildCaravanService caravan, GuildChallengeService guildChallenge, FriendExtraService friendExtra, GuildCampfireService campfire, GuildHomeService guildHome, GuildHuntingService hunting) : Messaging.IMessageModule
 {
-    private void MapSocialRoutes(Messaging.MessageRoutes routes)
+    private const uint SetFriendSystemMetadata = 82208, GetGuildLeagueMgrData = GuildLeagueService.MgrData;
+
+    public void Map(Messaging.MessageRoutes routes)
     {
+        // Guild-social owners admit their own guild and member keys; the route owner picks them.
+        routes.AdmitEconomic(id => routes.TryGet(id, out var route) &&
+            route.Owner is "guilds" or "caravan" or "campfire" or "guildChallenge" or "friendExtra" or "teams");
+        routes.AdmitEconomic((_, id, body) => ChatService.IsEventOwnerRequest(id, body));
+        routes.AdmitEconomic(id => id is >= 83900 and <= 83908); // guild black market
+        // Guild activity chests and dividends pay awards (GuildService.Activity).
+        routes.AdmitEconomic(id => id is GuildService.ReceiveWeekActiveReward or GuildService.TakeActivityBonus);
+        routes.AdmitRuntime(id => id is GuildCaravanService.HelpOther, "dispatcher/owned continuation");
+        // Chat acts on the sender. As Realm it queued every fighter's next cast behind it (31102 p99 1.4 s).
+        routes.AdmitRole(id => id is ChatService.TunnelUp or ChatService.JoinChannel);
+        routes.AdmitRole(id => id is >= 82422 and <= 82426); // emblems
+        // Hunting Challenge history reads the settled week and answers its sender only.
+        routes.AdmitRole(id => id is GuildHuntingService.History);
+
         // Not a guild-social owner: the default Realm reservation serializes the first entries of one guild, as 30400.
         routes.Map(GuildHomeService.EnterHome, "guildHome", async (session, msgId, body) =>
         {
             await guildHome.EnterAsync(session);
+        });
+        // A commander skill buffs other guilds' members and bosses: the default Realm reservation.
+        routes.Map(GuildHuntingService.UseSkill, "guildHunt", async (session, msgId, body) =>
+        {
+            await hunting.UseSkillAsync(session, UseGveHuntingSkillReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(GuildHuntingService.History, "guildHunt", async (session, msgId, body) =>
+        {
+            await hunting.HistoryAsync(session);
         });
         routes.Map(83242, "campfire", async (session, msgId, body) =>
         {
@@ -117,6 +143,26 @@ public sealed partial class GameMessageHandler
         {
             await teams.RecruitAsync(session, TeamRecruitReq.Parser.ParseFrom(body.Span));
         });
+        routes.Map(GuildService.ReceiveWeekActiveReward, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.ReceiveWeekRewardAsync(session, ReceiveGuildWeekActiveRewardReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(GuildService.TakeActivityBonus, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.TakeActivityBonusAsync(session);
+        });
+        routes.Map(GuildService.RecommendPlayers, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.RecommendPlayersAsync(session, PullRecommendPlayersReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(GuildService.Events, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.EventsAsync(session, GuildEventReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(GuildService.MoneyRank, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.MoneyRankAsync(session);
+        });
         routes.Map(GuildService.Create, "guilds", async (session, msgId, body) =>
         {
             await guilds.CreateAsync(session, GuildCreateReq.Parser.ParseFrom(body.Span));
@@ -140,6 +186,30 @@ public sealed partial class GameMessageHandler
         routes.Map(32220, "guilds", async (session, msgId, body) =>
         {
             await guilds.HelperOpeAsync(session, GuildCreateHelperOpeReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(GuildService.Convene, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.ConveneAsync(session);
+        });
+        routes.Map(GuildService.ConfirmConvene, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.ConfirmConveneAsync(session, ConfirmConveneReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(GuildService.PullHelperApply, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.PullHelperApplyAsync(session);
+        });
+        routes.Map(GuildService.HelperApplyOpe, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.HelperApplyOpeAsync(session, CreateHelperApplyOpeReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(GuildService.InviteHelperToken, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.InviteHelperTokenAsync(session, InviteCreateHelperTokenReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(GuildService.InviteHelperOpe, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.InviteHelperOpeAsync(session, InviteCreateHelperOpeReq.Parser.ParseFrom(body.Span));
         });
         routes.Map(32221, "guilds", async (session, msgId, body) =>
         {
@@ -288,6 +358,14 @@ public sealed partial class GameMessageHandler
         routes.Map(GetGuildLeagueMgrData, "guilds", async (session, msgId, body) =>
         {
             await guilds.LeagueMgrDataAsync(session, GetGuildLeagueMgrData);
+        });
+        routes.Map(GuildLeagueService.Info, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.LeagueInfoAsync(session, GuildLeagueService.Info);
+        });
+        routes.Map(GuildLeagueService.GroupInfo, "guilds", async (session, msgId, body) =>
+        {
+            await guilds.LeagueGroupInfoAsync(session, GuildLeagueService.GroupInfo);
         });
         routes.Map(SetFriendSystemMetadata, "friendExtra", async (session, msgId, body) =>
         {

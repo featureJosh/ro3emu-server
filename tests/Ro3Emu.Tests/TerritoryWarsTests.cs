@@ -127,7 +127,7 @@ public sealed class TerritoryWarsTests : IAsyncLifetime
         Assert.True(info.InitData.TerritoryWarInitData.GuildInfos.Count >= 2);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task ThreeGuildWireAuctionRefundsThenSharedBattleCapturesSettlesAndReplaysSafely()
     {
         await using var a = await Bot("TerrAlpha"); await using var b = await Bot("TerrBravo"); await using var c = await Bot("TerrCharlie");
@@ -233,7 +233,97 @@ public sealed class TerritoryWarsTests : IAsyncLifetime
         Assert.Equal(1, br.CommonResultInfo.FirstResultType); Assert.Equal(1, br.CommonResultInfo.SecondResultType);
     }
 
-    [Fact]
+    [ClientDataFact]
+    public async Task StrongholdBattleSendsGameplayPointsOnEveryLoadAndPublishesChangedPoints()
+    {
+        await using var bot = await Bot("TerrPoints");
+        long guild = await Guild(bot, "TwPnts");
+        await bot.JoinChatAsync("4_1");
+        var wars = Service<TerritoryWarsService>();
+        clock.Set(1779276700); await OnLoop(wars.ReconcileAsync); // TerritoryWarStageConfig 5: round 1 auction.
+        await Bid(bot, 1000);
+        clock.Set(1779362200); await OnLoop(wars.ReconcileAsync); // stage 7: round 1 preparation, auction settled.
+        long[] expected = [34, 41, 49, 51, 55, 56, 57, 59, 63, 66, 74, 81, 83, 85, 86]; // DungeonLua_3030101 UIModule_NpcData
+        async Task<(GlobalScenePointDataNotify Points, Dictionary<int, GlobalObjectData> Markers)> EnterStronghold()
+        {
+            await bot.SendGameAsync(30400, new EnterDungeonReq { SceneEntry = 3030101 });
+            Assert.Equal(0, (await Next(bot, 30400, EnterDungeonRsp.Parser)).Result);
+            var sw = await Next(bot, MsgId.SwitchSceneLine, SwitchSceneLineResp.Parser, s => s.SceneEntry == 3030101);
+            await bot.SendGameAsync(MsgId.SceneLoaded, new SceneLoadedReq { SceneId = sw.SceneEntry });
+            await Next(bot, MsgId.SceneLoaded, SceneLoadedResp.Parser, s => s.SceneId == 3030101);
+            await Next(bot, 30401, DungeonBaseInfoNotify.Parser, i => i.DungeonEntry == 3030101);
+            var points = await Next(bot, TerritoryWarsService.ScenePointNotify, GlobalScenePointDataNotify.Parser);
+            // The markers reach a loaded member either with its load or right after they spawn.
+            var markers = new Dictionary<int, GlobalObjectData>();
+            while (markers.Count < expected.Length)
+            {
+                var objects = await Next(bot, 30115, GlobalObjectDataNotify.Parser,
+                    n => n.GlobalDatas.Values.Any(d => d.ConfigId == 4905010 && !markers.ContainsKey(d.DungeonPointId)));
+                foreach (var d in objects.GlobalDatas.Values.Where(d => d.ConfigId == 4905010)) markers[d.DungeonPointId] = d;
+            }
+            return (points, markers);
+        }
+        var (first, markers) = await EnterStronghold();
+        Assert.Equal(expected, first.GlobalPoints.Keys.Order().ToArray());
+        Assert.All(first.GlobalPoints, p =>
+        {
+            Assert.Equal(p.Key, p.Value.PointId);
+            Assert.Equal(EnumGlobalScenePoint.Ready, p.Value.Status);
+            Assert.Equal(0, p.Value.ReadyTime);
+            Assert.Equal(0, p.Value.BelongGuildId);
+        });
+        Assert.Equal(expected, markers.Keys.Select(k => (long)k).Order().ToArray());
+        var editor = Service<WorldData>().Map(3030101)!;
+        Assert.All(markers, m =>
+        {
+            Assert.True(m.Value.Hp > 0); // hp 0 would make the client drop the entry.
+            Assert.Equal(0, m.Value.BelongGuild);
+            Assert.Equal(editor.Points[m.Key].X, m.Value.Pos.X); Assert.Equal(editor.Points[m.Key].Z, m.Value.Pos.Z);
+        });
+        var battle = Session(bot).TerritoryBattle!;
+        Assert.Equal(3030101, battle.State.Scene);
+        await OnLoop(() =>
+        {
+            Assert.Equal(expected.Length, battle.Room.Props.Count(p => p.Entity().EntityTemplateID == 4905010));
+            Assert.DoesNotContain(battle.Room.Monsters, m => m.Template.NpcId == 4905010); // markers are never targets.
+            return Task.CompletedTask;
+        });
+
+        // A change publishes only that point; readyTime is epoch milliseconds (the map countdown divides by 1000).
+        await bot.SendChatAsync("4_1", 2, "!twpoint 34 unready 90 self", channelIndex: 4);
+        Assert.Contains("Point 34", (await Next(bot, GmCommands.BroadcastNotify, BroadCastNotify.Parser)).Content);
+        var delta = await Next(bot, TerritoryWarsService.ScenePointNotify, GlobalScenePointDataNotify.Parser);
+        var barrier = Assert.Single(delta.GlobalPoints);
+        Assert.Equal(34, barrier.Key);
+        Assert.Equal(EnumGlobalScenePoint.UnReady, barrier.Value.Status);
+        Assert.Equal((1779362200L + 90) * 1000, barrier.Value.ReadyTime);
+        Assert.Equal(guild, barrier.Value.BelongGuildId);
+        await bot.SendChatAsync("4_1", 2, "!twpoint 55 ready 0 self", channelIndex: 4);
+        await Next(bot, GmCommands.BroadcastNotify, BroadCastNotify.Parser);
+        Assert.Equal(55, Assert.Single((await Next(bot, TerritoryWarsService.ScenePointNotify, GlobalScenePointDataNotify.Parser)).GlobalPoints).Key);
+        // Revival points read their owner from the marker's GlobalObjectData (GetRevivalPointData).
+        var revival = await Next(bot, 30115, GlobalObjectDataNotify.Parser, n => n.GlobalDatas.Values.Any(d => d.DungeonPointId == 55));
+        Assert.Equal(guild, revival.GlobalDatas.Values.Single(d => d.DungeonPointId == 55).BelongGuild);
+        await bot.SendChatAsync("4_1", 2, "!twpoint 99 ready", channelIndex: 4);
+        Assert.Contains("No gameplay point 99", (await Next(bot, GmCommands.BroadcastNotify, BroadCastNotify.Parser)).Content);
+
+        // Every load of the battle scene repeats the full, persisted set (the client clears it on scene switch).
+        await bot.SendGameAsync(30402, new LeaveDungeonReq());
+        await Next(bot, 30402, LeaveDungeonRsp.Parser);
+        var back = await Next(bot, MsgId.SwitchSceneLine, SwitchSceneLineResp.Parser, sw => sw.SceneEntry != 3030101);
+        await bot.SendGameAsync(MsgId.SceneLoaded, new SceneLoadedReq { SceneId = back.SceneEntry });
+        await Next(bot, MsgId.SceneLoaded, SceneLoadedResp.Parser, s => s.SceneId == back.SceneEntry);
+        Assert.Null(Session(bot).TerritoryBattle);
+        var (again, remarkers) = await EnterStronghold();
+        Assert.Equal(expected, again.GlobalPoints.Keys.Order().ToArray());
+        Assert.Equal(EnumGlobalScenePoint.UnReady, again.GlobalPoints[34].Status);
+        Assert.Equal(guild, again.GlobalPoints[34].BelongGuildId);
+        Assert.Equal(guild, again.GlobalPoints[55].BelongGuildId);
+        Assert.Equal(guild, remarkers[55].BelongGuild);
+        Assert.Equal(EnumGlobalScenePoint.Ready, again.GlobalPoints[41].Status);
+    }
+
+    [ClientDataFact]
     public async Task AutoBidRechecksOfficerRightsAndSeasonRefundsEscrowOnce()
     {
         await using var bot = await Bot("TerrEpoch");
@@ -301,7 +391,7 @@ public sealed class TerritoryWarsTests : IAsyncLifetime
         Assert.Equal(5000, store.Get(guild)!.AuctionMaterials);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task CommittedSeasonRoleApplyFaultLeavesOnlyThatRolePending()
     {
         await using var first = await Bot("TerrApplyOne");
@@ -387,7 +477,7 @@ public sealed class TerritoryWarsTests : IAsyncLifetime
         finally { accounts.ReadSyncObserved = null; }
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task RestartRetainsEscrowAndAutomaticBidScheduleWithoutChargingTwice()
     {
         long guild;
@@ -411,7 +501,7 @@ public sealed class TerritoryWarsTests : IAsyncLifetime
         Assert.Equal(4000, Service<GuildStore>().Get(guild)!.AuctionMaterials); // cancelling automation does not withdraw a seated bid.
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task TerritoryOwnerPublishesActivityStageWithoutActivityPolling()
     {
         await using var bot = await Bot("WarNotify");
@@ -427,11 +517,14 @@ public sealed class TerritoryWarsTests : IAsyncLifetime
             var projected = current.ActivityInfo[2000].ActivityParam.TerritoryWar.TerritoryWarStage;
             Assert.NotEqual(oldType, (long)projected.StageType);
             Assert.Equal(Service<TerritoryWarsClock>().Current.Type, (int)projected.StageType);
-            Assert.Equal(Service<TerritoryWarsClock>().Current.StartTime * 1000, projected.StartTime);
+            // Seconds: the client compares territoryWarStage with GetSystemTime (TerritoryWarsService.BuildActivityState).
+            Assert.Equal(Service<TerritoryWarsClock>().Current.StartTime, projected.StartTime);
+            Assert.Equal(Service<TerritoryWarsClock>().Current.EndTime, projected.EndTime);
+            Assert.Equal(projected.StartTime, current.ActivityInfo[2000].ActivityParam.TerritoryWar.TerritoryWarData.Stage.StartTime);
         });
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task ActivityCatalogueAndRefreshKeepMasterActivitiesAndTerritoryStateTogether()
     {
         await using var bot = await Bot("TerrActivities");
@@ -480,7 +573,7 @@ public sealed class TerritoryWarsTests : IAsyncLifetime
             closed.ActivityList.Select(a => a.Id).Order());
     }
 
-    [Fact]
+    [ClientDataFact]
     public void CalendarUsesExportedAbsoluteWindowsAndSeasonOffsets()
     {
         var schedule = Service<TerritoryWarsClock>();

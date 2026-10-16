@@ -11,7 +11,9 @@ public sealed partial class NewActivityTests
 {
     private async Task Eventually(Func<bool> condition, Func<string>? detail = null)
     {
-        for (int i = 0; i < 120; i++)
+        // 15 s: under the full suite a deadline's tick and its save can lag well behind the advanced clock.
+        var until = DateTime.UtcNow + TimeSpan.FromSeconds(15);
+        while (DateTime.UtcNow < until)
         {
             // Read loop-owned state on its owner, after the current synchronous mutation/save step.
             // A test-thread read can otherwise observe RefreshCalendar before its following DB write.
@@ -22,7 +24,7 @@ public sealed partial class NewActivityTests
         }
         await OnLoop(() =>
         {
-            Assert.True(condition(), "Activity deadline was not observed within three seconds. " + detail?.Invoke());
+            Assert.True(condition(), "Activity deadline was not observed within 15 seconds. " + detail?.Invoke());
             return Task.CompletedTask;
         });
     }
@@ -40,7 +42,7 @@ public sealed partial class NewActivityTests
         });
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task LocalMidnightAdvancesSevenDayOnceAndPersistsWithoutARequest()
     {
         await using var bot = await InWorld("ActMidnight");
@@ -76,7 +78,7 @@ public sealed partial class NewActivityTests
             .ActivityInfo[113].ActivityParam.SevenDay.LoginDays);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task MonthCardAndTreasureExpireAtDeadlinesWithoutARequest()
     {
         await using var bot = await InWorld("ActExpiry");
@@ -123,7 +125,7 @@ public sealed partial class NewActivityTests
         Assert.True(saved.ActivityInfo[199].ActivityParam.MonthCard.Infos[id].DayAward);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task CalendarEndProjectsAndPersistsAtExactBoundary()
     {
         await using var bot = await InWorld("ActCalEnd");
@@ -140,7 +142,7 @@ public sealed partial class NewActivityTests
             .ActivityInfo[200].State);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task CalendarStartProjectsAndPersistsWithoutARequest()
     {
         await using var bot = await InWorld("ActCalStart");
@@ -157,7 +159,7 @@ public sealed partial class NewActivityTests
             .ActivityInfo[118].State);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task LockedExpiredMonthCardDoesNotRepeatImmediateDeadline()
     {
         await using var bot = await InWorld("ActCardLock"); // level one does not satisfy activity 199's level-20 gate
@@ -193,7 +195,7 @@ public sealed partial class NewActivityTests
         Assert.Equal(4, session.NewActivities!.ActivityInfo[199].ActivityParam.MonthCard.Infos[id].LastDays);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task EveDeadlineWaitingOnSocialGateCannotSettleIntoNewRole()
     {
         var eveWindow = Assert.Single(Service<ActivityClock>().Segments(1011, clock.GetUtcNow().ToUnixTimeSeconds()));
@@ -249,7 +251,7 @@ public sealed partial class NewActivityTests
             Service<RoleStore>().LoadActivityRuntime(oldRole)!)!.EveSettledCycleStart);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task FailedMonthCardAfterPassCommitRetriesTheCurrentAttachment()
     {
         await using var bot = await InWorld("ActRetry");
@@ -354,7 +356,7 @@ public sealed partial class NewActivityTests
         Assert.False(saved.ActivityInfo[199].ActivityParam.MonthCard.Infos[cardId].DayAward);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task EveKeyIsSharedUntilTheSettlementLeadWindowOnEveryActivityPath()
     {
         // Every activity path (local, social, login) settles an ended Eve cycle before refreshing the calendar, so

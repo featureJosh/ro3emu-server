@@ -60,7 +60,7 @@ public sealed partial class DungeonTests
         }
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task FrozenDungeonRecipientSurvivesFailedDeliveryAndRestart()
     {
         SyntheticSolo(daily: true);
@@ -102,7 +102,7 @@ public sealed partial class DungeonTests
         Assert.Equal(90000, Currency(recovered, 2));
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task CommittedDungeonDeliveryApplyFaultReloadsWithoutSecondAward()
     {
         SyntheticSolo(daily: true);
@@ -154,7 +154,7 @@ public sealed partial class DungeonTests
         Assert.True(await Service<CharacterService>().RewardSourceCommittedAsync(source));
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task ThreeRecipientsPartiallyDeliverThenRestartPaysOnlyPendingMember()
     {
         long room, aliceRole, bobRole, carolRole;
@@ -274,7 +274,7 @@ public sealed partial class DungeonTests
         return request;
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task FinalTwoActorsInOneAreaHitFreezeOneCompleteReportBeforeResult()
     {
         const long story = 1054001;
@@ -318,7 +318,7 @@ public sealed partial class DungeonTests
             stats.TotalDamage);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task OverlappingLastTwoCastsWaitForFirstKillSourceAndFreezeBothRecipients()
     {
         var request = ConfigureTwoActorStory();
@@ -399,7 +399,7 @@ public sealed partial class DungeonTests
             .KillNpcData[5300036].LongValue);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task PreparedFinalKillRetriesSameMonsterAndEarnsOnce()
     {
         SyntheticSolo(daily: true);
@@ -423,7 +423,7 @@ public sealed partial class DungeonTests
         Assert.Empty(Service<DungeonObligationStore>().Pending((long)alice.Self.Uuid));
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task PreparedFinalKillWithoutOrdinaryReceiptCannotPayAfterRestart()
     {
         SyntheticSolo(daily: true);

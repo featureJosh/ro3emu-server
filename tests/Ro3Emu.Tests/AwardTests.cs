@@ -44,7 +44,7 @@ public sealed class AwardTests : IAsyncLifetime
         try { Directory.Delete(_dataDir, true); } catch (IOException) { }
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task MultiStackOwnedGrantRollsBackAndThenCommitsOneSourceAndReceipt()
     {
         await using var bot = await InWorld("GrantAlice");
@@ -132,7 +132,7 @@ public sealed class AwardTests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [ClientDataFact]
     public void FixedPlaybookEmptyAndUnresolvedPolicies()
     {
         var awards = new AwardService(_app.Services.GetRequiredService<GameData>());
@@ -153,7 +153,7 @@ public sealed class AwardTests : IAsyncLifetime
         Assert.Throws<AwardResolutionException>(() => awards.Resolve(null!, 25001)); // restriction replacement
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task BoundMintedCoinUsesCurrencyBalanceAndBoundNotification()
     {
         await using var bot = await InWorld("CoinAlice");
@@ -188,7 +188,7 @@ public sealed class AwardTests : IAsyncLifetime
         Assert.Equal(200000, roles.LoadProgress(session.Role.Id).Currency[2]);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task FixedCurrencyExpBoundItemAndRollbackPersistWithActualWireState()
     {
         await using var bot = await InWorld("AwardAlice");
@@ -253,7 +253,7 @@ public sealed class AwardTests : IAsyncLifetime
         Assert.Equal(currencyBefore, roles.LoadProgress(roleId).Currency[1]);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task PoolUsesActualTerminalsAndNeverPreview()
     {
         await using var bot = await InWorld("PoolAlice");
@@ -273,7 +273,7 @@ public sealed class AwardTests : IAsyncLifetime
         Assert.DoesNotContain(plan.Grants, g => g.Entry is 1200500 or 1200200 or 1200300); // preview-only
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task NoviceAndSwordsmanPoolGiftKeepsActualPermanentBind()
     {
         var loop = _app.Services.GetRequiredService<GameLoop>();
@@ -310,7 +310,7 @@ public sealed class AwardTests : IAsyncLifetime
         }
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task ItemUseRejectsInvalidCountAndUnsupportedEffectWithoutConsumingIt()
     {
         await using var bot = await InWorld("UseAlice");

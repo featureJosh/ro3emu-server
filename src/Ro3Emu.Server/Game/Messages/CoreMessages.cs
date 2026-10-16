@@ -4,10 +4,24 @@ using Romsg;
 
 namespace Ro3Emu.Server.Game;
 
-public sealed partial class GameMessageHandler
+/// <summary>
+/// The login, role and session messages, the quest messages and the stubs of features that are not served. How
+/// they are admitted: role creation under its account, the session's own continuations as runtime, the few that
+/// change only the sender's role under that role.
+/// </summary>
+public sealed class CoreMessages(RoleSessionService roleSessions, ChatService chat, BuffService buffs, GmCommands gm, SceneService scene, TaskService tasks, DailyActivityService daily, TeamService teams, GuildService guilds, DungeonService dungeons, Ownership.RoleHandover handover, Micro.RankService ranks) : Messaging.IMessageModule
 {
-    private void MapCoreRoutes(Messaging.MessageRoutes routes)
+    private const uint EquipGetRank = 31470;
+
+    public void Map(Messaging.MessageRoutes routes)
     {
+        routes.AdmitRuntime(id => id is MsgId.SceneLoaded or MsgId.PreSwitchRole or MsgId.LoginRoleSelect or MsgId.Logout
+            or MsgId.Heartbeat, "dispatcher/owned continuation");
+        // Role creation writes only its new role (the unique name index decides between accounts).
+        routes.AdmitAccount(id => id == MsgId.LoginRoleCreate);
+        routes.AdmitRole(id => id is MsgId.Walk or MsgId.SaveSetting or MsgId.ClientEnterMainUi or MsgId.UploadClientSdkInfo);
+        routes.AdmitRole(id => id is FeedbackService.SubmitMsg); // reads the sender, appends to its own report file
+
         routes.Map(GuildChallengeService.Notify, "handler", async (session, msgId, body) =>
         {
         });
@@ -40,6 +54,10 @@ public sealed partial class GameMessageHandler
         });
         routes.Map(WorldCoreService.TeleportObject, "handler", async (session, msgId, body) =>
         {
+            // In the reverse dungeon (SceneService.MovesOnSurface) the client reports where it shows an NPC before every
+            // interaction it sends (LC_DAL_Interact.SyncNpcPos: only for units in m_bReverseMode, then 32700), and waits
+            // for no answer: accepted without a reply, as an error tip would show on every press. Elsewhere it is not sent.
+            if (scene.MovesOnSurface(session.SceneEntry)) return;
             await WorldCoreService.ErrorAsync(session, msgId, ErrorCodes.Parameter);
         });
         routes.Map(31204, "tasks", async (session, msgId, body) =>
@@ -73,11 +91,11 @@ public sealed partial class GameMessageHandler
         });
         routes.Map(MsgId.LoginRoleCreate, "handler", async (session, msgId, body) =>
         {
-            await CreateRoleAsync(session, AccountLoginCreateRoleReq.Parser.ParseFrom(body.Span));
+            await roleSessions.CreateRoleAsync(session, AccountLoginCreateRoleReq.Parser.ParseFrom(body.Span));
         });
         routes.Map(MsgId.LoginRoleSelect, "handler", async (session, msgId, body) =>
         {
-            await SelectRoleAsync(session, AccountLoginSelectRoleReq.Parser.ParseFrom(body.Span));
+            await roleSessions.SelectRoleAsync(session, AccountLoginSelectRoleReq.Parser.ParseFrom(body.Span));
         });
         routes.Map(DungeonService.Result, "handler", async (session, msgId, body) =>
         {
@@ -112,9 +130,11 @@ public sealed partial class GameMessageHandler
         });
         routes.Map(EquipGetRank, "handler", async (session, msgId, body) =>
         {
-            // Equipment ranking in tooltips: both ids echoed (an empty reply caches item 0), unranked.
+            // Equipment ranking in tooltips (UI_Com_ItemTips_Equip_HeadWidgetCtrl._requestRankData, board 1401): both ids
+            // echoed (an empty reply caches item 0), 0 when the instance is not on the board.
             var rank = QueryEquipRankReq.Parser.ParseFrom(body.Span);
-            await session.SendGameAsync(EquipGetRank, new QueryEquipRankRes { Rankid = rank.Rankid, Itemuid = rank.Itemuid, Rank = 0 });
+            await session.SendGameAsync(EquipGetRank, new QueryEquipRankRes { Rankid = rank.Rankid, Itemuid = rank.Itemuid,
+                Rank = await ranks.EquipRankAsync(rank.Rankid, rank.Itemuid) });
         });
         routes.Map(AuctionService.Sync, "handler", async (session, msgId, body) =>
         {
@@ -136,11 +156,11 @@ public sealed partial class GameMessageHandler
         });
         routes.Map(MsgId.Walk, "handler", async (session, msgId, body) =>
         {
-            await WalkAsync(session, WalkReq.Parser.ParseFrom(body.Span));
+            await roleSessions.WalkAsync(session, WalkReq.Parser.ParseFrom(body.Span));
         });
         routes.Map(MsgId.SaveSetting, "handler", async (session, msgId, body) =>
         {
-            await SaveSettingAsync(session, SaveSettingReq.Parser.ParseFrom(body.Span), body);
+            await roleSessions.SaveSettingAsync(session, SaveSettingReq.Parser.ParseFrom(body.Span), body);
         });
         routes.Map(MsgId.Logout, "handover", async (session, msgId, body) =>
         {
@@ -149,7 +169,7 @@ public sealed partial class GameMessageHandler
         });
         routes.Map(MsgId.PreSwitchRole, "handler", async (session, msgId, body) =>
         {
-            // The client then calls the avatar RPC SwitchToAccount (see SwitchToAccountAsync).
+            // The client then calls the avatar RPC SwitchToAccount (see RoleSessionService.SwitchToAccountAsync).
             await session.SendGameAsync(MsgId.PreSwitchRole, new PreSwitchRoleResp { Result = 0 });
         });
         routes.Map(MsgId.ClientEnterMainUi, "handler", async (session, msgId, body) =>
@@ -235,6 +255,34 @@ public sealed partial class GameMessageHandler
             if (session.Role == null) return;
             var text = System.Text.Encoding.UTF8.GetString(body.Span[..Math.Min(body.Length, 16 * 1024)]);
             await chat.Feedback.SubmitAsync(session, text, "button");
+        });
+        routes.Map(MsgId.SceneLoaded, "scene", async (session, msgId, body) =>
+        {
+            var loadedRole = session.Role;
+            var loadedAttachment = session.Attachment;
+            long sceneGeneration = session.SceneGeneration;
+            session.WorldState.NameBoardLimit = Math.Min(SceneLoadedReq.Parser.ParseFrom(body.Span).NameBoardMaxCount, 1000);
+            await scene.SceneLoadedAsync(session, SceneLoadedReq.Parser.ParseFrom(body.Span));
+            using var scope = session.Owners is { } loadedOwners ? await roleSessions.EnterScenePublicationAsync(loadedOwners, session) : null;
+            if (!ReferenceEquals(session.Role, loadedRole) || !ReferenceEquals(session.Attachment, loadedAttachment)
+                || session.SceneGeneration != sceneGeneration) return;
+            await teams.OnEnteredAsync(session);
+            session.GuildOnlinePublished = true; // undo even if the publication throws after saving
+            await guilds.OnlineChangedAsync(session, true);
+            await guilds.SceneGuildIdAsync(session);
+        });
+        routes.Map(MsgId.Heartbeat, "daily", async (session, msgId, body) =>
+        {
+            // C/D 16: every player's heartbeat used to be one Realm scope (S3: 10k per 5 min, the top Realm waiter,
+            // other replies queued behind it up to 2.5 s). The role's own reconciliation runs under its reservation;
+            // realm guild maintenance (at most once a second) admits its own guild keys.
+            async Task OwnAsync() { await daily.ReconcileAsync(session); await dungeons.ReconcileAsync(session); }
+            if (session.Owners is { } owners && session.Role is { } role)
+                await owners.RunSessionAsync("heartbeat",
+                    [Ownership.ReservationKey.Role(role.Id), Ownership.ReservationKey.Lifecycle(role.Id)], session, OwnAsync);
+            else await OwnAsync();
+            await guilds.ReconcileOnHeartbeatAsync();
+            await session.SendGameAsync(MsgId.Heartbeat, new Pong { ServerTimeMs = roleSessions.NowMs() });
         });
     }
 }

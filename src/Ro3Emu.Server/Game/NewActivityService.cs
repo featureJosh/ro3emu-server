@@ -43,6 +43,8 @@ public sealed partial class NewActivityService
     private readonly InstanceService instances;
     private readonly DungeonService dungeons;
     private readonly PronteraDefenseService defense;
+    private readonly TeamService teams;
+    private readonly bool freePremiumPass, passPlay;
     private readonly ILogger<NewActivityService> log;
     private readonly HashSet<(GameSession Session, long Attachment)> queued = new();
     private long Now => clock.GetUtcNow().ToUnixTimeSeconds();
@@ -51,7 +53,8 @@ public sealed partial class NewActivityService
         AccountStore accounts, ItemStore items, MailService mail, SeasonService seasons, TimeProvider clock, ActivityClock activityClock,
         AwardService awards, TaskService tasks, SessionRegistry sessions, GameLoop loop, SceneService scene,
         InstanceService instances, DungeonService dungeons, PronteraDefenseService defense, CombatService combat,
-        Deadlines deadlines, ILogger<NewActivityService> log)
+        Deadlines deadlines, TeamService teams, MvpService mvps, ChatService chat, Microsoft.Extensions.Options.IOptions<ServerOptions> options,
+        ILogger<NewActivityService> log)
     {
         this.data = data; this.character = character; this.functions = functions; this.roles = roles;
         this.accounts = accounts; this.items = items; this.mail = mail; this.seasons = seasons; this.clock = clock;
@@ -59,6 +62,10 @@ public sealed partial class NewActivityService
         this.loop = loop; this.scene = scene; this.instances = instances; this.defense = defense; this.log = log;
         this.deadlines = deadlines;
         this.dungeons = dungeons;
+        this.teams = teams;
+        freePremiumPass = options.Value.Pass.FreePremium;
+        passPlay = options.Value.Pass.Play;
+        if (passPlay) InitializePassPlay(combat, dungeons, mvps, tasks, chat);
         dungeons.JourneyWon = JourneyDungeonWonAsync;
         dungeons.CanStageJourneyVictory = session => ActivityError(session, 112, 15) == 0;
         InitializeAdventureServices(accounts, items);
@@ -90,11 +97,16 @@ public sealed partial class NewActivityService
             && session.Role is { } role && activityClock.ResolveActivity(row, Now, role.CreateTime, book).Contains(Now);
     }
 
-    /// <summary>The activity's own open condition; OpenContent forces the rows whose condition is an unreachable level.</summary>
-    private bool Gate(GameSession session, JsonElement row) =>
-        seasons.OpenContent.ForcesActivity(GameData.Int(row, "_iID"))
-        || seasons.OpenContent.OpensStageActivities && StageActivities(Playbook(session)).Contains(GameData.Int(row, "_iID"))
-        || functions.ConditionMet(session, GameData.Int(row, "_kOpenCondition"));
+    /// <summary>
+    /// The activity's own open condition; OpenContent forces the rows whose condition is an unreachable level. A pass
+    /// that follows another one (Pass II after Pass I) also waits for its turn (<see cref="PassTurnReached"/>).
+    /// <paramref name="state"/>: the activity state being rebuilt, when it is not yet the session's.
+    /// </summary>
+    private bool Gate(GameSession session, JsonElement row, DBNewActivityInfo? state = null) =>
+        PassTurnReached(session, GameData.Int(row, "_iID"), state)
+        && (seasons.OpenContent.ForcesActivity(GameData.Int(row, "_iID"))
+            || seasons.OpenContent.OpensStageActivities && StageActivities(Playbook(session)).Contains(GameData.Int(row, "_iID"))
+            || functions.ConditionMet(session, GameData.Int(row, "_kOpenCondition")));
 
     private readonly Dictionary<int, HashSet<long>> stageActivities = new();
 
@@ -149,6 +161,7 @@ public sealed partial class NewActivityService
             if (!deadlines.IsCurrent(session, lease)) return;
             session.ActivitiesReady = true;
             ScheduleDeadline(session);
+            PassEvent(session, []); // the day played, and any daily activity earned while the pass was not watching
         }
         finally { session.ActivityGate.Release(); ownerScope?.Dispose(); }
     }
@@ -182,7 +195,7 @@ public sealed partial class NewActivityService
             InitializePass(session, row, info);
             InitializeMonthCard(session, row, info);
             var window = activityClock.ResolveActivity(row, now, session.Role!.CreateTime, book);
-            bool gate = Gate(session, row);
+            bool gate = Gate(session, row, state);
             bool active = window.Contains(now) && gate;
             info.State = active ? window.State : "_close";
             info.IsShielded = !gate;

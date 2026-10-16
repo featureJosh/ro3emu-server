@@ -27,7 +27,16 @@ public static partial class EconomySnapshotReader
     // goods are granted by its own cd13e/advguild-award receipt, and takenGroupRewardLevel is only that receipt's
     // once-only marker. The adventure_group / adventure_group_member tables hold names, rosters, the tree and group EXP
     // (a progression counter, not a currency); they are classified as social tables.
-    public const string ExpectedFormatManifestHash = "0E228586BF7EC7BD15F30B984006DCD55D3D542ACBC441A6280165B24EABBE74";
+    // Pass play: role.activity_runtime PassPlay (NewActivityService.PassPlay) holds the day's and week's challenge
+    // progress, daily EXP caps, paid chapters and EXP counters. No balance and no asset: pass EXP is currency 132, granted
+    // by the pass/play receipt that also saves these markers.
+    // Valhalla Trials: role.heroic_spirit is DBOdinStatue (Blessing statue EXP and level). Not a balance: its EXP is
+    // bought with Einherjar Coins by the cd13b/valhalla-pray receipt that also saves it. Cleared layers are
+    // dungeons Records "valhalla:<layer>", written with the layer's reward by the dungeon obligation.
+    // Monster Hunt: role.area_concur is DBAreaConcurInfo (kill counters per monster and map, claimed stage markers,
+    // the area's claimed-stage count). No balance: kill counters ride the monster-kill receipt, and a claim's goods are
+    // granted by its own cd13e/monsterhunt-award receipt whose claimed marker is only that receipt's once-only source.
+    public const string ExpectedFormatManifestHash = "6F3AD57ECA3574DA6EA6ED8ABC95F87229A7C06938F446D0E6DD9ACEE9A86307";
     public static string FormatManifestHash => State.FormatManifestHash;
 
     private sealed partial class State

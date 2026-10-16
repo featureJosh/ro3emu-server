@@ -28,7 +28,7 @@ namespace Ro3Emu.Server.Game;
 /// </list>
 /// Server rules the client cannot prove are marked (inferred). One realm: every member's bornAreaId is this cluster, so
 /// the server-transfer deadline (AdventureGroupServerTransferContinueTime) never applies.
-/// All routes take the default Realm reservation (LegacyMutationManifest): a group operation touches several roles.
+/// All routes take the default Realm reservation (MessageRoutes.Admit): a group operation touches several roles.
 /// </summary>
 public sealed partial class AdventureGroupService : IGameTicker
 {
@@ -101,7 +101,6 @@ public sealed partial class AdventureGroupService : IGameTicker
         tasks.QuestDelivered.Add(OnTaskDelivered);
         scene.Loaded.Add(OnSceneLoadedAsync);
         gm.Register("advguild", "create <name> | add <role name> | exp <n> | water | info | disband (Adventure Group test aid)", GmAsync);
-        loop.Add(this);
     }
 
     // ---------------------------------------------------------------- config

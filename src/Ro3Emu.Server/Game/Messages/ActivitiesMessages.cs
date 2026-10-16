@@ -4,10 +4,35 @@ using Romsg;
 
 namespace Ro3Emu.Server.Game;
 
-public sealed partial class GameMessageHandler
+/// <summary>Dungeons, the tower, daily and timed activities, festivals, training, lottery, AFK and build plans.</summary>
+public sealed class ActivitiesMessages(DailyActivityService daily, TowerService tower, ValhallaService valhalla, MonsterHuntService monsterHunt, DungeonService dungeons, DungeonMatchService dungeonMatches, WildAfkService afk, NewActivityService activities, TimedEventService timedEvents, TimedBattleService timedBattles, FestivalService festival, TrainingService training, LotteryService lottery, GenreService genre, GuildHuntingService hunting) : Messaging.IMessageModule
 {
-    private void MapActivitiesRoutes(Messaging.MessageRoutes routes)
+    private const uint SetAutoBattle = 31054;
+
+    public void Map(Messaging.MessageRoutes routes)
     {
+        routes.AdmitEconomic(id => id is >= 82800 and <= 82828); // genre build plans
+        routes.AdmitRole(id => id is NewActivityService.PassPanelMsg); // marks the session and syncs its own 5027
+        routes.Map(NewActivityService.PassPanelMsg, "pass", (session, _, _) => activities.PassPanelAsync(session));
+        routes.AdmitEconomic(id => id is >= 84061 and <= 84067); // training
+        routes.AdmitEconomic(id => id is LotteryService.DrawRequest);
+        routes.AdmitEconomic((_, id, body) => activities.IsOfflineOwnerRequest(id, body) || activities.IsEventOwnerRequest(id, body));
+        routes.AdmitEconomic((_, id, body) => festival.IsOwnerRequest(id, body));
+        routes.AdmitEconomic(timedEvents.IsOwnerRequest);
+        routes.AdmitEconomic(IsTimedBattleOwnerRequest);
+        routes.AdmitEconomic(training.IsOwnerRequest);
+        // A solo private floor (its return position, room and handoff); as Realm p99 1.2 s at 500 players.
+        // Valhalla Trials: a layer starts a solo private dungeon like a tower floor; a Blessing spends coins.
+        routes.AdmitRole(id => id is ValhallaService.Challenge);
+        routes.AdmitEconomic(id => id is ValhallaService.Pray);
+        // Monster Hunt stage claims pay their awards.
+        routes.AdmitEconomic(id => id is MonsterHuntService.GainAreaAward or MonsterHuntService.GainMonsterAward);
+        routes.AdmitRole(id => id is TowerService.Info or TowerService.SetPets or TowerService.FirstPassRange
+            or TowerService.ClaimFirstPass or TowerService.Sweep or TowerService.End or TowerService.Start);
+        routes.AdmitRole(id => id is DungeonService.SetJobPosition or DungeonService.SetGuide or DungeonService.ClaimFirstPass
+            or DungeonService.Statistics or DungeonService.StatisticsHistory or DungeonService.StatisticsCurrent
+            or DungeonService.StatisticsModule or DungeonService.QueryResult);
+
         routes.Map(82800, "genre", async (session, msgId, body) =>
         {
             await genre.RunOwnedAsync(session, () => genre.SeekAsync(session), 0, codes: true);
@@ -188,6 +213,33 @@ public sealed partial class GameMessageHandler
         {
             await timedBattles.ClaimDragonAsync(session, DragonIslandClaimRankRewardReq.Parser.ParseFrom(body.Span));
         });
+        // Survivor Battle inside the match (TimedBattleService.Chicken*): careers, landing, items, revival, giving up.
+        routes.Map(TimedBattleService.SelectCareer, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.SelectCareerAsync(session, SelectRoleCareerReq.Parser.ParseFrom(body.Span)));
+        routes.Map(TimedBattleService.SelectPosition, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.SelectPositionAsync(session, SelectRolePositionReq.Parser.ParseFrom(body.Span)));
+        routes.Map(TimedBattleService.InsertItem, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.InsertAsync(session, InsertChickenItemReq.Parser.ParseFrom(body.Span)));
+        routes.Map(TimedBattleService.UseItem, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.UseAsync(session, UseChickenItemReq.Parser.ParseFrom(body.Span)));
+        routes.Map(TimedBattleService.DiscardItem, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.DiscardAsync(session, DiscardChickenItemReq.Parser.ParseFrom(body.Span)));
+        routes.Map(TimedBattleService.PickupItem, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.PickupAsync(session, PickUpChickenItemReq.Parser.ParseFrom(body.Span)));
+        routes.Map(TimedBattleService.PickupAll, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.PickupAllAsync(session, PickUpAllChickenItemReq.Parser.ParseFrom(body.Span)));
+        routes.Map(TimedBattleService.ForceDead, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.ForceDeadAsync(session));
+        routes.Map(TimedBattleService.StartRevive, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.StartReviveAsync(session));
+        routes.Map(TimedBattleService.Relife, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.RelifeAsync(session, ChickenRelifeReq.Parser.ParseFrom(body.Span)));
+        routes.Map(TimedBattleService.RelifeOther, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.RelifeOtherAsync(session, ChickenRelifeOtherReq.Parser.ParseFrom(body.Span)));
+        routes.Map(TimedBattleService.ItemUpgrade, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.UpgradeAsync(session, ChickenItemUpgradeReq.Parser.ParseFrom(body.Span)));
+        routes.Map(TimedBattleService.ItemUpgradeAll, "timedBattles", async (session, msgId, body) =>
+            await timedBattles.UpgradeAllAsync(session));
         routes.Map(83351, "timedBattles", async (session, msgId, body) =>
         {
             await timedBattles.OnePieceInfoAsync(session, HiddenTreasureRoundInfoReq.Parser.ParseFrom(body.Span));
@@ -236,28 +288,33 @@ public sealed partial class GameMessageHandler
         {
             await dungeons.RemindAsync(session, TeamConfirmRemindersReq.Parser.ParseFrom(body.Span));
         });
-        routes.Map(MsgId.Heartbeat, "daily", async (session, msgId, body) =>
-        {
-            // C/D 16: every player's heartbeat used to be one Realm scope (S3: 10k per 5 min, the top Realm waiter,
-            // other replies queued behind it up to 2.5 s). The role's own reconciliation runs under its reservation;
-            // realm guild maintenance (at most once a second) admits its own guild keys.
-            async Task OwnAsync() { await daily.ReconcileAsync(session); await dungeons.ReconcileAsync(session); }
-            if (session.Owners is { } owners && session.Role is { } role)
-                await owners.RunSessionAsync("heartbeat",
-                    [Ownership.ReservationKey.Role(role.Id), Ownership.ReservationKey.Lifecycle(role.Id)], session, OwnAsync);
-            else await OwnAsync();
-            await guilds.ReconcileOnHeartbeatAsync();
-            await session.SendGameAsync(MsgId.Heartbeat, new Pong { ServerTimeMs = NowMs() });
-        });
         routes.Map(DailyActivityService.RingAccept, "festival", async (session, msgId, body) =>
         {
             var dailyRequest = CommonDailyActivityReq.Parser.ParseFrom(body.Span);
             if (dailyRequest.RainbowKoiBet != null) await festival.BetAsync(session, dailyRequest);
+            // Branch 200 gveHuntingQueryResult (MG_Activity.proto:310) is the Hunting Challenge's, not the Ring's.
+            else if (dailyRequest.GveHuntingQueryResult != null) await hunting.QueryResultAsync(session, dailyRequest);
             else await daily.AcceptRingAsync(session, dailyRequest);
         });
         routes.Map(DailyActivityService.StageGain, "daily", async (session, msgId, body) =>
         {
             await daily.ClaimAsync(session, StageRewardGainReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(MonsterHuntService.GainMonsterAward, "monsterHunt", async (session, msgId, body) =>
+        {
+            await monsterHunt.ClaimMonsterAsync(session, AreaConcurGainMonsterAwardReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(MonsterHuntService.GainAreaAward, "monsterHunt", async (session, msgId, body) =>
+        {
+            await monsterHunt.ClaimAreaAsync(session, AreaConcurGainAreaAwardReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(ValhallaService.Challenge, "valhalla", async (session, msgId, body) =>
+        {
+            await valhalla.ChallengeAsync(session, HeroicSpiritChallengeReq.Parser.ParseFrom(body.Span));
+        });
+        routes.Map(ValhallaService.Pray, "valhalla", async (session, msgId, body) =>
+        {
+            await valhalla.PrayAsync(session); // NullArg: the client sends no body
         });
         routes.Map(DungeonService.Confirm, "dungeons", async (session, msgId, body) =>
         {
@@ -348,5 +405,22 @@ public sealed partial class GameMessageHandler
         {
             await afk.SnapshotAsync(session);
         });
+    }
+
+    // Shared match packets retain legacy admission if either end belongs to an unconverted dungeon family.
+    private bool IsTimedBattleOwnerRequest(GameSession session, uint message, ReadOnlyMemory<byte> body)
+    {
+        if (!timedBattles.IsOwnerRequest(message, body)) return false;
+        if (message == TimedBattleService.StartMatch)
+            return !dungeonMatches.WantsEntry(StartMatchReq.Parser.ParseFrom(body.Span).MatchEntryId);
+        if (message == TimedBattleService.CancelMatch)
+        {
+            var request = CancelMatchReq.Parser.ParseFrom(body.Span);
+            return !dungeonMatches.Owns(session) && !dungeonMatches.WantsEntry(request.MatchEntryId)
+                && !dungeonMatches.WantsEntry(request.NextMatchEntry) && request.NextMatchData?.MultiDungeon == null;
+        }
+        if (message == TimedBattleService.Ready)
+            return !dungeonMatches.Owns(session) && !dungeonMatches.WantsEntry(MatchReadyReq.Parser.ParseFrom(body.Span).MatchEntryId);
+        return true;
     }
 }

@@ -106,7 +106,6 @@ public sealed partial class WorldCoreService : IGameTicker
         { Id=long.Parse(a[0]), CustomParam=new CustomParam{Tp=(CustomParam.Types.ParamType)3,LongParam=long.Parse(a[1])} }));
         gm.Register("worldleave", "seconds", (s,a) => BeginTemporaryLeaveAsync(s,int.Parse(a[0])));
         gm.Register("scenevar", "id value", (s,a) => SetSceneVariableAsync(s.WorldScene,new CommonPublicVar{VarId=int.Parse(a[0]),Vi64={long.Parse(a[1])}}));
-        loop.Add(this);
     }
 
     private long Now => clock.GetUtcNow().ToUnixTimeMilliseconds();
@@ -397,7 +396,7 @@ public sealed partial class WorldCoreService : IGameTicker
 
     private EntityBase? Entity(GameSession viewer, long id)
     {
-        if (Player(id) is { } p && Ready(p) && p.WorldScene == viewer.WorldScene && (p==viewer || viewer.Visible.Contains(p))) return GameMessageHandler.PlayerEntity(p);
+        if (Player(id) is { } p && Ready(p) && p.WorldScene == viewer.WorldScene && (p==viewer || viewer.Visible.Contains(p))) return RoleSessionService.PlayerEntity(p);
         if (viewer.VisibleUnits.FirstOrDefault(u=>u.Uid==id && u.WorldScene==viewer.WorldScene) is { } unit) return unit.Entity();
         return worldData.Npc(id) is { } npc && npc.SceneEntry==viewer.SceneEntry ? SceneService.NpcEntity(npc) : null;
     }

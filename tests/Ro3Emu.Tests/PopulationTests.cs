@@ -523,7 +523,7 @@ public sealed class PopulationTests : IDisposable
     {
         await world.JoinAsync(Player()); await population.UpdateAsync(1000);
         var bot = (PopulationUnit)world.AllUnits().First();
-        var service = new UserDataService(null!, null!, loop, null!, null!, Options.Create(options),
+        var service = new UserDataService(null!, null!, loop, null!, null!, null!, Options.Create(options),
             NullLogger<UserDataService>.Instance, population);
         var args = new Dictionary<object, object?> { ["UidFieldVersions"] = new Dictionary<object, object?>
             { [bot.Uid.ToString()] = new Dictionary<object, object?> { ["Name"] = 0L, ["Base"] = 0L } } };

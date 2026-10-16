@@ -62,24 +62,24 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         return dir?.FullName ?? throw new DirectoryNotFoundException();
     }
     private Task Teach(string name, int group) => Loop.InvokeAsync(() => { Session(name).Progress!.Skills[group] = 1; return Task.CompletedTask; });
-    private Task<MonsterUnit> Target(string name, bool stationary = false) => Loop.InvokeAsync(async () =>
+    private Task<MonsterUnit> Target(string name, bool stationary = false, int npcId = 5000001) => Loop.InvokeAsync(async () =>
     {
         var s = Session(name);
         var monsters = app.Services.GetRequiredService<MonsterService>();
         MonsterTemplate? template = null;
         if (stationary)
         {
-            template = monsters.Template(5000001);
+            template = monsters.Template(npcId);
             Assert.NotNull(template);
             template = template with { RoamDistance = 0 };
         }
-        var result = await monsters.SpawnSingleAsync(s.SceneEntry, 5000001,
+        var result = await monsters.SpawnSingleAsync(s.SceneEntry, npcId,
             new MapPoint(s.Position.X, s.Position.Y, s.Position.Z, 0), s.InstanceId, customTemplate: template);
         Assert.NotNull(result);
         return result;
     });
 
-    [Fact]
+    [ClientDataFact]
     public async Task CancelledAttachmentDuringFirstAreaHitCannotDamageNextTarget()
     {
         await using var alice = await InWorld("Alice");
@@ -131,7 +131,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         Assert.True(first.Hp < 100000);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task CancelledLeaseAfterLethalAreaHitKeepsCommittedKillConsequences()
     {
         await using var alice = await InWorld("Alice");
@@ -256,7 +256,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         await Next(alice, CombatService.SkillEnd, SkillEndNotify.Parser, e => e.SessionId == first.SessionId && e.Type == SkillEndNotify.Types.SkillEndType.Interrupted);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task AcceptedCastHitsAndPassiveUnownedAndWrongActorAreRefused()
     {
         await using var alice = await InWorld("Alice");
@@ -289,7 +289,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         Assert.Equal(ErrorCodes.SkillPassive, (await Next(alice, CombatService.UseSkill, CastSkillRsp.Parser)).Result);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task InterruptInvalidatesDelayedHitAndEchoesAutoCast()
     {
         await using var alice = await InWorld("Alice");
@@ -308,7 +308,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         await Loop.InvokeAsync(() => { Assert.Equal(hp, target.Hp); Assert.Null(Session("alice").SkillCast); return Task.CompletedTask; });
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task GroundNpcUsesRequestedPositionAndDespawnsOnTeardown()
     {
         await using var alice = await InWorld("Alice"); await using var bob = await InWorld("Bob");
@@ -324,7 +324,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         Assert.Empty(Session("alice").SkillObjects);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task HealSelectsAllyAndInsufficientSpDoesNotStartCooldown()
     {
         await using var alice = await InWorld("Alice"); await using var bob = await InWorld("Bob");
@@ -342,7 +342,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         Assert.False(Session("alice").SkillCds.ContainsKey(14001));
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task LethalHitBlocksReviveUntilDeathPublicationCompletes()
     {
         await using var alice = await InWorld("Alice");
@@ -385,7 +385,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         Assert.True(Character.Stats(player)[2000] > 0);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task PendingLethalHitCannotDeliverDuplicateKillCallbacks()
     {
         await using var alice = await InWorld("Alice");
@@ -441,7 +441,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         Assert.True(target.Dead);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task EventCastRechecksRangeAndUsesTheSharedLethalProtection()
     {
         await using var alice = await InWorld("Alice");
@@ -506,7 +506,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         Assert.Equal(1, Character.Stats(b)[2000]);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task UnifiedCastCallsMasterDamageAndHealingHooksOnce()
     {
         await using var alice = await InWorld("Alice");
@@ -549,7 +549,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         Assert.Equal(2, landed);
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task WorldTreeConsumesOneLeafAndRevivesDeadAlly()
     {
         await using var alice = await InWorld("Alice"); await using var bob = await InWorld("Bob");
@@ -575,7 +575,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         });
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task BackSlideMovesTheActorAndItsAuthoritativePosition()
     {
         await using var alice = await InWorld("Alice");
@@ -595,7 +595,7 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         await Loop.InvokeAsync(() => { Assert.Equal(moved.EndPos, session.Position); return Task.CompletedTask; });
     }
 
-    [Fact]
+    [ClientDataFact]
     public async Task ACasterStillWalkingIntoRangeIsAcceptedAndAStandingOneOutOfRangeIsNot()
     {
         // In-game 11.10: the client sends the attack on reaching range and its stop 13 ms later; the server measured
@@ -624,5 +624,46 @@ public sealed partial class SkillCombatTests : IAsyncLifetime
         await alice.SendGameAsync(MsgId.Walk, new WalkReq { Pos = arrived, Face = 180, BStop = true, SpeedRate = 1 });
         var hit = await Next(alice, CombatService.SkillHit, SkillHitInfo.Parser, p => p.SessionId == accepted.SessionId);
         Assert.Equal(target.Uid, Assert.Single(hit.Dsts).DstID);
+    }
+
+    [ClientDataFact]
+    public async Task ArcherCastAtClientRangeBoundaryHitsAnExactlyRepresentedFieldMonster()
+    {
+        // ClientB skill_13000.m_fAtkRange is 18 m. NPCConfig[5000007]._iPrefabRadius is 0,
+        // and UnitConfig[31007]._iCollisionType is None, so the client's target radius is 0.
+        await using var alice = await InWorld("Alice");
+        await Gm("alice", "!job 3100");
+        var target = await Target("alice", stationary: true, npcId: 5000007);
+        var aoi = await Next(alice, GameAoiSink.SyncAoiView, AoIViewChangeData.Parser,
+            view => view.Bases.Any(b => b.Uuid == (ulong)target.Uid));
+        var wireUid = Assert.Single(aoi.Bases, b => b.Uuid == (ulong)target.Uid).Uuid;
+        Assert.Equal(target.Uid, (long)(double)wireUid); // the client's shared-memory path uses doubles
+
+        var start = Session("alice").Position.Clone();
+        var nav = app.Services.GetRequiredService<WorldData>().Map(Session("alice").SceneEntry)!.Nav!;
+        var approach = Enumerable.Range(0, 32).Select(i => i * MathF.Tau / 32)
+            .Select(angle => (
+                Far: new Vec3 { X = start.X + 18.7f * MathF.Cos(angle), Y = start.Y,
+                    Z = start.Z + 18.7f * MathF.Sin(angle) },
+                Near: new Vec3 { X = start.X + 18f * MathF.Cos(angle), Y = start.Y,
+                    Z = start.Z + 18f * MathF.Sin(angle) }))
+            .First(p => nav.IsWalkable(p.Far.X, p.Far.Y, p.Far.Z)
+                && nav.IsWalkable(p.Near.X, p.Near.Y, p.Near.Z)
+                && nav.CanWalk(start.X, start.Y, start.Z, p.Far.X, p.Far.Z));
+
+        await alice.SendGameAsync(MsgId.Walk, new WalkReq { Pos = approach.Far, BStop = true, SpeedRate = 1 });
+        await alice.SendGameAsync(CombatService.UseSkill, new CastSkillReq { SkillId = 1300001, TargetId = (long)wireUid });
+        Assert.Equal(ErrorCodes.SkillDistance, (await Next(alice, CombatService.UseSkill, CastSkillRsp.Parser)).Result);
+
+        await alice.SendGameAsync(MsgId.Walk, new WalkReq { Pos = approach.Near, BStop = true, SpeedRate = 1 });
+        long before = target.Hp;
+        await alice.SendGameAsync(CombatService.UseSkill, new CastSkillReq { SkillId = 1300001, TargetId = (long)wireUid });
+        var accepted = await Next(alice, CombatService.UseSkill, CastSkillRsp.Parser);
+        Assert.Equal(0, accepted.Result);
+        var hit = await Next(alice, CombatService.SkillHit, SkillHitInfo.Parser, p => p.SessionId == accepted.SessionId);
+        var damage = Assert.Single(hit.Dsts);
+        Assert.Equal(target.Uid, damage.DstID);
+        Assert.True(damage.Damage > 0);
+        Assert.True(target.Hp < before);
     }
 }
