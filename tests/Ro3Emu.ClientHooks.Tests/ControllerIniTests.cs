@@ -24,6 +24,8 @@ public class ControllerIniTests
         }
         Assert.Equal(["<Gamepad>/buttonSouth"], binds["InteractiveSkill_01"]);
         Assert.Equal(["<Gamepad>/touchpadButton"], binds["QuestNav"]);
+        Assert.Equal(["<Gamepad>/buttonWest"], binds["MenuAssign"]);
+        Assert.Equal(["<Gamepad>/buttonNorth"], binds["MenuUnassign"]);
         Assert.Equal(0.2f, tune["Deadzone"]);
         Assert.Equal(6, tune.Count);
     }

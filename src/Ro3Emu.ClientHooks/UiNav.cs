@@ -18,6 +18,7 @@ namespace Ro3Emu.ClientHooks
     /// <item>D-pad / left stick: spatial focus move with hold-to-repeat; on a slider left/right changes the value.</item>
     /// <item>MenuConfirm (✕): pointer down/up/click on the focus, as a mouse click would.</item>
     /// <item>MenuBack (○): the game's own Esc (a tapped Escape key), which closes the top panel.</item>
+    /// <item>MenuAssign (□) / MenuUnassign (△) on a bag item: assign / clear a D-pad potion slot, see <see cref="ItemHotkey"/>.</item>
     /// <item>MenuTabLeft / MenuTabRight (L1/R1): previous / next toggle of the panel's top-most toggle group (tab bars).</item>
     /// <item>Right stick: scrolls the scroll view around the focus (or the panel's largest); the focus is kept in view.</item>
     /// </list>
@@ -77,6 +78,12 @@ namespace Ro3Emu.ClientHooks
                 return;
             }
             if (_focus == null || !Usable(_focus)) _focus = DefaultFocus();
+            if (!SkillBinding.InSkillPanel(FocusPanel) && !SkillBinding.Active && ItemHotkey.Tick(pad, _focus, PromptList)) // the skill window has its own MenuAssign / MenuUnassign
+            {
+                if (_focus != null) DrawRing(ScreenRect(_focus));
+                Overlay.SetPrompts(PromptList);
+                return;
+            }
             Input(pad);
             if (_focus != null) DrawRing(ScreenRect(_focus)); else HideRing();
             Prompts();
@@ -87,6 +94,7 @@ namespace Ro3Emu.ClientHooks
             if (_panel == null && (_ring == null || !_ring[0].gameObject.activeSelf)) return;
             _panel = null;
             _focus = null;
+            ItemHotkey.Cancel();
             if (_ring != null) foreach (var r in _ring) r.gameObject.SetActive(false);
             Overlay.SetPrompts(null);
         }
@@ -358,7 +366,7 @@ namespace Ro3Emu.ClientHooks
             return Math.Abs(d.x) > Math.Abs(d.y) ? new Vector2(Math.Sign(d.x), 0) : new Vector2(0, Math.Sign(d.y));
         }
 
-        private static bool Pressed(Gamepad pad, string action, string fallback)
+        internal static bool Pressed(Gamepad pad, string action, string fallback)
         {
             string path = Controller.FirstBinding(action) ?? "<Gamepad>/" + fallback;
             return Controller.Edge(pad.TryGetChildControl(path.Substring(path.IndexOf('/') + 1)) as ButtonControl, true);
@@ -584,6 +592,11 @@ namespace Ro3Emu.ClientHooks
             {
                 PromptList.Add((Control("MenuTabLeft", "leftShoulder"), ""));
                 PromptList.Add((Control("MenuTabRight", "rightShoulder"), "Tabs"));
+            }
+            if (!SkillBinding.InSkillPanel(FocusPanel) && ItemHotkey.CanStart(_focus))
+            {
+                PromptList.Add((Control("MenuAssign", "buttonWest"), "Assign"));
+                PromptList.Add((Control("MenuUnassign", "buttonNorth"), "Clear slot"));
             }
             if (ScrollFor(_focus) != null) PromptList.Add(("<Gamepad>/rightStick/up", "Scroll"));
             if (SkillBinding.InSkillPanel(FocusPanel))
