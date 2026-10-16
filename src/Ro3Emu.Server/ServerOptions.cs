@@ -235,6 +235,7 @@ public sealed class PopulationOptions
 {
     public PopulationChatOptions Chat { get; set; } = new();
     public PopulationAppearanceOptions Appearance { get; set; } = new();
+    public Game.PopulationRoleOptions Roles { get; set; } = new();
     public bool Enabled { get; set; }
     public int PerMap { get; set; } = 20;
     public int MaxTotal { get; set; } = 100;
@@ -255,6 +256,8 @@ public sealed class PopulationPreset
     public int MinLevel { get; set; } = 1;
     public int MaxLevel { get; set; } = 100;
     public int MaxEquipmentQuality { get; set; } = 6;
+    /// <summary>Behavior-role weights (explorer, hunter, socializer, crafter, merchant, rester); null keeps built-in defaults.</summary>
+    public Dictionary<string, int>? Roles { get; set; }
 }
 
 public sealed class PopulationMapOptions
@@ -294,6 +297,18 @@ public sealed class PopulationChatOptions
         ["hunt"] = ["Looking for a quiet hunting spot.", "I'll try a different patch of ground.", "Keeping an eye out for monsters.",
             "Let's not pull too many at once.", "Time for a little practice.", "I'll check the clearing over there.",
             "Better watch my footing out here.", "A short rest before the next fight.", "I could use a few more supplies.", "Staying alert out here."],
+        ["explorer"] = ["I wonder what's past that ridge.", "Haven't mapped this corner yet.", "Every path leads somewhere new.",
+            "Let's see what's over there.", "I could swear this trail used to go further.", "Found a nice view up here.",
+            "One more look around, then onward.", "There's always somewhere I haven't been.", "Marking this spot for later.", "Quiet out here. I like it."],
+        ["socializer"] = ["So, where's everyone headed next?", "Did you hear about the monsters near the old road?", "I could chat here all day.",
+            "Anyone found anything interesting lately?", "Good to see some familiar faces.", "Let's wait a bit before heading out.",
+            "That last trip was something else.", "Who's up for an adventure later?", "Nice to take it slow for once.", "Tell me if you spot anything good."],
+        ["crafter"] = ["Let's see what I can gather here.", "These materials should be useful.", "Just need a few more pieces.",
+            "Careful hands make better work.", "I think I can make something from this.", "Sorting out my supplies.",
+            "Good spot for collecting.", "Almost have everything I need.", "A bit of patience goes a long way.", "This should be enough for now."],
+        ["merchant"] = ["Just watching the crowd go by.", "Lots of travelers today.", "Prices sure have changed lately.",
+            "Waiting on a friend before I shop.", "I should check my bag again.", "Busy around here today.",
+            "Thinking about what to buy next.", "Good spot to see who's passing through.", "Window shopping, mostly.", "I'll restock before the next trip."],
         ["rest"] = ["Taking a breather.", "A little rest goes a long way.", "How's everyone's day going?", "Nice weather for adventuring.",
             "Just sorting out my plans.", "I wonder where I'll head next.", "Glad to have a moment to relax.",
             "Hope everyone's travels are going well.", "Enjoying the view for a bit.", "There's no hurry today."],

@@ -65,7 +65,7 @@ internal sealed class PopulationChatter(PopulationChatOptions options)
                 state.Recent.Enqueue(template);
                 while (state.Recent.Count > 8) state.Recent.Dequeue();
                 state.Ready = now + mapSeconds * 1000L + random.Next(0, mapSeconds * 500 + 1);
-                bot.NextChatMs = now + botSeconds * 1000L + random.Next(0, botSeconds * 500 + 1);
+                bot.NextChatMs = now + (long)((botSeconds * 1000L + random.Next(0, botSeconds * 500 + 1)) * PopulationRoles.ChatScale(bot.Behavior));
                 if (reaction != null) reactions.Consume(reaction, now);
                 lines.Add(new(bot, text, reaction?.Subject, reaction?.Subject.SceneGeneration ?? 0, reaction?.Subject.Role?.Id ?? 0, reaction?.Context == "levelup" ? reaction.Subject.Progress?.Level ?? reaction.Subject.Role?.Level ?? 1 : 0));
                 break;
