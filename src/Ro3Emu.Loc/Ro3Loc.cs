@@ -45,7 +45,7 @@ namespace Ro3Emu.Loc
         /// </summary>
         public static string Sid(string value, long sid)
         {
-            if (!string.IsNullOrEmpty(value) && value != "None" && !value.StartsWith("Not Find Key", StringComparison.Ordinal)) return value;
+            if (sid <= 0 || (!string.IsNullOrEmpty(value) && value != "None" && !value.StartsWith("Not Find Key", StringComparison.Ordinal))) return value; // sid <= 0 means "no sid": the game leaves those labels empty on purpose
             try
             {
                 string zh = null;
