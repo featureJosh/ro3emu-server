@@ -42,7 +42,8 @@ it exists** (see "How it is built").
 
 **Dev loop (use it; do not ask the player to restart or press buttons):**
 1. Build: `RO3_CLIENT_DIR="$PWD/../RO3 Launcher/Client" dotnet build src/Ro3Emu.ClientHooks` (toolchain in CLAUDE.md).
-2. `tools/linux/dev/restart-client.sh` installs the DLL (atomic rename), restarts the client and waits for the login panel.
+2. `tools/linux/dev/restart-client.sh` installs the DLL (atomic rename), restarts the client and waits for the login panel. It sets `RO3EMU_FORCE_CONTROLLER=1` (Wine passes host env
+   through umu-run), which forces controller mode for that session only; the saved `ro3emu.controller` is untouched.
 3. `cat tools/linux/dev/to-world.txt more-commands.txt | tools/linux/dev/cmd.sh` reaches the world by virtual pad.
 4. Commands, one per line, run one per frame:
    - `focus ignore` (send first: input works while the window is in the background), `verbose`.
@@ -52,6 +53,7 @@ it exists** (see "How it is built").
    - `wait <frames>`, `waitmenu <part of panel name> [seconds]`, `select <object name>`.
    - `shot <name>` -> `<client>/ro3emu/shot-<name>.png`; `tree <object> [depth]` -> `ro3emu/tree.txt`;
      `pick <x> <y>` lists the UI under a screenshot pixel.
+   - `click <object name>`: pointer click (as UiNav sends it) on the first active object of that name; for mouse-only widgets.
    - `find`, `panels`, `actions` (real Input System action names), `lua`, `luacall`.
    - Log: `~/.local/share/ro3emu/prefix/drive_c/users/steamuser/AppData/LocalLow/gravity/ro3/Player.log`.
 5. GM warp over loopback: `curl -X POST "http://127.0.0.1:5380/ro3emu/gm?account=featureJosh" --data '!warp 10101 155 55'`.

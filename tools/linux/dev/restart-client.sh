@@ -7,7 +7,7 @@ cp "$root/ro3emu-server/src/Ro3Emu.ClientHooks/bin/Debug/netstandard2.1/Ro3Emu.C
 p=$(pgrep -f '^X:.*ro3\.exe$'); [ -n "$p" ] && kill $p
 for i in $(seq 40); do pgrep -f "umu-run ./ro3.exe" >/dev/null || break; sleep 1; done
 before=$(date +%s)
-(cd "$root" && setsid nohup ./start-game.sh >/dev/null 2>&1 &)
+(cd "$root" && RO3EMU_FORCE_CONTROLLER=1 setsid nohup ./start-game.sh >/dev/null 2>&1 &)
 for i in $(seq 120); do
   if [ -f "$L" ] && [ $(stat -c %Y "$L") -ge $before ] && grep -aq "Ro3Emu.UiNav\] menu: UI_Sys_LoginPanel" "$L"; then echo "login screen after $((i*2))s"; exit 0; fi
   sleep 2

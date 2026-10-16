@@ -390,7 +390,7 @@ namespace Ro3Emu.ClientHooks
             slider.value = Mathf.Clamp(slider.value + sign * step, slider.minValue, slider.maxValue);
         }
 
-        private static void Click(Component s)
+        internal static void Click(Component s)
         {
             if (s == null || EventSystem.current == null) return;
             if (s is TMPro.TMP_InputField field) { Osk.Show(field); return; } // typing needs the on-screen keyboard
