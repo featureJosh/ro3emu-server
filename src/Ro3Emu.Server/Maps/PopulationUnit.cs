@@ -19,6 +19,7 @@ public sealed class PopulationUnit : WorldUnit
     internal long TargetExpectedHp;
     internal bool VisitingNpc, JourneyActive;
     internal int HuntKills;
+    internal AoiBehaviorStateMachineInfo? Behavior; // a running gesture, so late viewers see it too
     public long[] EquipmentLook { get; } = new long[7];
     public Dictionary<int, int> Appearances { get; } = new();
     public Dictionary<int, long> GearAttributes { get; } = new();
@@ -88,6 +89,7 @@ public sealed class PopulationUnit : WorldUnit
             entity.Property.Add(new AoIProperty { Idx = id, Data = value, BaseData = value });
         entity.EquipInfo.Add(EquipmentLook);
         entity.CurUseAppearances.Add(Appearances);
+        if (Behavior != null) entity.BehaviorStateMachineInfo = Behavior.Clone();
         foreach (var (id, amount) in new (long, long)[] { (103, Attack), (104, MagicAttack), (105, Defence), (106, MagicDefence), (109, Hit), (110, Flee), (111, Critical) })
             entity.Property.Add(new AoIProperty { Idx = id, Data = amount, BaseData = amount });
         return entity;

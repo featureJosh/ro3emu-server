@@ -7,7 +7,7 @@ using Ro3Emu.Server.Maps;
 namespace Ro3Emu.Server.Game;
 
 /// <summary>Optional ambient population. Placement and roaming are inferred offline-server policy.</summary>
-public sealed class PopulationService : IGameTicker
+public sealed partial class PopulationService : IGameTicker
 {
     // Disjoint from NPCs, monsters, stalls and tower pets; exact in the client's double UUID storage (< 2^53).
     private const long UidBase = 1L << 50;
@@ -39,6 +39,7 @@ public sealed class PopulationService : IGameTicker
         this.options = options.Value.Population; this.combat = combat; this.skills = skills;
         policy = new(data, worldData, this.options); loadouts = new(data);
         chatter = new(this.options.Chat); this.chat = chat;
+        InitReactions();
         loop.Add(this);
     }
 
@@ -190,6 +191,7 @@ public sealed class PopulationService : IGameTicker
                     have++; spawned++;
                 }
             }
+            await ReactionsPassAsync(now);
             int routeBudget = 1; // Bound pathfinding admissions per pass, even at the population ceiling.
             foreach (var bot in bots)
             {
@@ -271,7 +273,10 @@ public sealed class PopulationService : IGameTicker
             }
             if (chat != null)
                 foreach (var line in chatter.Plan(bots, scene => Settings(scene).Profile, now, chat.PopulationAudience))
+                {
                     await chat.PublishPopulationAsync(line.Bot, line.Text, line.Subject, line.SubjectGeneration, line.SubjectRole, line.SubjectLevel);
+                    NoteSpoken(line, now);
+                }
         }
         finally { gate.Release(); }
     }

@@ -5,8 +5,9 @@ namespace Ro3Emu.Server.Game;
 /// <summary>Bounded original offline chatter; never simulates player messages or real quest completion.</summary>
 internal sealed class PopulationChatter(PopulationChatOptions options)
 {
-    internal sealed record Line(PopulationUnit Bot, string Text, GameSession? Subject = null, long SubjectGeneration = 0, long SubjectRole = 0, int SubjectLevel = 0);
+    internal sealed record Line(PopulationUnit Bot, string Text, GameSession? Subject = null, long SubjectGeneration = 0, long SubjectRole = 0, int SubjectLevel = 0, string? Context = null);
     private readonly PopulationReactions reactions = new(options);
+    internal PopulationReactions Reactions => reactions;
     private sealed class MapState
     {
         public long Ready;
@@ -67,7 +68,7 @@ internal sealed class PopulationChatter(PopulationChatOptions options)
                 state.Ready = now + mapSeconds * 1000L + random.Next(0, mapSeconds * 500 + 1);
                 bot.NextChatMs = now + botSeconds * 1000L + random.Next(0, botSeconds * 500 + 1);
                 if (reaction != null) reactions.Consume(reaction, now);
-                lines.Add(new(bot, text, reaction?.Subject, reaction?.Subject.SceneGeneration ?? 0, reaction?.Subject.Role?.Id ?? 0, reaction?.Context == "levelup" ? reaction.Subject.Progress?.Level ?? reaction.Subject.Role?.Level ?? 1 : 0));
+                lines.Add(new(bot, text, reaction?.Subject, reaction?.Subject.SceneGeneration ?? 0, reaction?.Subject.Role?.Id ?? 0, reaction?.Context == "levelup" ? reaction.Subject.Progress?.Level ?? reaction.Subject.Role?.Level ?? 1 : 0, reaction?.Context));
                 break;
             }
         }
