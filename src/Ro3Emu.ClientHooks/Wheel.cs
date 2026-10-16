@@ -59,6 +59,7 @@ namespace Ro3Emu.ClientHooks
 
             Fn("Dungeons", "Dungeon"), Fn("Challenge", "Challenge"), Fn("Competition", "Competition"),
             Fn("Climb Tower", "ClimbTower"), Fn("Become Stronger", "BecomeStronger"), Fn("Profile", "Personal"),
+            Fn("School", "School"),
             Act("Settings", "ClosePanel"), new Entry("Controller", Kind.Controller),
         };
 
@@ -186,21 +187,35 @@ namespace Ro3Emu.ClientHooks
                     break;
                 case Kind.Mail:
                     // UI_Sys_Main_EmailWidgetCtrl.lua:111-147: OpenPanelDefault(UINames.UI_Sys_MailPanel) once MailNew is open.
-                    {
-                        var global = LuaPatches.Global;
-                        var ui = global?.Obf_RuA<Obf_R.Obf_ff>("Lua_UIManagerNewIns");
-                        var open = ui?.Obf_RuA<Obf_R.Obf_Ef>("OpenPanelDefault");
-                        var panel = global?.Obf_LuA<object>("UINames.UI_Sys_MailPanel");
-                        if (open == null || panel == null) { Debug.LogWarning("[Ro3Emu.Wheel] mail panel not found"); break; }
-                        open.Obf_HuA(ui, panel);
-                    }
+                    OpenPanel("UI_Sys_MailPanel");
                     break;
                 case Kind.Party:
                     // UI_Sys_Main_TeamUpWidgetCtrl.lua:864 / Logic/Team/LC_TeamHelper.lua:1227: opens the team panel by team type.
-                    CallLua("LC_TeamHelper.OpenPanelDependsTeamType");
+                    // Without a party the stock team widget has nothing to open, so fall back to the party finder the chat
+                    // opens (UI_Sys_Chat_FunctionContentWidgetCtrl.lua:3647, _openTeamPlatform).
+                    {
+                        var global = LuaPatches.Global;
+                        var type = CallLua("LC_TeamHelper.GetTeamType");
+                        var five = global?.Obf_LuA<object>("PBTeamType.TeamTypeFive");
+                        var forty = global?.Obf_LuA<object>("PBTeamType.TeamTypeForty");
+                        object have = type != null && type.Length > 0 ? type[0] : null;
+                        if (have != null && (Equals(have, five) || Equals(have, forty))) CallLua("LC_TeamHelper.OpenPanelDependsTeamType");
+                        else OpenPanel("UI_Sys_TeamPlatformPanel");
+                    }
                     break;
             }
             Debug.Log("[Ro3Emu.Wheel] pick " + entry.Label);
+        }
+
+        /// <summary>Lua_UIManagerNewIns:OpenPanelDefault(UINames.&lt;name&gt;).</summary>
+        private static void OpenPanel(string name)
+        {
+            var global = LuaPatches.Global;
+            var ui = global?.Obf_RuA<Obf_R.Obf_ff>("Lua_UIManagerNewIns");
+            var open = ui?.Obf_RuA<Obf_R.Obf_Ef>("OpenPanelDefault");
+            var panel = global?.Obf_LuA<object>("UINames." + name);
+            if (open == null || panel == null) { Debug.LogWarning("[Ro3Emu.Wheel] panel " + name + " not found"); return; }
+            open.Obf_HuA(ui, panel);
         }
 
         /// <summary>The function behind an entry: enum_FunctionType name, or enum_InputKeyFunc[action] for a hotkey (null: always open).</summary>
@@ -224,6 +239,8 @@ namespace Ro3Emu.ClientHooks
             {
                 var global = LuaPatches.Global;
                 if (global == null) return true;
+                // Task and Map are FunctionDefaultOpen: OpenFunctionPanelDefault skips the check for them (LC_FunctionHelper.lua:1023-1031).
+                if (entry.Key == "OpenTask" || entry.Key == "OpenMap") return true;
                 var id = FunctionId(entry);
                 if (id == null) return entry.Kind != Kind.Function && entry.Kind != Kind.Mail; // an unmapped function stays disabled
                 var r = CallLua("LC_FunctionHelper.CheckFunctionIsOpen", id, showTip);
@@ -294,7 +311,8 @@ namespace Ro3Emu.ClientHooks
                 if (i >= n) continue;
                 // Slice 0 is at the top, then clockwise.
                 float a = i * 2f * Mathf.PI / n;
-                Slices[i].bg.rectTransform.anchoredPosition = new Vector2(Mathf.Sin(a) * Radius, Mathf.Cos(a) * Radius);
+                // Overlay.Image pivots bottom-left, so the slice is centred by half its size.
+                Slices[i].bg.rectTransform.anchoredPosition = new Vector2(Mathf.Sin(a) * Radius - SliceW / 2f, Mathf.Cos(a) * Radius - SliceH / 2f);
                 var entry = Current(i);
                 bool on = i == _selected;
                 Slices[i].label.text = entry.Label;
