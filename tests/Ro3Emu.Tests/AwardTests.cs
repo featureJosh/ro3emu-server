@@ -129,7 +129,7 @@ public sealed class AwardTests : IAsyncLifetime
         Assert.Empty(awards.Resolve(null!, 31104).Grants); // novice trial's separate TaskConfig EXP remains
         Assert.Equal(new[] { new AwardGrant(102, 100), new AwardGrant(2, 2500) },
             awards.Resolve(null!, 2131).Grants.ToArray()); // declared but empty drop pool keeps its fixed grants
-        Assert.Throws<AwardResolutionException>(() => awards.Resolve(null!, 920160)); // absent group
+        Assert.Throws<AwardResolutionException>(() => awards.Resolve(null!, 920161)); // absent group: no MultiverseGroupConfig row 920161 (920160 is a valid fixed grant: _iValue_default 920160 -> AwardConfig 920160 _kAward [[920132,2000,1]])
         Assert.Throws<AwardResolutionException>(() => awards.Resolve(null!, 21)); // type 1, NPC drop route
         Assert.Throws<AwardResolutionException>(() => awards.Resolve(null!, 40007)); // multirow day selector
         Assert.Throws<AwardResolutionException>(() => awards.Resolve(null!, 1005)); // AwardConfig _kEXP
