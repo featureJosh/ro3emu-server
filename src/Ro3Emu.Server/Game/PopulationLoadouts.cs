@@ -5,12 +5,12 @@ using Ro3Emu.Server.Maps;
 namespace Ro3Emu.Server.Game;
 
 /// <summary>Original offline policy: visible equipment supplies real base attributes, not decorative power claims.</summary>
-internal sealed class PopulationLoadouts(GameData data)
+internal sealed partial class PopulationLoadouts(GameData data)
 {
     private JsonElement[]? equipment, wardrobe;
     internal static int QualityForLevel(int level) => level < 20 ? 2 : level < 40 ? 3 : level < 60 ? 4 : level < 80 ? 5 : 6;
 
-    public void Apply(PopulationUnit bot, int areaQuality, long seed)
+    public void Apply(PopulationUnit bot, int areaQuality, long seed, PopulationLookStyle? style = null)
     {
         var random = new Random(unchecked((int)(seed ^ (seed >> 32))));
         int quality = Math.Min(QualityForLevel(bot.Level), areaQuality);
@@ -47,6 +47,7 @@ internal sealed class PopulationLoadouts(GameData data)
                 foreach (var (derived, factor) in GameData.Pairs(conversion, ranged ? "_kAttribute2" : "_kAttribute1"))
                     raw[(int)derived] = raw.GetValueOrDefault((int)derived) + amount * factor;
         foreach (var (id, value) in raw) bot.GearAttributes[id] = (long)Math.Ceiling(value);
+        if (style != null) { ApplyStyle(bot, quality, seed, style); return; }
 
         bool Compatible(JsonElement row) => GameData.Int(row, "_iDisable") == 0 && GameData.Int(row, "_iLuxury") == 0
             && (GameData.Int(row, "_iSexNeed") == 0 || GameData.Int(row, "_iSexNeed") == bot.Gender)

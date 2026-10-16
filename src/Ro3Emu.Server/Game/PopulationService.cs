@@ -7,7 +7,7 @@ using Ro3Emu.Server.Maps;
 namespace Ro3Emu.Server.Game;
 
 /// <summary>Optional ambient population. Placement and roaming are inferred offline-server policy.</summary>
-public sealed class PopulationService : IGameTicker
+public sealed partial class PopulationService : IGameTicker
 {
     // Disjoint from NPCs, monsters, stalls and tower pets; exact in the client's double UUID storage (< 2^53).
     private const long UidBase = 1L << 50;
@@ -172,7 +172,7 @@ public sealed class PopulationService : IGameTicker
                         Home = point, X = point.X, Y = point.Y, Z = point.Z, Face = random.Next(360),
                         NextWalkMs = now + random.Next(1000, 8000), VisitingNpc = id % 3 == 0,
                     };
-                    loadouts.Apply(bot, settings.MaxQuality, id);
+                    ApplyLook(bot, settings, id);
                     bot.Hp = bot.MaxHp;
                     bot.NormalSkill = skills?.NormalAttack(bot.Career) ?? 1000001;
                     bot.AttackRange = data.Row("SkillConfig", bot.NormalSkill) is { } normal ? Math.Max(2, GameData.Int(normal, "_iDistanceMax") / 100f) : 2;

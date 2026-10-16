@@ -21,6 +21,7 @@ public sealed class PopulationUnit : WorldUnit
     internal int HuntKills;
     public long[] EquipmentLook { get; } = new long[7];
     public Dictionary<int, int> Appearances { get; } = new();
+    internal long LookSeed; // seed whose look was chosen (identity seed or a bounded distinctness variant)
     public Dictionary<int, long> GearAttributes { get; } = new();
     public long MaxHp => 200 + Level * 50L + GearAttributes.GetValueOrDefault(101);
     public long Attack => 12 + Level * 4L + GearAttributes.GetValueOrDefault(103);
