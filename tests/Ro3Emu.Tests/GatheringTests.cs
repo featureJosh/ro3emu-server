@@ -271,6 +271,9 @@ public sealed class GatheringTests : IAsyncLifetime
         await LearnMiner(alice);
         await LearnMiner(bob);
         var accounts = _app.Services.GetRequiredService<AccountStore>();
+        // The server unregisters a session whose disconnect handover hits RecoveryRequired (RoleLifecycleTests asserts
+        // sessions.All() is empty), so hold the GameSession from before the fault instead of re-resolving it.
+        var aliceSession = await OnLoop("alice", s => s);
         var failedApply = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         accounts.BeforeOwnedApplyForTest = label =>
         {
@@ -291,7 +294,7 @@ public sealed class GatheringTests : IAsyncLifetime
         Assert.Single(GatherSources());
         await Next(bob, GameAoiSink.SyncAoiView, AoIViewChangeData.Parser, v => v.LeaveAoi.Contains(node.Uuid));
         Assert.Equal(Ro3Emu.Server.Game.Ownership.RoleOwnerState.RecoveryRequired,
-            await OnLoop("alice", s => s.Owner!.State));
+            await _app.Services.GetRequiredService<GameLoop>().InvokeAsync(() => Task.FromResult(aliceSession.Owner!.State)));
         // C/D quarantine deliberately requires process recovery; no stale snapshot is allowed to reconnect/save.
         await alice.DisposeAsync();
         await bob.DisposeAsync();
