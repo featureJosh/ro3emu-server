@@ -51,6 +51,11 @@ namespace Ro3Emu.ClientHooks
                     case "select":
                         if (parts.Length > 1) UiNav.Select(parts[1]);
                         break;
+                    case "click":
+                        // "click <object name>": the first active object of that name gets the same pointer click UiNav sends,
+                        // so tests are not stuck on mouse-only widgets (buttons, ClickEvent links, cells).
+                        if (parts.Length > 1) ClickNamed(parts[1]);
+                        break;
                     case "verbose":
                         Verbose = parts.Length < 2 || parts[1] != "off";
                         break;
@@ -103,6 +108,19 @@ namespace Ro3Emu.ClientHooks
             {
                 Debug.LogError("[Ro3Emu.Diag] " + line + " failed: " + e);
             }
+        }
+
+        private static void ClickNamed(string name)
+        {
+            Component best = null;
+            foreach (var rt in UnityEngine.Object.FindObjectsOfType<RectTransform>())
+            {
+                if (rt.name != name || !rt.gameObject.activeInHierarchy) continue;
+                var target = (Component)rt.GetComponent<Selectable>() ?? rt;
+                if (best == null || target is Selectable && !(best is Selectable)) best = target;
+            }
+            if (best == null) { Debug.Log("[Ro3Emu.Diag] click " + name + ": no active object of that name"); return; }
+            UiNav.Click(best);
         }
 
         /// <summary>"pick x y" (screenshot pixels, origin top-left): every visible UI graphic under that point.</summary>

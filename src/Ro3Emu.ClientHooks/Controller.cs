@@ -41,16 +41,23 @@ namespace Ro3Emu.ClientHooks
         private static float _zoomLast, _scroll;
         private static Vector2 _cursorRest;
 
+        private static bool _loggedForce;
+        private static bool Saved => _enabled ??= PlayerPrefs.GetInt(PrefKey, 0) == 1;
+
         /// <summary>Cursor mode is on (the pad drives the mouse).</summary>
         public static bool CursorOn => _cursor;
 
-        /// <summary>The "Controller" mode is chosen (saved in PlayerPrefs).</summary>
+        /// <summary>Dev switch: RO3EMU_FORCE_CONTROLLER=1 (tools/linux/dev/restart-client.sh sets it) turns controller mode on for
+        /// the session without touching the saved setting, so automated tests reach the pad-driven menus whatever the player chose.</summary>
+        private static readonly bool Forced = Environment.GetEnvironmentVariable("RO3EMU_FORCE_CONTROLLER") == "1";
+
+        /// <summary>The "Controller" mode is chosen (saved in PlayerPrefs), or forced for the session.</summary>
         public static bool Enabled
         {
-            get => _enabled ??= PlayerPrefs.GetInt(PrefKey, 0) == 1;
+            get => Forced || Saved;
             set
             {
-                if (Enabled == value) return;
+                if (Saved == value) return;
                 _enabled = value;
                 PlayerPrefs.SetInt(PrefKey, value ? 1 : 0);
                 PlayerPrefs.Save();
@@ -65,6 +72,7 @@ namespace Ro3Emu.ClientHooks
             try
             {
                 bool on = Enabled;
+                if (Forced && !_loggedForce) { _loggedForce = true; Debug.Log("[Ro3Emu.Controller] controller mode forced by RO3EMU_FORCE_CONTROLLER (saved: " + (Saved ? 1 : 0) + ")"); }
                 UpdateEdges();
                 if (on) ControllerSkin.Tick();
                 ControllerHud.Tick(on);
@@ -509,7 +517,7 @@ namespace Ro3Emu.ClientHooks
                 list.Obf_luA<long, Obf_R.Obf_ff>(ControllerMode, card);
                 card.Obf_luA<string, long>("m_iMode", ControllerMode);
             }
-            if (Enabled && (mode == null || Same(mode, _fashion))) _select.Obf_HuA(self, ControllerMode);
+            if (Saved && (mode == null || Same(mode, _fashion))) _select.Obf_HuA(self, ControllerMode);
         }
     }
 }
