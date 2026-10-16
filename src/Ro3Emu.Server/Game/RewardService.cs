@@ -224,7 +224,7 @@ public sealed class RewardService
             for (int r = 0; r < rolls; r++)
             {
                 if (_random.NextDouble() * 1_000_000 >= chance) continue;
-                for (int i = 0; i < picks; i++) PickFromGroup(group, progress, drops, bound);
+                PickFromGroup(group, progress, drops, bound, picks);
             }
         }
     }
@@ -290,10 +290,8 @@ public sealed class RewardService
         return goods.GroupBy(g => (g.Entry, g.Bind)).Select(g => (g.Key.Entry, g.Sum(x => x.Count), g.Key.Bind)).ToList();
     }
 
-    private void PickFromGroup(long group, GameSession player, List<(int, int)> drops, List<(int Entry, int Count, int Bind)>? bound = null)
-        => PickFromGroup(group, player.Progress!, drops, bound);
-
-    private void PickFromGroup(long group, RoleProgress progress, List<(int, int)> drops, List<(int Entry, int Count, int Bind)>? bound = null)
+    /// <summary>Takes up to <paramref name="picks"/> DISTINCT rows of a drop group, by weight without replacement (a repeated draw would duplicate one row).</summary>
+    private void PickFromGroup(long group, RoleProgress progress, List<(int, int)> drops, List<(int Entry, int Count, int Bind)>? bound = null, int picks = 1)
     {
         if (data.Row("DropGroupConfig", group) is not { } rows) return;
         var p = progress;
@@ -305,6 +303,8 @@ public sealed class RewardService
             return !r.TryGetProperty("_iJobLimit", out var jobs) || jobs.ValueKind != JsonValueKind.Array || jobs.GetArrayLength() == 0
                    || jobs.EnumerateArray().Any(j => GameData.Number(j) == p.Career);
         }).ToList();
+        for (int pick = 0; pick < picks && candidates.Count > 0; pick++)
+        {
         long total = candidates.Sum(r => GameData.Int(r, "_iWeights"));
         if (total <= 0) return;
         long roll = (long)(_random.NextDouble() * total);
@@ -316,7 +316,9 @@ public sealed class RewardService
             int entry = (int)GameData.Int(r, "_kDropItem"), amount = Math.Max(1, count);
             drops.Add((entry, amount));
             bound?.Add((entry, amount, (int)GameData.Int(r, "_iBind")));
-            return;
+            candidates.Remove(r);
+            break;
+        }
         }
     }
 
