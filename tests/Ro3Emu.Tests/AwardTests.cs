@@ -116,6 +116,22 @@ public sealed class AwardTests : IAsyncLifetime
         Assert.Contains(grants, g => g.Entry is 2020120 or 2030120 or 2050120 or 2500120);
     }
 
+    [Theory]
+    [InlineData(3100, new[] { 2110120 })]                          // Archer: only serial 7 (bow) is job-eligible
+    [InlineData(2100, new[] { 2090120, 2500120 })]                 // serials 6 + 9
+    [InlineData(1100, new[] { 2020120, 2030120, 2050120, 2500120 })] // serials 2, 3, 4, 9
+    public void Task10101210RewardGrantsEachEligibleRowOnce(int career, int[] expected)
+    {
+        // DropPoolConfig 31121 slot 1 = [121121, 1000000, 1, 10]: up to 10 DISTINCT rows of the career kit, never ten copies.
+        var awards = new AwardService(_app.Services.GetRequiredService<GameData>());
+        for (int i = 0; i < 200; i++)
+        {
+            var grants = awards.ResolveForProgress(new RoleProgress { Level = 10, Career = career }, 31121).Grants;
+            Assert.Equal(expected.OrderBy(x => x), grants.Select(g => g.Entry).OrderBy(x => x));
+            Assert.All(grants, g => Assert.Equal(1, g.Count));
+        }
+    }
+
     [Fact]
     public void FixedPlaybookEmptyAndUnresolvedPolicies()
     {
