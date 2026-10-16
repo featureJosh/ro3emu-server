@@ -86,6 +86,7 @@ list supported file names and sizes. The radial menu now opens a Controller page
 rebinding, conflict warnings, and editable UI scale, glyph scale, camera speed, cursor speed, and dead zone. Both
 features still need a live client pass at 1080p and 4K. The remaining targeting, skill layers, rebuilt menus, and
 full play-session items below are still open.
+Cooldown-ready flash and low-HP orb pulse now build from the stock HUD state; their timing and look need that pass too.
 
 ## HUD polish (player feedback 2026-10-15)
 

@@ -50,10 +50,11 @@ namespace Ro3Emu.ClientHooks
             public RectTransform Rect;
             public Image Icon, Cd, Glyph, Frame, Flash;
             public TextMeshProUGUI CdText, Count;
+            public bool Cooling;
         }
 
         private static RectTransform _root;
-        private static Image _hpFill, _spFill, _plate, _plateEdge;
+        private static Image _hpFill, _spFill, _hpRing, _plate, _plateEdge;
         private static TextMeshProUGUI _hpText, _spText;
         private static readonly List<Slot> Skills = new List<Slot>(), Potions = new List<Slot>();
         private static readonly List<Source> SkillSources = new List<Source>(), PotionSources = new List<Source>();
@@ -83,6 +84,12 @@ namespace Ro3Emu.ClientHooks
             Layout();
             _hpFill.fillAmount = _hp.value;
             _hpText.text = Mathf.RoundToInt(_hp.value * 100f) + "%";
+            if (_hpRing != null)
+            {
+                float pulse = _hp.value < 0.25f ? 0.4f + 0.6f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4f)) : 0f;
+                _hpRing.color = Color.Lerp(ControllerSkin.Get("orb_frame", null) != null ? Color.white : Gold,
+                    new Color(1f, 0.16f, 0.12f), pulse);
+            }
             if (_sp != null) { _spFill.fillAmount = _sp.value; _spText.text = Mathf.RoundToInt(_sp.value * 100f) + "%"; }
             for (int i = 0; i < Skills.Count; i++) Fill(Skills[i], i < SkillSources.Count ? SkillSources[i] : null);
             for (int i = 0; i < Potions.Count; i++) Fill(Potions[i], i < PotionSources.Count ? PotionSources[i] : null);
@@ -221,12 +228,15 @@ namespace Ro3Emu.ClientHooks
             slot.Icon.enabled = has;
             slot.Glyph.sprite = src != null ? Glyphs.For(Controller.FirstBinding(src.Action)) : null;
             slot.Glyph.enabled = slot.Glyph.sprite != null;
-            if (!has) { slot.Cd.enabled = false; slot.CdText.text = ""; if (slot.Count != null) slot.Count.text = ""; return; }
-            if (Pressed(src.Action)) Punch.Play(slot.Rect, 1.18f, slot.Flash);
+            if (!has) { slot.Cooling = false; slot.Cd.enabled = false; slot.CdText.text = ""; if (slot.Count != null) slot.Count.text = ""; return; }
+            bool pressed = Pressed(src.Action);
+            if (pressed) Punch.Play(slot.Rect, 1.18f, slot.Flash);
             if (slot.Icon.sprite != src.Icon.sprite) slot.Icon.sprite = src.Icon.sprite;
             bool disabled = src.Disabled != null && src.Disabled.gameObject.activeInHierarchy;
             slot.Icon.color = disabled ? new Color(0.45f, 0.45f, 0.45f) : Color.white;
             bool cd = src.CdOn != null && src.CdOn.activeInHierarchy && (src.CdFill == null || src.CdFill.fillAmount > 0f);
+            if (slot.Cooling && !cd && !pressed) Punch.Play(slot.Rect, 1.12f, slot.Flash);
+            slot.Cooling = cd;
             slot.Cd.enabled = cd;
             if (cd && src.CdFill != null)
             {
@@ -329,6 +339,7 @@ namespace Ro3Emu.ClientHooks
             ControllerSkin.Bind(shine, "orb_glass", Shapes.Circle);
             var ring = Img("Ring", frame, Shapes.Ring, Gold, 0, 0, OrbSize);
             ControllerSkin.Bind(ring, "orb_frame", Shapes.Ring);
+            if (side < 0) _hpRing = ring;
             label = Overlay.Text("Value", frame, 24);
             label.alignment = TextAlignmentOptions.Center;
             Place(label.rectTransform, 0, 0, OrbSize, OrbSize);
@@ -349,9 +360,11 @@ namespace Ro3Emu.ClientHooks
             slot.Cd.fillMethod = Image.FillMethod.Radial360;
             slot.Cd.fillOrigin = (int)Image.Origin360.Top;
             slot.Cd.fillClockwise = false;
+            ControllerSkin.Bind(slot.Cd, "slot_cooldown_mask", Shapes.RoundedRect);
             slot.Frame = Img("Frame", slot.Rect, Shapes.RoundedRing, Gold, 0, 0, size);
             ControllerSkin.Bind(slot.Frame, potion ? "potion_frame" : "slot_frame", Shapes.RoundedRing);
             slot.Flash = Img("Flash", slot.Rect, Shapes.RoundedRect, new Color(1f, 0.93f, 0.75f, 0f), 0, 0, size);
+            ControllerSkin.Bind(slot.Flash, "slot_ready_flash", Shapes.RoundedRect);
             slot.Flash.enabled = false;
             slot.CdText = Overlay.Text("Seconds", slot.Rect, size * 0.38f);
             slot.CdText.alignment = TextAlignmentOptions.Center;
