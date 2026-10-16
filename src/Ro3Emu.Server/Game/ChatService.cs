@@ -22,6 +22,9 @@ public sealed class ChatService(GmCommands gm, FeedbackService feedback, GuildSt
     /// <summary>Player chat commands ("/pass week"): the first word, any case, and the rest of the line. Never shown to others.</summary>
     public Dictionary<string, Func<GameSession, string, Task>> PlayerCommands { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>A player's ordinary map-chat line was accepted (population body language; content is not passed).</summary>
+    public List<Action<GameSession>> LocalChatSent { get; } = new();
+
     public const uint ImUserSig = 77001;
     public const uint JoinChannel = 77002;
     public const uint TunnelUp = 77010;
@@ -365,6 +368,7 @@ public sealed class ChatService(GmCommands gm, FeedbackService feedback, GuildSt
             recipients = recipients.Where(p => GuildAllowed(p, req.ReceiveId)).ToList();
         }
         if (req.ChatType != ChatTypePrivate) Remember(message, sender);
+        if (local) foreach (var handler in LocalChatSent) handler(sender);
         log.LogInformation("Chat {Name} -> {Target} ({Count} recipient(s)): {Text}", sender.Role.Name, req.ReceiveId, recipients.Count, req.Content);
 
         await DownAsync(sender, Cmd.SendText, new SendTextChatMessageResponse { ChatResult = true, Msg = message });

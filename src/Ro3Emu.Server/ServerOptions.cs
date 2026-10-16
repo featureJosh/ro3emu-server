@@ -236,6 +236,7 @@ public sealed class PopulationOptions
     public PopulationChatOptions Chat { get; set; } = new();
     public PopulationAppearanceOptions Appearance { get; set; } = new();
     public Game.PopulationRoleOptions Roles { get; set; } = new();
+    public PopulationGestureOptions Gestures { get; set; } = new();
     public bool Enabled { get; set; }
     public int PerMap { get; set; } = 20;
     public int MaxTotal { get; set; } = 100;
@@ -277,6 +278,10 @@ public sealed class PopulationChatOptions
     public string Mode { get; set; } = "quiet";
     public bool GreetingsEnabled { get; set; } = true;
     public bool LevelUpReactionsEnabled { get; set; } = true;
+    public bool HealReactionsEnabled { get; set; } = true;
+    public bool ReviveReactionsEnabled { get; set; } = true;
+    public bool SharedFightReactionsEnabled { get; set; } = true;
+    public bool BossReactionsEnabled { get; set; } = true;
     public int GreetingCooldownSeconds { get; set; } = 600;
     public Dictionary<string, string[]> Phrases { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     internal static readonly IReadOnlyDictionary<string, string[]> DefaultPhrases = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
@@ -288,6 +293,19 @@ public sealed class PopulationChatOptions
             "Another level! Well done, {player}.", "Looking stronger, {player}!", "Keep it up, {player}!",
             "Level {level} already? Nice, {player}!", "Great progress, {player}!", "Way to go, {player}!",
             "Happy level-up, {player}!", "Well earned, {player}!"],
+        ["thanks"] = ["Thanks for the support, {player}!", "Much appreciated, {player}!", "That helped a lot, thanks!",
+            "Thank you, {player}!", "I owe you one, {player}.", "Feeling better already. Thanks!", "Cheers, {player}!",
+            "You're a lifesaver, {player}.", "Thanks, that was close!", "Kind of you, {player}. Thanks!"],
+        ["revived"] = ["Thanks for picking me up, {player}!", "Back on my feet. Thank you!", "I owe you big time, {player}.",
+            "Phew, thanks for the rescue!", "That was embarrassing. Thanks, {player}!", "You saved my trip, {player}.",
+            "Thank you! I'll be more careful.", "Good as new. Thanks, {player}!", "Never thought I'd be so glad to see you, {player}!",
+            "Thanks for not leaving me there!"],
+        ["sharedfight"] = ["Nice hit, {player}!", "Good teamwork, {player}!", "We make a good team!", "That one went down fast.",
+            "Thanks for the help, {player}!", "Nice timing, {player}!", "Well fought!", "Great finish, {player}!",
+            "Couldn't have done it better myself.", "Good fight, {player}!"],
+        ["boss"] = ["Is that a boss over there?", "Careful, something big is nearby!", "Looks like a boss showed up.",
+            "Anyone else see that? That's a big one.", "I'd bring friends before taking that on.", "Better keep my distance from that one.",
+            "That looks dangerous!", "A boss, here? Stay sharp!", "I think I'll watch from a safe distance.", "Whoa, that's a tough-looking monster."],
         ["travel"] = ["Let's see where this path goes.", "Still a little way to go.", "I like taking the scenic route.",
             "Time to stretch my legs.", "Wonder what's around the next corner.", "Taking a different route today.",
             "A good day for a walk.", "There's always another place to explore.", "No need to rush.", "Onward!"],

@@ -20,6 +20,7 @@ public sealed class PopulationUnit : WorldUnit
     internal bool VisitingNpc, JourneyActive;
     internal int HuntKills;
     internal Game.PopulationRole Behavior; internal bool RoleIdle; internal MapPoint? LookAt; internal Game.PopulationCluster? Cluster;
+    internal AoiBehaviorStateMachineInfo? Gesture; // a running gesture, so late viewers see it too
     public long[] EquipmentLook { get; } = new long[7];
     public Dictionary<int, int> Appearances { get; } = new();
     internal long LookSeed; // seed whose look was chosen (identity seed or a bounded distinctness variant)
@@ -90,6 +91,7 @@ public sealed class PopulationUnit : WorldUnit
             entity.Property.Add(new AoIProperty { Idx = id, Data = value, BaseData = value });
         entity.EquipInfo.Add(EquipmentLook);
         entity.CurUseAppearances.Add(Appearances);
+        if (Gesture != null) entity.BehaviorStateMachineInfo = Gesture.Clone();
         foreach (var (id, amount) in new (long, long)[] { (103, Attack), (104, MagicAttack), (105, Defence), (106, MagicDefence), (109, Hit), (110, Flee), (111, Critical) })
             entity.Property.Add(new AoIProperty { Idx = id, Data = amount, BaseData = amount });
         return entity;

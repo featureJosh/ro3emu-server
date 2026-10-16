@@ -39,6 +39,7 @@ public sealed partial class PopulationService : IGameTicker
         this.options = options.Value.Population; this.combat = combat; this.skills = skills;
         policy = new(data, worldData, this.options); loadouts = new(data);
         chatter = new(this.options.Chat); this.chat = chat;
+        InitReactions();
         loop.Add(this);
     }
 
@@ -192,6 +193,7 @@ public sealed partial class PopulationService : IGameTicker
                     have++; spawned++;
                 }
             }
+            await ReactionsPassAsync(now);
             int routeBudget = 1; // Bound pathfinding admissions per pass, even at the population ceiling.
             foreach (var bot in bots)
             {
@@ -274,7 +276,10 @@ public sealed partial class PopulationService : IGameTicker
             }
             if (chat != null)
                 foreach (var line in chatter.Plan(bots, scene => Settings(scene).Profile, now, chat.PopulationAudience))
+                {
                     await chat.PublishPopulationAsync(line.Bot, line.Text, line.Subject, line.SubjectGeneration, line.SubjectRole, line.SubjectLevel);
+                    NoteSpoken(line, now);
+                }
         }
         finally { gate.Release(); }
     }

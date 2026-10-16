@@ -3,9 +3,9 @@ using Ro3Emu.Server.Maps;
 namespace Ro3Emu.Server.Game;
 
 /// <summary>Observed nearby player events only. No human state is changed and offline events are never replayed.</summary>
-internal sealed class PopulationReactions(PopulationChatOptions options)
+internal sealed partial class PopulationReactions(PopulationChatOptions options)
 {
-    internal sealed record Reaction(GameSession Subject, string Context);
+    internal sealed record Reaction(GameSession Subject, string Context, object? Event = null);
     private sealed class Visitor
     {
         public long LastSeen, GreetingReady, LevelReady, PendingReady, PendingUntil, Generation;
@@ -16,7 +16,7 @@ internal sealed class PopulationReactions(PopulationChatOptions options)
     }
     private readonly Dictionary<long, Visitor> visitors = new();
     internal int Count => visitors.Count;
-    public void Clear() => visitors.Clear();
+    public void Clear() { visitors.Clear(); ClearEvents(); }
     internal static bool Nearby(PopulationUnit bot, GameSession player) => !player.Dead
         && MathF.Pow(player.Position.X - bot.X, 2) + MathF.Pow(player.Position.Z - bot.Z, 2) <= 12 * 12;
 
@@ -57,6 +57,7 @@ internal sealed class PopulationReactions(PopulationChatOptions options)
             if (visitor.PendingUntil < now || visitor.Pending == "greeting" && !options.GreetingsEnabled
                 || visitor.Pending == "levelup" && !options.LevelUpReactionsEnabled) visitor.Pending = null;
         }
+        ObserveEvents(now, enabled);
     }
 
     public Reaction? Find(PopulationUnit bot, IEnumerable<GameSession> audience, long now)
@@ -65,11 +66,12 @@ internal sealed class PopulationReactions(PopulationChatOptions options)
             if (visitors.TryGetValue(player.Role!.Id, out var visitor) && visitor.Map == bot.RuntimeMap && visitor.Generation == player.SceneGeneration
                 && visitor.Pending != null && visitor.PendingReady <= now && visitor.PendingUntil >= now)
                 return new(player, visitor.Pending);
-        return null;
+        return FindEvent(bot, audience, now);
     }
 
     public void Consume(Reaction reaction, long now)
     {
+        if (reaction.Event != null) { ConsumeEvent(reaction, now); return; }
         if (reaction.Subject.Role == null || !visitors.TryGetValue(reaction.Subject.Role.Id, out var visitor)) return;
         visitor.Pending = null;
         visitor.GreetingReady = now + Math.Clamp(options.GreetingCooldownSeconds, 60, 3600) * 1000L;

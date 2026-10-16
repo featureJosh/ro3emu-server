@@ -6,6 +6,9 @@ namespace Ro3Emu.Server.Game;
 
 public sealed partial class CombatService
 {
+    /// <summary>A bot's hit landed on a monster (PopulationService shared-fight observation; no rewards).</summary>
+    internal Action<PopulationUnit, MonsterUnit>? PopulationHit { get; set; }
+
     /// <summary>Simulated solo combat uses the normal formula/packets but has no economic or quest recipient.</summary>
     internal async Task PopulationAttackAsync(PopulationUnit bot, MonsterUnit monster, int skillId, long now)
     {
@@ -35,6 +38,7 @@ public sealed partial class CombatService
             var (damage, result) = Damage(attacker, defender, row);
             monster.Hp = Math.Max(0, monster.Hp - damage);
             bot.TargetExpectedHp = monster.Hp;
+            if (damage > 0) PopulationHit?.Invoke(bot, monster);
             bool killed = monster.Hp == 0;
             // Reserve death synchronously; player/tower casts already reject zero HP before reward admission.
             if (killed) { monster.Dead = true; bot.HuntKills++; bot.Target = null; }
