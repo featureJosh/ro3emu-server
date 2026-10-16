@@ -96,7 +96,9 @@ public sealed partial class CombatService
             // A normal-attack swing never blocks: the auto-attack loop starts one every cycle, so treating it as busy
             // refused every skill while auto-attacking (player report). Skills interrupt the swing (inferred).
             else if (s.SkillCast is { Cancelled: false } active && Now < active.StartMs + active.ChantMs + active.ActionMs
-                && GameData.Int(active.Row, "_iIsNormalAtk") != 1
+                && GameData.Int(active.Row, "_iIsNormalAtk") != 1 && !CastMayBeInterrupted(active, group)) error = ErrorCodes.SkillBusy;
+            else if (s.SkillCast is { Cancelled: false } active2 && Now < active2.StartMs + active2.ChantMs + active2.ActionMs
+                && GameData.Int(active2.Row, "_iIsNormalAtk") != 1
                 && GameData.Int(row.Value, "_bCancelCast") == 0) error = ErrorCodes.SkillBusy;
             else error = ValidateTarget(s, row.Value, req, origin, owned == null ? WalkSlack(s) : 0);
         }
@@ -396,6 +398,19 @@ public sealed partial class CombatService
         await buffs.SpendEnergyAsync(s, row);
         return Current();
     }
+
+    /// <summary>
+    /// Client rule (LC_Skill_RunTimeContext.SkillCanInterrupted / GetSkillCanInterrupted): by the running skill's
+    /// _iInterruptedType, 1 = any other skill may cut in but the same skill never restarts it, 2 = anything may cut in
+    /// only once the hit point has passed, every other value (0, 3, 4, 5, 99) = not interruptible. Without this a
+    /// zero-cooldown skill spammed faster than its action time restarted the cast before its hit (player report).
+    /// </summary>
+    private static bool CastMayBeInterrupted(ActiveSkillCast active, int incomingGroup) => GameData.Int(active.Row, "_iInterruptedType") switch
+    {
+        1 => GameData.Int(active.Row, "_iSkillID") != incomingGroup,
+        2 => active.Resolved,
+        _ => false,
+    };
 
     private async Task StartCastAsync(GameSession s, JsonElement row, CastSkillReq req, long id, SkillObject? actor = null)
     {
