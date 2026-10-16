@@ -184,7 +184,7 @@ public sealed class PhonestChannel : IAsyncDisposable
             {
                 _log.LogWarning("{Remote}: {Bytes} bytes queued, the client is not reading; closing the connection",
                     Remote, Interlocked.Read(ref _queuedBytes));
-                Abort();
+                AbortReset(); // RST: a graceful FIN would wait for a peer that is not reading
             }
             return Task.CompletedTask;
         }
