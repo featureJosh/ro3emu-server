@@ -56,6 +56,28 @@ Release builds and 53 focused cases plus two real-data/initialization smoke chec
 These are best-effort nearby flavor responses. Client presentation and two-player LAN still need acceptance;
 healing, resurrection, shared combat, boss reactions, emotes and party integration remain planned.
 
+## Implemented increment: round pop-r1 (2026-10-16)
+
+Five parallel workstreams (`wf/pop-density`, `wf/pop-roles`, `wf/pop-reactions`, `wf/pop-appearance`,
+`wf/pop-companions`), each reviewed before merging. Release build clean; 593 server tests pass, including 42 new
+population tests. The same 10 tests that need exported game data fail on the base commit too. Nothing here has
+in-game or two-player LAN acceptance yet. Settings are in the [usage guide](../guide/offline-population.md).
+
+- [x] Density: gradual automatic despawn with hysteresis, landmark clearance around NPCs/portals/Kafras/born points,
+  `CompanionReserve`, live reload of `Ro3Emu:Population`, `!bots status` density line and `!bots stats`.
+- [x] Appearance: seeded plain / town fashion / distinctive styles weighted per area, fashion slots (clothing, face
+  accessory, mouth, foot), nearby distinctness. Hair color has no protocol/config channel.
+- [x] Roles: explorer, hunter, socializer, crafter, merchant, rester; role-driven destinations and pauses, town social
+  groups, role chat weighting and packs.
+- [x] Reactions and gestures: shared-fight and boss lines; wave, sit and face-the-speaker through the emote state
+  machine. Heal/buff/revive thanks are wired but inactive until bots are valid friendly-skill targets; wave ID inferred.
+- [x] Party companions (off by default): `!bots recruit` or a normal invite, real roster entry, follow/stay/assist/
+  passive, owner-only commands, disconnect grace, cleanup on leave/disband/relog, wait outside private dungeons.
+  Companions never land killing blows, so the human's kill settles once and bots receive nothing.
+
+Still open from these milestones: per-viewer render budgets, weighting looks by role, retreat/focus-target commands,
+companion combat roles, monsters targeting companions, and companions entering instances (milestone 4).
+
 ## Recommended sequence
 
 | Order | Milestone | Main benefit | Depends on |
@@ -75,12 +97,12 @@ healing, resurrection, shared combat, boss reactions, emotes and party integrati
 - [ ] Give each profile a target count, job/level mix, activity mix, chat frequency and allowed spawn/activity zones.
 - [x] Resolve settings in a clear order: map override, area-type preset, server default. Let owners disable any map.
 - [ ] Apply public-map targets per occupied line; private-dungeon targets apply per eligible instance, not per viewer.
-- [ ] Keep a global ceiling, reserve capacity for recruited companions, and share remaining capacity fairly across
+- [x] Keep a global ceiling, reserve capacity for recruited companions, and share remaining capacity fairly across
   occupied maps. A busy city must not consume the entire budget and leave a friend's map empty.
 - [ ] Add a nearby render budget that respects client detail settings and prioritizes human players and party members.
-- [ ] Adjust populations gradually, with spawn/despawn delays and hysteresis. Keep models near useful landmarks
+- [x] Adjust populations gradually, with spawn/despawn delays and hysteresis. Keep models near useful landmarks
   without blocking portals, doorways, quest NPCs or the player's camera.
-- [ ] Expose reloadable settings and operator readouts: actual count, target, profile, budget and missing-nav reasons.
+- [x] Expose reloadable settings and operator readouts: actual count, target, profile, budget and missing-nav reasons.
   Future controls should support editing a particular map without changing every occupied map.
 
 Illustrative tuning targets, to be adjusted after performance and visual testing:
@@ -107,7 +129,7 @@ instances remain isolated; lowering a target cleans up gradually; the global lim
   requires an appropriately strong bot in suitable content. A visiting high-level human must not turn a level-1
   area into a crowd of legendary adventurers. Real equipped gear must contribute to the bot's combat attributes;
   cosmetic overrides must not disguise weak bots as endgame characters.
-- [ ] **Randomized appearance presets:** vary hairstyles, supported hair colors, faces where available, outfits,
+- [x] **Randomized appearance presets:** vary hairstyles, supported hair colors, faces where available, outfits,
   visible weapons/equipment, headgear and cosmetics. Use valid exported client appearance IDs and respect
   gender, job, level and model compatibility; avoid arbitrary combinations that fail to render.
 - [ ] Weight appearance pools by region and role: plain beginner gear, recognizable class equipment, town fashion,
@@ -117,16 +139,16 @@ instances remain isolated; lowering a target cleans up gradually; the global lim
   Pure cosmetic variation must not grant items or stats; functional equipped gear already contributes real base attributes.
 
 
-- [ ] Assign behavior profiles such as explorer, hunter, socializer, crafter, merchant and resting adventurer.
+- [x] Assign behavior profiles such as explorer, hunter, socializer, crafter, merchant and resting adventurer.
   Give towns more social roles and fields more hunters, with varied pauses and routes rather than synchronized loops.
 - [ ] Add editable, localized phrase packs with personality, context, weights and cooldowns. Include casual
   conversation, location comments and brief party-oriented lines. Use the proper bot sender/profile identity.
 - [x] Support nearby chat first. Respect visibility, mute preferences, per-bot cooldowns and a per-map message budget.
   Avoid repeating a recent phrase or broadcasting the same event once for every spectator.
 - [x] Greet nearby newcomers and congratulate observed level gains, with shared player cooldowns and no catch-up queue.
-- [ ] Expand actual-event reactions: thank a player for healing,
+- [x] Expand actual-event reactions: thank a player for healing,
   acknowledge being revived, notice a nearby boss, or comment after a shared fight. Continue with further observable player events; healing/revival reactions activate as bot-friendly targeting and companion support land.
-- [ ] Add waves, sitting, turning to face a speaker and short pauses. Reactions should not interrupt combat
+- [x] Add waves, sitting, turning to face a speaker and short pauses. Reactions should not interrupt combat
   or movement constantly. Greeting the same player repeatedly should have a long cooldown.
 - [x] Offer quiet/normal/chatty settings and a complete chat-off switch. Dialogue remains optional flavor.
 
@@ -141,18 +163,18 @@ produces one response, not one per viewer; muted or disabled chat produces no me
 
 ## 3. Temporary party companions — most useful gameplay feature
 
-- [ ] Let players recruit compatible bots through an explicit interaction or normal invitation flow, then dismiss
+- [x] Let players recruit compatible bots through an explicit interaction or normal invitation flow, then dismiss
   them easily. Start with a small configurable allowance and always respect the existing client party limit.
-- [ ] Represent bots throughout the real party roster, portraits, profiles, HP/SP bars, targeting and invitation
+- [x] Represent bots throughout the real party roster, portraits, profiles, HP/SP bars, targeting and invitation
   lifecycle. They should not need fake account logins or persistent player inventories to appear as teammates.
 - [ ] Add follow, stay, assist, passive and retreat controls, then focus-target and role assignment. A companion's
   human owner controls it; define leader delegation and LAN ownership so players cannot command each other's bots accidentally.
 - [ ] Use loose formations and staggered movement. Handle obstacles, height layers, getting stuck and catching up.
   Follow the owner's actual map/line/instance transition after admission, without joining another party's instance.
 - [ ] Provide tank, healer/support and damage roles, with appropriate job selection and clear level scaling.
-- [ ] Define death, resurrection, disconnect grace, dismissal and party-leader departure. Clean up memberships,
+- [x] Define death, resurrection, disconnect grace, dismissal and party-leader departure. Clean up memberships,
   targets, timers and actor state together; do not leave ghost party members after a relog or server shutdown.
-- [ ] Define rewards before enabling companion kills: use the existing human party's eligibility and durable
+- [x] Define rewards before enabling companion kills: use the existing human party's eligibility and durable
   settlement rules, grant rewards once, and never create rewards for the ephemeral bot itself. Preserve the
   current no-player-rewards policy for unrelated ambient bot kills.
 
@@ -217,5 +239,6 @@ bots do not leak private-instance state or consume real-player admission slots.
   visibility, reward attribution and chat cooldowns; perform in-game and two-player LAN acceptance separately.
 - [ ] Keep defaults conservative, provide a clear off switch, and document implemented options as they ship.
 
-Next increments should refine density controls and appearance pools, then add personality/activity roles and further player-event reactions to nearby chatter. Party companions should be delivered as a complete roster/follow/ownership lifecycle before
+Next increments: make bots valid friendly-skill targets (activates heal/revive thanks), companion retreat/focus and
+combat roles (milestone 5), then persistent identity seeds (milestone 6). Party companions should be delivered as a complete roster/follow/ownership lifecycle before
 enabling dense private-dungeon combat.

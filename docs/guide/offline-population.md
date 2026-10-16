@@ -15,11 +15,15 @@ On the current main server, enter a public map and type in chat:
 - `!bots 20` — use a uniform target of 20 per occupied public map/line.
 - `!bots map 3` / `!bots map off` — override the current map ID across its public lines.
 - `!bots map reset` — remove the current map's runtime override.
-- `!bots status` — show total population/limit and the current map's profile, target, level range and rarity cap.
+- `!bots status` — show total population/limit and the current map's profile, target, level range and rarity cap,
+  plus a role-mix line and a density line (actual / target / allocated, pending despawns, and why a map has none).
+- `!bots stats` — totals per map/line (eight shown), pending despawns, path failures, chat lines in the last minute,
+  last pass time and settings reloads.
 - `!bots chat off/quiet/normal/chatty` — set the server-wide chatter cadence.
 - `!bots mute` / `!bots unmute` — hide/restore bot chatter for your current login session.
 - `!bots off` — remove all inhabitants immediately, including maps with runtime overrides.
 - `!bots reset` — restore startup settings and clear all runtime map overrides.
+- `!bots recruit`, `!bots dismiss [all]`, `!bots follow|stay|assist|passive` — party companions, when enabled (see below).
 
 Commands use the existing GM account policy (`!help` lists the command). Runtime changes last until restart;
 `!bots map` does not enable a disabled master switch. `!bots on` removes the uniform override but preserves
@@ -57,7 +61,10 @@ explicit profile override. These are inferred policies, not official RO3 classif
 
 Count precedence is runtime map override, runtime uniform override, configured map count, then profile count
 (or `PerMap` when `UseMapProfiles=false`). Level/rarity settings resolve map override before profile defaults.
-Changing file settings requires a server restart; live file reload is future work.
+`Ro3Emu:Population` changes in the server's **output-folder** `appsettings.json` (for example
+`src/Ro3Emu.Server/bin/Release/net10.0/appsettings.json`) apply without a restart when `ReloadOnChange` is true
+(the default). A missing section or malformed value is rejected and the current settings stay; runtime `!bots`
+overrides keep precedence until `!bots reset`. A reload replaces `Maps`/`Profiles` with exactly what the file says.
 
 Or enable profiles with configuration arguments:
 
@@ -68,8 +75,15 @@ dotnet run --project src/Ro3Emu.Server -c Release -- \
 
 Disabled by default. Per-map targets clamp to 0–100 and the total ceiling to 0–500; a zero ceiling disables
 spawning. At most eight new actors spawn per simulation pass by default. Smaller targets receive a fair share
-of the global budget before busy maps fill the remaining space. Reductions and shutdown remove actors immediately;
-gradual despawning remains planned. Small/obstructed areas can hold fewer actors; missing navigation means none.
+of the global budget before busy maps fill the remaining space. Automatic reductions (fair share moving to a newly
+occupied line, a reloaded lower target or a larger `CompanionReserve`) are gradual: a map/line must stay over budget for
+`DespawnDelaySeconds` (10, 0–600; 0 = immediate), then at most `MaxDespawnsPerTick` (2, 1–100) leave per pass, out-of-sight
+and idle bots first, and that map's refill waits one more delay. `!bots N`, `!bots map N/off`, `!bots off`, empty or
+disabled maps, a lowered `MaxTotal` and shutdown still remove at once. `CompanionReserve` (0, 0–100) is kept free under
+`MaxTotal`, so ambient bots use at most `MaxTotal − CompanionReserve`.
+`LandmarkClearance` (4 map units, 0–30; 0 = off) keeps spawns and pause destinations away from NPC, portal and Kafra
+stand points, portal/Kafra landing points and born/revive points; NPC visits stop just outside it, facing the NPC.
+Per-viewer render budgets are not implemented: they would need the client's detail settings. Small/obstructed areas can hold fewer actors; missing navigation means none.
 No external AI service or internet is used.
 
 ## Levels, appearances and real equipment
@@ -93,7 +107,18 @@ Each actor receives a stable seeded look for its lifetime: compatible default-un
 and optional non-luxury headgear from level 20. Headgear rarity cannot exceed the bot's allowed and worn rarity,
 and effect-bearing headgear is excluded. Automatic premium outfits, wings, mounts and glow effects are excluded;
 beginner bots therefore cannot masquerade as legendary adventurers. AOI and profile responses use the same look.
-Hair colors, supported faces, regional fashion pools and persistent identity seeds remain planned.
+With `Population:Appearance:Enabled` (default true) each bot rolls one style from its seed: **plain** (hair and job
+gear), **town fashion** or rare **distinctive**. Weights are per preset under
+`Population:Appearance:Profiles:<city|town|field|remote>:{Plain,Fashion,Distinctive}` (defaults 35/58/7, 45/50/5,
+80/18/2, 65/30/5; unknown presets use the field weights). Fashion slots are clothing, face accessory, mouth and foot.
+Only default-unlocked, non-luxury, effect-free, sex/model-compatible wardrobe rows are used unless
+`UnlockableFashion=true` adds non-luxury collectible fashion. Wings, mounts, glows and luxury rows are never used.
+Fashion rarity is capped by the area, the bot's worn gear rarity and common (3); distinctive looks prefer higher rarity
+within those caps. A bot avoids the hair/face-accessory/outfit/weapon combination of another bot within
+`DistinctRadius` (30) on the same map/line, re-rolling up to `DistinctRetries` (4, max 8) seed variants; a re-roll can
+also pick different level-appropriate gear. Cosmetic slots never change stats. Hair color cannot vary: neither the
+protocol nor `WardRobeConfig` has a color or dye channel. Exported data may have few default-unlocked fashion rows,
+in which case crowds differ mainly by hair, weapon and headgear. Persistent identity seeds remain planned.
 
 ## Behavior and limits
 
@@ -136,10 +161,10 @@ At exceptionally small total limits some maps still cannot receive an actor. Bot
 actors and use the server-unit AOI path; they have their own bounded population and do not use the real-player
 view-limit/rebalancer. Lower profile/map counts or use `!bots 5` if the client renders too many models.
 
-Bots have no accounts or saved progression. They do not accept parties, sell items or support the full
-player social/inspection workflow. Their profile explicitly disables party invitations. Levels and gear are
+Bots have no accounts or saved progression. They do not sell items or support the full player social/inspection
+workflow. Their profile disables party invitations unless party companions are enabled (below). Levels and gear are
 simulated progression based on area difficulty, not saved characters. A restart clears all bots.
-Companions, shops, full quest chains and advanced skill behavior remain future work.
+Shops, full quest chains and advanced skill behavior remain future work.
 ## Nearby chatter
 
 Enabled bots use **quiet** chatter by default. Messages use the bot's real profile UID over the existing
@@ -160,7 +185,7 @@ immediately repeating. Removed/empty population maps release their chatter state
 
 Original offline phrase packs cover travel, NPC stops, town pauses, hunting and resting. This is flavor,
 not conversation with a language model or evidence that a bot completed a quest. Nearby greetings and observed
-base-level gains also produce bounded reactions (below). Healing/revival reactions remain planned.
+base-level gains also produce bounded reactions (below). Shared fights, nearby bosses and support from players also produce reactions (below).
 Text does not interrupt movement or combat.
 
 Configure packs under `Ro3Emu.Population.Chat` before restart:
@@ -177,7 +202,8 @@ Configure packs under `Ro3Emu.Population.Chat` before restart:
 }
 ```
 
-Available keys are `travel`, `npc`, `town`, `hunt`, `rest`, `greeting`, `levelup`.
+Available keys are `travel`, `npc`, `town`, `hunt`, `rest`, `greeting`, `levelup`, `thanks`, `revived`, `sharedfight`,
+`boss`, and the role packs `explorer`, `socializer`, `crafter`, `merchant`.
 Reaction packs can use `{player}` and `{level}` placeholders; names are reduced to plain text. Use at least nine distinct lines per context for
 sustained variation. Each configured context replaces its built-in pack; omitted contexts use the English
 defaults. Blank text, control characters and text over 180 characters are ignored.
@@ -210,6 +236,63 @@ configuration. `!bots chat off` and personal `!bots mute` also suppress reaction
 combat state is changed. Short-lived observations store IDs/levels rather than player-session references, retain
 at most 2,048 visitors and expire after the greeting cooldown plus two minutes away; turning the population off clears
 them. Saved identities and durable per-player preferences remain future work.
+
+### Shared fights, bosses and support
+
+These reuse the greeting/level-up budgets, delays, mute and chat-off rules. Each event produces at most one line from
+one bot, however many bots or LAN viewers are nearby. Switches under `Ro3Emu.Population.Chat`, all `true` by default:
+
+- `SharedFightReactionsEnabled` (`sharedfight`, accepts `{player}`): a bot and a nearby player both damaged a monster
+  that died within 20 units of the bot. One comment 2 s after the kill, expiring after 30 s, at most once per player
+  every two minutes.
+- `BossReactionsEnabled` (`boss`, no placeholder): a living NPCConfig subtype 3/4 monster within 30 units of a bot.
+  One line per boss spawn per map/line; maps are scanned every 5 s. Which subtype is field boss versus MVP is inferred.
+- `HealReactionsEnabled` (`thanks`) and `ReviveReactionsEnabled` (`revived`): thanks for a player's heal/buff or
+  revive. **Inactive today:** friendly skills can only target players, so nothing triggers them until bots become
+  valid friendly-skill targets.
+
+### Behavior roles
+
+Each bot gets one stable role at spawn: explorer, hunter, socializer, crafter (stands beside gathering points, never
+collects), merchant (idles near Kafra/function NPCs facing passers-by, never trades) or rester. Cities and towns favour
+socializers, merchants and resters; fields favour hunters and explorers; remote maps mostly explorers. Set
+`Population:Profiles:<area>:Roles` (for example `{"hunter": 5, "explorer": 2}`) to replace an area's mix; unknown keys
+are ignored and an all-zero mix uses the defaults. Roles choose destinations, hunting willingness and randomized pauses
+(merchants and resters stand longest), so bots drift out of step. Town socializers form groups of 2 to
+`Population:Roles:ClusterSize` (3, 2–4) on a small ring, facing the centre, at most eight groups per map. Socializers
+chat more often and hunters less, within the existing chat budgets. `Population:Roles:Enabled=false` restores the
+original journey loop for newly spawned bots; `SocialClusters=false` turns off groups only.
+
+### Gestures
+
+`Ro3Emu.Population.Gestures`: `Enabled` (true), `FaceSpeakers` (true), `WaveEmojiId` (50001, inferred),
+`WaveChancePercent` (50), `SitEmojiId` (50002), `SitChancePercent` (35); an ID of 0 disables that gesture. A bot turns
+toward a player it greets and may wave; up to two idle bots within 12 units turn toward a player who speaks in map chat
+(once per speaker every 10 s) and pause about 3 s; resting bots may sit and stand up before walking on. Gestures never
+start while a bot moves, routes or fights, and end within one pass if that changes. Emote IDs missing from
+`PerformanceConfig`, the wrong sex, or maps marked `_iPerformanceForbidden` are skipped. Gestures are world state every
+viewer sees; `!bots mute` affects chat only. Wave ID 50001 is a guess that needs an in-game check.
+
+## Party companions (optional)
+
+Off by default. Enable with `"Population": { "Companions": { "Enabled": true, "MaxPerPlayer": 1, "RecruitRange": 20,
+"DisconnectGraceSeconds": 60 } }` (`MaxPerPlayer` 0–4, so the party never exceeds five).
+
+- `!bots recruit`: the nearest ambient bot within `RecruitRange` joins your party (one is spawned beside you if none is
+  near); a party is created with you as leader if you have none. Inviting a visible bot through the normal party
+  invite also works; it accepts at once.
+- `!bots follow` / `!bots stay`: follow with a loose offset, or hold position. `!bots assist` (default) /
+  `!bots passive`: help against monsters fighting you, or never attack.
+- `!bots dismiss` / `!bots dismiss all`: remove your companion(s). `!bots off` removes companions as well.
+
+Only the owner commands a companion; party friends see it in the roster and the world. The leader can kick it; it
+never leads, and leadership always passes to a human. It teleports beside you beyond 40 units or after three failed
+paths, reappears beside you after map/line changes, and waits outside private dungeons (shown as away). Dungeon and
+match admission count humans only; a merged match party drops companions. If you disconnect, the companion disappears
+and leaves the party after the grace period; leaving the party or the last human leaving dismisses it at once. It
+revives 30 s after dying. Companions never land killing blows (their damage stops at 1 HP), so your own kill grants
+the normal reward once; bots never receive rewards and do not count toward the party EXP bonus. Monsters do not target
+companions yet. Companions are not capped by `MaxTotal`; set `CompanionReserve` to keep ambient bots plus companions under it.
 
 ## Protocol evidence and validation
 
