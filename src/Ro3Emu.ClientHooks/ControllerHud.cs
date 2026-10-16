@@ -25,7 +25,7 @@ namespace Ro3Emu.ClientHooks
     public static class ControllerHud
     {
         internal const string SkillWidget = "UI_Sys_Main_JoyStickSkillWidget_PC(Clone)";
-        private const string PropsWidget = "UI_Sys_Main_PropsWidget_PC(Clone)";
+        internal const string PropsWidget = "UI_Sys_Main_PropsWidget_PC(Clone)";
         private const string AvatarWidget = "UI_Sys_Main_AvatarInfoWidget_PC(Clone)";
 
         // Skill slots in button order (the HUD's left-to-right order follows the bound control).

@@ -26,7 +26,8 @@ namespace Ro3Emu.ClientHooks
 # press, <Gamepad>/touchpadButton, the one control the defaults leave free; also in the radial menu as Go to Quest),
 # CameraZoom (hold, then right stick up/down). In menus: MenuConfirm, MenuBack, MenuTabLeft, MenuTabRight
 # (D-pad / left stick move the focus, right stick scrolls). In the skill window: MenuAssign (focused skill, then press a
-# skill button to bind it to that slot) and MenuUnassign (then press a skill button to unbind that slot).
+# skill button to bind it to that slot) and MenuUnassign (then press a skill button to unbind that slot). MenuAssign /
+# MenuUnassign also work on bag items: assign the item to, or clear, a D-pad potion slot.
 # Tuning: CameraSpeedX / CameraSpeedY (negative inverts), CursorSpeed (pixels per second), Deadzone (0-1),
 # GlyphScale (button glyph size relative to the key label it replaces), UiScale (size of our controller UI).
 
