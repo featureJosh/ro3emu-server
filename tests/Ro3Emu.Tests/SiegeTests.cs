@@ -20,7 +20,9 @@ public sealed class SiegeTests : IAsyncLifetime
     private static readonly TimeSpan Wait = TimeSpan.FromSeconds(12);
     private sealed class Clock : TimeProvider
     {
-        private long seconds = At(2026, 10, 14, 20, 29, 59);
+        // Siege window: data/config/DailyActivityConfig.json id 115 (_iID), _kDay [3] Wednesday, _kTime [2100, 2130] = 21:00-21:30.
+        // 2026-10-14 is a Wednesday; start one second before the window opens.
+        private long seconds = At(2026, 10, 14, 20, 59, 59);
         public override DateTimeOffset GetUtcNow() => DateTimeOffset.FromUnixTimeSeconds(Interlocked.Read(ref seconds));
         public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
         public void Set(long value) => Interlocked.Exchange(ref seconds, value);
@@ -142,7 +144,7 @@ public sealed class SiegeTests : IAsyncLifetime
         await using var defense = await Bot("SiegeSeedDef");
         long ga = await Guild(gm, "SgSeedA"), gd = await Guild(defense, "SgSeedD");
         await gm.JoinChatAsync("4_1");
-        clock.Set(At(2026, 10, 14, 20, 30, 25));
+        clock.Set(At(2026, 10, 14, 21, 0, 25));
         await gm.SendChatAsync("4_1", 2, $"!siege seed 1001 {ga} {gd}", channelIndex: 4);
         await Next(gm, GmCommands.BroadcastNotify, BroadCastNotify.Parser);
         var panel = await Base(gm, currentCity: 1001);
@@ -158,32 +160,32 @@ public sealed class SiegeTests : IAsyncLifetime
         await using var gm = await Bot("SiegeGm");
         await using var guest = await Bot("SiegeGuest");
         await gm.JoinChatAsync("4_1"); await guest.JoinChatAsync("4_1");
-        clock.Set(At(2026, 10, 14, 20, 30, 25));
-        Assert.Equal(At(2026, 10, 14, 20, 30), (await Base(gm, state: SiegeCityActivityState.Fighting)).SiegeBaseInfo.BattleInfos[1001].StartTime);
+        clock.Set(At(2026, 10, 14, 21, 0, 25));
+        Assert.Equal(At(2026, 10, 14, 21, 0), (await Base(gm, state: SiegeCityActivityState.Fighting)).SiegeBaseInfo.BattleInfos[1001].StartTime);
         await guest.SendChatAsync("4_1", 2, "!siege open", channelIndex: 4);
         Assert.Contains("not enabled", (await Next(guest, GmCommands.BroadcastNotify, BroadCastNotify.Parser)).Content);
         await gm.SendChatAsync("4_1", 2, "!siege open", channelIndex: 4);
         Assert.Contains("Fighting", (await Next(gm, GmCommands.BroadcastNotify, BroadCastNotify.Parser)).Content);
-        Assert.Equal(At(2026, 10, 14, 20, 30), (await Base(gm, state: SiegeCityActivityState.Fighting)).SiegeBaseInfo.BattleInfos[1001].StartTime);
-        clock.Set(At(2026, 10, 14, 20, 30, 26));
+        Assert.Equal(At(2026, 10, 14, 21, 0), (await Base(gm, state: SiegeCityActivityState.Fighting)).SiegeBaseInfo.BattleInfos[1001].StartTime);
+        clock.Set(At(2026, 10, 14, 21, 0, 26));
         await gm.SendChatAsync("4_1", 2, "!siege open", channelIndex: 4);
         Assert.Contains("Fighting", (await Next(gm, GmCommands.BroadcastNotify, BroadCastNotify.Parser)).Content);
-        Assert.Equal(At(2026, 10, 14, 20, 30), (await Base(gm, state: SiegeCityActivityState.Fighting)).SiegeBaseInfo.BattleInfos[1001].StartTime);
+        Assert.Equal(At(2026, 10, 14, 21, 0), (await Base(gm, state: SiegeCityActivityState.Fighting)).SiegeBaseInfo.BattleInfos[1001].StartTime);
         await gm.SendChatAsync("4_1", 2, "!siege close", channelIndex: 4);
         Assert.Contains("NotOpen", (await Next(gm, GmCommands.BroadcastNotify, BroadCastNotify.Parser)).Content);
-        Assert.Equal(At(2026, 10, 21, 20, 30), (await Base(gm, state: SiegeCityActivityState.NotOpen,
-            starts: At(2026, 10, 21, 20, 30))).SiegeBaseInfo.BattleInfos[1001].StartTime);
+        Assert.Equal(At(2026, 10, 21, 21, 0), (await Base(gm, state: SiegeCityActivityState.NotOpen,
+            starts: At(2026, 10, 21, 21, 0))).SiegeBaseInfo.BattleInfos[1001].StartTime);
         await gm.SendGameAsync(30400, new EnterDungeonReq { SceneEntry = 2230101,
             InitData = new DungeonInitData { SiegeInitData = new SiegeInitData { CityId = 1001 } } });
         Assert.Equal(ErrorCodes.TerritoryWarClosed, (await Next(gm, 30400, EnterDungeonRsp.Parser)).Result);
         clock.Set(At(2026, 10, 14, 21, 30));
         await gm.SendChatAsync("4_1", 2, "!siege close", channelIndex: 4);
         Assert.Contains("NotOpen", (await Next(gm, GmCommands.BroadcastNotify, BroadCastNotify.Parser)).Content);
-        Assert.Equal(At(2026, 10, 21, 20, 30), (await Base(gm, state: SiegeCityActivityState.NotOpen,
-            starts: At(2026, 10, 21, 20, 30))).SiegeBaseInfo.BattleInfos[1001].StartTime);
-        clock.Set(At(2026, 10, 21, 20, 30));
+        Assert.Equal(At(2026, 10, 21, 21, 0), (await Base(gm, state: SiegeCityActivityState.NotOpen,
+            starts: At(2026, 10, 21, 21, 0))).SiegeBaseInfo.BattleInfos[1001].StartTime);
+        clock.Set(At(2026, 10, 21, 21, 0));
         Assert.Equal(SiegeCityActivityState.Fighting, (await Base(gm, state: SiegeCityActivityState.Fighting,
-            starts: At(2026, 10, 21, 20, 30))).SiegeBaseInfo.BattleInfos[1001].ActivityState);
+            starts: At(2026, 10, 21, 21, 0))).SiegeBaseInfo.BattleInfos[1001].ActivityState);
     }
 
     [Fact]
@@ -193,7 +195,7 @@ public sealed class SiegeTests : IAsyncLifetime
         await using var defense = await Bot("SiegeSeniorDef");
         long ga = await Guild(attack, "SgSAtk"), gd = await Guild(defense, "SgSDef");
         var guilds = Service<GuildStore>();
-        long start = At(2026, 10, 14, 20, 30);
+        long start = At(2026, 10, 14, 21, 0);
         await OnLoop(async () =>
         {
             var wars = Service<TerritoryWarsService>();
@@ -249,7 +251,7 @@ public sealed class SiegeTests : IAsyncLifetime
         Assert.Equal(1001, panel.SiegeBaseInfo.CurrentCityId);
         Assert.Equal(ga, panel.SiegeBaseInfo.BattleInfos[1001].AttackGuildInfo.Guid);
         Assert.Equal(gd, panel.SiegeBaseInfo.BattleInfos[1001].DefenseGuildInfo.Guid);
-        clock.Set(At(2026, 10, 14, 20, 30));
+        clock.Set(At(2026, 10, 14, 21, 0));
         await OnLoop(Service<TerritoryWarsService>().ReconcileAsync);
         await outsider.SendGameAsync(30400, new EnterDungeonReq { SceneEntry = 2230101 });
         Assert.Equal(ErrorCodes.FeatureUnavailable, (await Next(outsider, 30400, EnterDungeonRsp.Parser)).Result);
@@ -294,7 +296,7 @@ public sealed class SiegeTests : IAsyncLifetime
         await Next(defense, MsgId.EntitySelf, EntitySelf.Parser);
         // CombatService's action tail uses MonsterService.NowMs (real time), not this test's window clock.
         await Task.Delay(1200);
-        clock.Set(At(2026, 10, 14, 20, 31));
+        clock.Set(At(2026, 10, 14, 21, 1));
         await OnLoop(Service<TerritoryWarsService>().ReconcileAsync);
         var point = Service<WorldData>().Map(2230101)!.Points[44];
         await OnLoop(async () =>
