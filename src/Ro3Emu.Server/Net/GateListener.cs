@@ -13,6 +13,7 @@ public abstract class GateListener(IPAddress address, int port, ILogger log, Dia
     private readonly AsyncLocal<GameLoop.CompletionReservation?> _serveCompletion = new();
     private long _nextServeId;
     private bool _stopping;
+    private Socket? _listener;
     public bool DrainSucceeded { get; private set; } = true;
     public int OutstandingServeTasks { get { lock (_servesGate) return _serves.Count; } }
     protected ILogger Log { get; } = log;
@@ -27,11 +28,25 @@ public abstract class GateListener(IPAddress address, int port, ILogger log, Dia
     protected virtual void OnCleanupFailed(PhonestChannel channel, Exception error) { }
     protected GameLoop.CompletionReservation? CurrentServeCompletion => _serveCompletion.Value;
 
+    // Bind before StartAsync returns: under .NET 10 ExecuteAsync's bind/listen is not complete when StartAsync returns,
+    // so a client connecting right after StartAsync was refused (observed: ConnectAsync 'Connection refused').
+    public override Task StartAsync(CancellationToken cancellationToken)
+    {
+        var bound = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+        try
+        {
+            bound.Bind(new IPEndPoint(address, port));
+            bound.Listen(512); // a realm start is a burst of connects (Kestrel's default backlog too)
+        }
+        catch { bound.Dispose(); throw; }
+        _listener = bound;
+        return base.StartAsync(cancellationToken);
+    }
+
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        using var listener = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-        listener.Bind(new IPEndPoint(address, port));
-        listener.Listen(512); // a realm start is a burst of connects (Kestrel's default backlog too)
+        using var listener = Interlocked.Exchange(ref _listener, null);
+        if (listener is null) return; // stopped before ExecuteAsync ran; StopAsync disposed the socket
         Log.LogInformation("{Name} listening on {Address}:{Port}", Name, address, port);
         try
         {
@@ -69,6 +84,7 @@ public abstract class GateListener(IPAddress address, int port, ILogger log, Dia
     {
         lock (_servesGate) _stopping = true;
         await base.StopAsync(cancellationToken);
+        Interlocked.Exchange(ref _listener, null)?.Dispose();
         Task[] outstanding;
         lock (_servesGate)
         {
