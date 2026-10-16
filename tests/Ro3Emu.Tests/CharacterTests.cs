@@ -560,7 +560,7 @@ public sealed class CharacterTests : IAsyncLifetime
         var skills = await Next(alice, SkillService.SkillDataSync, DBSkillDataIncrement.Parser,
             m => m.HasCurrentAtkSkillId);
         Assert.Equal(1299901, skills.CurrentAtkSkillId);
-        Assert.Equal(1299901, skills.SkillWheel.All.AtkSkillId);
+        Assert.Equal(1299901, skills.SkillWheel.Inc.AtkSkillId); // job change is an increment: the wheel arrives as `inc`, not `all`
     }
 
     [Fact]
