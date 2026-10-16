@@ -6,18 +6,20 @@ namespace Ro3Emu.ClientHooks
     /// <summary>
     /// Auto-path to the tracked quest with the pad. On PC the player clicks the quest in the main UI tracker; that click is
     /// UI_Sys_Main_TeamUp_Task_ListWidgetCtrl._onClickFrame (re/clientB/lua-src/UI/Main/Controllers/
-    /// UI_Sys_Main_TeamUp_Task_ListWidgetCtrl.lua:1527-1672). This repeats its logic for the quest the tracker shows first
-    /// (or the one it last selected, asset "MainSelectTaskID"), calling the same game functions:
+    /// UI_Sys_Main_TeamUp_Task_ListWidgetCtrl.lua:1568-1672). This repeats its logic for the quest the tracker shows first
+    /// (or the one it last selected, asset "MainSelectTaskID"), from LC_TaskHelper.GetCurrentMainTrackTask
+    /// (LC_TaskHelper.lua:1113; finished quests come first), calling the same game functions:
     /// <list type="bullet">
-    /// <item>Running quest (lua:1543-1558): LC_TaskHelper.IsRunningTaskOpen(info) (Logic/Task/LC_TaskHelper.lua:2816),
-    /// then LC_TaskHelper.DealFollow(info) (LC_TaskHelper.lua:1365-1427; runs the quest's track steps, which start the
-    /// auto-path), then MainSelectTaskID = id; if it is not open, the tracker's tip (UIWords 35029).</item>
-    /// <item>Finished quest (lua:1613-1636): lc_interactactions.PathFindingNormal(map, npc, 9, ...) to the hand-in NPC
-    /// (config GetDeliverTask), or LC_TaskHelper.SendTaskGetward for hand-in by UI.</item>
+    /// <item>Running quest (lua:1585-1620): LC_TaskHelper.IsRunningTaskOpen(info) (Logic/Task/LC_TaskHelper.lua:2816; call at lua:1587),
+    /// then LC_TaskHelper.DealFollow(info) (lua:1596; LC_TaskHelper.lua:1365-1427; runs the quest's track steps, which start the
+    /// auto-path), then MainSelectTaskID = id (lua:1608); if it is not open, the tracker's tip (UIWords 35029, lua:1617).</item>
+    /// <item>Finished quest (lua:1622-1651): lc_interactactions.PathFindingNormal(map, npc, 9, ...) (lua:1633;
+    /// Logic/Interact/LC_InteractActions.lua:1501) to the hand-in NPC
+    /// (config GetDeliverTask), or LC_TaskHelper.SendTaskGetward (lua:1645) for hand-in by UI.</item>
     /// </list>
-    /// Not repeated: the tutorial-guide event (_onTryDispatchGuideTaskRunningEvent) and the failed-quest branch (opens the
-    /// quest panel). Cancelling: moving with the stick starts the game's own joystick move, which cancels the auto-path
-    /// (LC_Actor_ControlMove.lua:548-557, UserCancel), so nothing is added here.
+    /// Not repeated: the tutorial-guide event (_onTryDispatchGuideTaskRunningEvent) and the failed-quest branch (lua:1652-1668, opens the
+    /// quest panel). Cancelling: not added here. The game's joystick move start cancels an auto-path
+    /// (LC_Actor_ControlMove.lua:548-557, UserCancel); that the pad's MoveForward/... actions reach it is an in-game check.
     /// </summary>
     internal static class QuestNav
     {
