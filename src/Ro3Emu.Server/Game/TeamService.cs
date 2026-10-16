@@ -101,7 +101,7 @@ public sealed partial class TeamService : IGameTicker
 
     /// <summary>Authoritative roster, including offline members; dungeon admission must not silently omit them.</summary>
     public IReadOnlyList<long> MembersOf(long role) =>
-        _byMember.TryGetValue(role, out var team) ? team.Members.ToArray() : [role];
+        _byMember.TryGetValue(role, out var team) ? Humans(team).ToArray() : [role]; // companions wait outside admission
 
     public Task CreateAsync(GameSession s, TeamCreateReq req) =>
         RunTeamAsync(s, "team/create", () => CreateCoreAsync(s, req));
@@ -140,6 +140,7 @@ public sealed partial class TeamService : IGameTicker
     private async Task InviteCoreAsync(GameSession s, InviteIntoTeamReq req)
     {
         long self = s.Role!.Id;
+        if (IsCompanion(req.Guid)) { await InviteCompanionCoreAsync(s, req.Guid); return; }
         var target = Session(req.Guid);
         // Codes as (inferred from their texts).
         int code = !_byMember.TryGetValue(self, out var team) ? ErrorCodes.NotInParty
@@ -213,6 +214,7 @@ public sealed partial class TeamService : IGameTicker
             : team!.Leader != self ? ErrorCodes.NoPermission
             : req.TargetGuid == self || req.Oper is not (TeamOperationType.TeamOperTypeKick or TeamOperationType.TeamOperTypeChangeLeader or TeamOperationType.TeamOperTypeAppointViceLeader or TeamOperationType.TeamOperTypeRemovalViceLeader) ? ErrorCodes.Parameter
             : !team.Members.Contains(req.TargetGuid) ? ErrorCodes.MemberLeft
+            : IsCompanion(req.TargetGuid) && req.Oper != TeamOperationType.TeamOperTypeKick ? ErrorCodes.Parameter
             : req.Oper == TeamOperationType.TeamOperTypeAppointViceLeader && team.ViceLeaders.Count >= 7 && !team.ViceLeaders.Contains(req.TargetGuid) ? ErrorCodes.PartyFull
             : req.Oper == TeamOperationType.TeamOperTypeRemovalViceLeader && !team.ViceLeaders.Contains(req.TargetGuid) ? ErrorCodes.Parameter : 0;
         bool ok = code == 0;
@@ -257,7 +259,7 @@ public sealed partial class TeamService : IGameTicker
 
     private async Task RemoveAsync(Team team, long role, int leaveType, bool notifyLeaver = true)
     {
-        string name = Session(role)?.Role?.Name ?? roles.Get(role)?.Name ?? "";
+        string name = Session(role)?.Role?.Name ?? (IsCompanion(role) ? _companions.GetValueOrDefault(role)?.Last?.Name : roles.Get(role)?.Name) ?? "";
         team.Members.Remove(role);
         team.Applicants.Remove(role);
         team.ViceLeaders.Remove(role);
@@ -269,16 +271,19 @@ public sealed partial class TeamService : IGameTicker
         team.LastCard.Remove(role);
         team.LastBattle.Remove(role);
         _byMember.Remove(role);
+        ForgetCompanion(role);
         log.LogInformation("{Name} leaves party {Team} ({Left} left)", name, team.Id, team.Members.Count);
-        if (team.Members.Count == 0)
+        if (team.Members.All(IsCompanion))
         {
+            DissolveCompanions(team);
             _teams.Remove(team.Id);
             return;
         }
-        if (team.Leader == role) await ChangeLeaderAsync(team, team.Members[0]);
+        if (team.Leader == role) await ChangeLeaderAsync(team, Humans(team).First());
         var leave = new BroadCastMemberLeave { TeamId = team.Id, LeaveType = (ELeaveType)leaveType, Guid = role, Name = name };
         for (int i = 0; i < team.Members.Count; i++) leave.MemberIndex[team.Members[i]] = i;
         await ToOthersAsync(team, role, TeamBroadcastLeave, leave);
+        foreach (long bot in OwnedCompanions(team, role)) await RemoveAsync(team, bot, leaveType);
     }
 
     /// <summary>42008 to everyone first (its tip reads the current leader's name), then the two changed cards (42050).</summary>
@@ -359,6 +364,7 @@ public sealed partial class TeamService : IGameTicker
     /// <summary>A member card; battleInfo.hpPercent / mpPercent carry the absolute HP / SP, pos is mandatory (§2.3).</summary>
     private TeamMemberDetailInfo Detail(Team team, long role)
     {
+        if (IsCompanion(role)) return CompanionDetail(team, role);
         var s = Session(role);
         var r = s?.Role ?? roles.Get(role);
         var p = s?.Progress;

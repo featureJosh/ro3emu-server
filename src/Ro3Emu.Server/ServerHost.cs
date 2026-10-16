@@ -328,6 +328,7 @@ public static class ServerHost
         app.Services.GetRequiredService<DungeonService>().Completed.Add((s, scene, _) => questTasks.OnDungeonClearedAsync(s, scene));
         app.Services.GetRequiredService<PopulationService>().RegisterCommands(app.Services.GetRequiredService<GmCommands>());
         app.Services.GetRequiredService<PopulationService>().WatchConfiguration(app.Configuration); // live Ro3Emu:Population reload
+        app.Services.GetRequiredService<PopulationService>().UseTeams(app.Services.GetRequiredService<TeamService>());
         app.Services.GetRequiredService<ReconnectService>(); // hooks the handover and registers !netdrop
         // Create the key before the first client connects, so ClientPatch can read the public half.
         app.Services.GetRequiredService<GateCrypto>();
