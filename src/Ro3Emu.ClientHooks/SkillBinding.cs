@@ -59,7 +59,10 @@ namespace Ro3Emu.ClientHooks
         public static bool InSkillPanel(Transform panel) => panel != null && panel.name.StartsWith("UI_Sys_Skill", StringComparison.Ordinal);
 
         /// <summary>The focus can be bound: a drag button that can drag.</summary>
-        public static bool CanBind(Component focus) => focus is UIDragButton b && CanDrag(b);
+        public static bool CanBind(Component focus) => CanDrag(SourceOf(focus));
+
+        /// <summary>The focus itself (UIDragButton is a Button), or the drag button inside the focused cell.</summary>
+        private static UIDragButton SourceOf(Component focus) => focus as UIDragButton ?? (focus != null ? focus.GetComponentInChildren<UIDragButton>() : null);
 
         /// <summary>Enter bind mode for the focused skill cell (unbind false) or unbind mode (focus ignored).</summary>
         public static void Start(Component focus, bool unbind)
@@ -71,7 +74,7 @@ namespace Ro3Emu.ClientHooks
                 if (Targets.Count == 0) { Notice("No skill bar found"); return; }
                 if (!unbind)
                 {
-                    var button = focus as UIDragButton;
+                    var button = SourceOf(focus);
                     if (button == null || !CanDrag(button) || button.onDragBegin == null || button.onDragEnd == null) { Notice("Pick a skill that can be bound"); return; }
                     button.onDragBegin();
                     if (!IsListSkill(out string why))
@@ -85,7 +88,7 @@ namespace Ro3Emu.ClientHooks
                 }
                 _mode = unbind ? Mode.Unbind : Mode.Bind;
                 _startFrame = Time.frameCount;
-                Debug.Log("[Ro3Emu.SkillBinding] " + _mode + " mode, slots " + string.Join(" ", Targets.ConvertAll(t => t.Action + "=" + t.Control)));
+                Debug.Log("[Ro3Emu.SkillBinding] " + _mode + " mode, HUD widget " + (HudActive ? "active" : "inactive") + ", slots " + string.Join(" ", Targets.ConvertAll(t => t.Action + "=" + t.Control)));
             }
             catch (Exception e)
             {
@@ -138,13 +141,16 @@ namespace Ro3Emu.ClientHooks
             {
                 if (_mode == Mode.Bind)
                 {
+                    bool accepted = false;
                     try
                     {
                         t.Trigger.onPointerEnter?.Invoke(); // DragTriggerFunc = the slot's _progressDragItem, if _checkDragItem accepts
+                        accepted = DragTriggerFunc() != null;
                         _source.onDragEnd?.Invoke();        // calls it with DragItemData: SkillLoad Load / Replace
                     }
                     finally { t.Trigger.onPointerExit?.Invoke(); }
-                    Debug.Log("[Ro3Emu.SkillBinding] bind dropped on " + t.Action + " (" + t.Control + ")");
+                    Debug.Log("[Ro3Emu.SkillBinding] bind on " + t.Action + " (" + t.Control + "): " + (accepted ? "accepted, SkillLoad sent" : "refused by the slot"));
+                    if (!accepted) Notice("Already in that slot");
                 }
                 else
                 {
@@ -209,15 +215,21 @@ namespace Ro3Emu.ClientHooks
 
         // ---- the game's drag data (Lua) ----
 
+        private static bool HudActive => GameObject.Find(ControllerHud.SkillWidget) != null;
+
         private static object First(object[] r) => r != null && r.Length > 0 ? r[0] : null;
 
         /// <summary>LC_AssetManager asset "DragItemData": { iItemType, iSourceType, kData = { iSkillId, iLevel, iSlotIndex } }, or null.</summary>
-        private static Obf_R.Obf_ff DragData()
+        private static Obf_R.Obf_ff DragData() => Asset("DragItemData") as Obf_R.Obf_ff;
+
+        /// <summary>LC_AssetManager asset "DragTriggerFunc": set by the trigger the drag entered when its check accepted the item.</summary>
+        private static object DragTriggerFunc() => Asset("DragTriggerFunc");
+
+        private static object Asset(string name)
         {
-            var global = LuaPatches.Global;
-            var location = global?.Obf_RuA<Obf_R.Obf_ff>("ServerLocation");
+            var location = LuaPatches.Global?.Obf_RuA<Obf_R.Obf_ff>("ServerLocation");
             var assets = First(location?.Obf_RuA<Obf_R.Obf_Ef>("GetServer")?.Obf_HuA(location, "LC_AssetManager")) as Obf_R.Obf_ff;
-            return First(assets?.Obf_RuA<Obf_R.Obf_Ef>("GetAssetData")?.Obf_HuA(assets, "DragItemData")) as Obf_R.Obf_ff;
+            return First(assets?.Obf_RuA<Obf_R.Obf_Ef>("GetAssetData")?.Obf_HuA(assets, name));
         }
 
         /// <summary>The drag data after begin is a skill from the skill list (iSlotIndex 0, as SetItemWidget_PC sets it,
