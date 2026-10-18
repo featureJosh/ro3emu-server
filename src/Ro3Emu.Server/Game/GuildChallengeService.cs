@@ -207,7 +207,7 @@ public sealed class GuildChallengeService : IGameTicker
     private int Unlocked(GuildState state)
     {
         int result = 0;
-        long days = seasons.OpenContent.ServerDayFree ? long.MaxValue : (long)Math.Floor((Now - new DateTimeOffset(seasons.Start).ToUnixTimeSeconds()) / 86400d) + 1;
+        long days = seasons.OpenContent.ServerDayFree ? long.MaxValue : (long)Math.Floor((Now - seasons.StartTime) / 86400d) + 1;
         foreach (var config in Configs)
         {
             if (data.Row("LC_ConditionList", GameData.Int(config, "_kCondition")) is not { } condition) continue;
@@ -428,6 +428,9 @@ public sealed class GuildChallengeService : IGameTicker
         }
     }
 
+    /// <summary>A settled stage attempt, won or lost, for each guild member present (quest target 103014); listeners post.</summary>
+    public List<Action<GameSession>> Participated { get; } = new();
+
     internal async Task SettleAsync(DungeonService.Attempt a, bool won)
     {
         using var ownerScope = loop.Owners is { } owners
@@ -515,6 +518,9 @@ public sealed class GuildChallengeService : IGameTicker
                 }
                 try { await s.SendGameAsync(DungeonService.Result, result); }
                 catch (Exception e) { log.LogWarning(e, "Guild Challenge result delivery failed for {Role}", s.Role?.Id); }
+                foreach (var handler in Participated)
+                    try { handler(s); }
+                    catch (Exception e) { log.LogError(e, "Guild Challenge participation hook failed for {Role}", s.Role?.Id); }
             }
             await BroadcastAsync(run.Guild);
         }

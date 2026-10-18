@@ -6,6 +6,7 @@ using Romsg;
 using Ro3Emu.Bot;
 using Ro3Emu.Server;
 using Ro3Emu.Server.Accounts;
+using Ro3Emu.Server.Data;
 using Ro3Emu.Server.Game;
 using Ro3Emu.Server.Maps;
 
@@ -15,7 +16,7 @@ namespace Ro3Emu.Tests;
 /// Guild League (GuildLeagueService): the server-owned calendar (opening weeks from DailyActivityCustomConfig, then the two-week cycle), registration, 30410-30412, a match on
 /// the Main/Sub battlefields with 30415/30433/30110/30414 and the settlement.
 /// </summary>
-public sealed class GuildLeagueTests : IAsyncLifetime
+public sealed partial class GuildLeagueTests : IAsyncLifetime
 {
     private static readonly TimeSpan Wait = TimeSpan.FromSeconds(15);
     private readonly string dataDir = Path.Combine(Path.GetTempPath(), "ro3emu-league-" + Guid.NewGuid().ToString("N"));
@@ -62,7 +63,7 @@ public sealed class GuildLeagueTests : IAsyncLifetime
         {
             o.DataDir = dataDir; o.GameDataDir = Path.Combine(ClientData.RepoRoot, "data");
             o.HttpPort = web; o.MicroGatePort = micro; o.GameGatePort = gate;
-            o.SeasonStart = opening.ToString("yyyy-MM-dd"); o.GuildLeagueMinMembers = 2;
+            o.SeasonStart = opening.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture); o.GuildLeagueMinMembers = 2;
         }, clock);
         SureHitRolls.Install(app);
         await app.StartAsync();
@@ -176,10 +177,17 @@ public sealed class GuildLeagueTests : IAsyncLifetime
         Assert.Equal((At(3, 3, 5, 0), At(3, 3, 20, 0), At(3, 6, 20, 0), At(4, 6, 20, 0), At(4, 6, 20, 30)),
             (tournaments[1].Init, tournaments[1].Preliminary.Start, tournaments[1].Semifinal.Start, tournaments[1].Final.Start,
              tournaments[1].Final.End));
-        // Then _kDay 1/3/6/13 every two weeks: Monday 05:03, Wednesday, Saturday, Saturday of the next week.
-        Assert.Equal((3, At(5, 1, 5, 3), At(5, 3, 20, 30), At(5, 6, 20, 30), At(6, 6, 20, 30)),
+        // Then every two weeks from week 5 on the rows' own first _kDay and start (13 is Saturday of the next week).
+        long Steady(int week, int id)
+        {
+            var row = Service<GameData>().Row("DailyActivityConfig", id)!.Value;
+            int day = (int)GameData.Number(row.GetProperty("_kDay")[0])!.Value;
+            int start = (int)GameData.Number(row.GetProperty("_kTime")[0])!.Value;
+            return At(week, day, start / 100, start % 100);
+        }
+        Assert.Equal((3, Steady(5, 129), Steady(5, 109), Steady(5, 110), Steady(5, 111)),
             (tournaments[2].Index, tournaments[2].Init, tournaments[2].Preliminary.Start, tournaments[2].Semifinal.Start, tournaments[2].Final.Start));
-        Assert.Equal(At(7, 1, 5, 3), tournaments[3].Init);
+        Assert.Equal(Steady(7, 129), tournaments[3].Init);
 
         var info = calendar.Info(At(1, 1, 12, 0));
         Assert.Equal((GuildLeagueStatus.NotOpen, false, At(1, 3, 20, 30)), (info.EStatus, info.Open, info.NextPreliminaryTime));
@@ -235,6 +243,9 @@ public sealed class GuildLeagueTests : IAsyncLifetime
 
         // The final: both guilds meet. Blue is the guild of the first semifinal (the client's FightThree pairing).
         await Go(At(1, 6, 20, 30, 5));
+        // Quest targets of a fought match (TaskService.OnGuildLeagueMatch): 106603 [stage, n] and 106019 [stage, points, n].
+        foreach (var (account, task) in new[] { ("alice", 706050L), ("alice", 500042L), ("alice", 1602030L), ("bob", 706050L), ("bob", 1602030L) })
+            await QuestProbe.AcceptAsync(app, http, account, task);
         var open = await MgrData(alice);
         Assert.Equal((GuildLeagueStatus.FightThree, true), (open.ActivityInfo.EStatus, open.ActivityInfo.Open));
         var cup = await Read(() => League.State.Cup!);
@@ -311,6 +322,13 @@ public sealed class GuildLeagueTests : IAsyncLifetime
         Assert.Equal(blue == astra ? 0 : 1, result.History.ResultInfo.Result);
         Assert.Equal(new[] { League.MainScene, League.SubScene }.Order(), result.History.DungeonRolesInfo.Keys.Order());
         await Next(bob, GuildLeagueService.ResultNotify, GuildLeagueDungeonResultNtf.Parser);
+        // The byes of rounds 1 and 2 were no match; the final is one for both fighters. 1602030 asks for more than
+        // 20 personal points in the finals: Alice scored, Bob (Sub-Battlefield, no kill or capture) did not.
+        await QuestProbe.DoneAsync(app, "alice", 706050);
+        await QuestProbe.WaitAsync(app, "alice", 500042, i => i.Status == TaskState.Delivery, "delivered");
+        await QuestProbe.DoneAsync(app, "alice", 1602030); // delivery waits on its action 115
+        await QuestProbe.DoneAsync(app, "bob", 706050);
+        Assert.Equal(0, (await QuestProbe.ReadAsync(app, "bob", 1602030))!.CompleteNum[0]);
         await Until(() => Read(() => League.State.Cup!.Settled), "the tournament settlement");
 
         await alice.SendGameAsync(GuildLeagueService.Info, new GetGuildLeagueInfoReq());

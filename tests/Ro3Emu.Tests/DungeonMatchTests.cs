@@ -157,8 +157,17 @@ public sealed class DungeonMatchTests : IAsyncLifetime
         { MatchEntryId = Entry, PlayerId = (long)alice.Self.Uuid, IsReady = false });
         Assert.Equal(ErrorCodes.DungeonDeclined,
             (await Next(alice, DungeonMatchService.Ready, MatchReadyResp.Parser)).Result);
-        await Next(alice, DungeonMatchService.CancelNotify, CancelMatchNotify.Parser);
+        // A refusal fails the match naming the refuser (82643), not a plain cancellation (82639).
+        var refused = await Next(alice, DungeonMatchService.FailNotify, FailMatchNtf.Parser);
+        Assert.Equal(ErrorCodes.DungeonDeclined, refused.Result);
+        Assert.Equal(Entry, refused.MatchEntryId);
+        Assert.Equal((long)alice.Self.Uuid, refused.PenaltyMemberGuid);
+        Assert.Equal((long)alice.Self.Uuid, refused.FailPlayer);
+        Assert.Equal(0, refused.PenaltyMemberUnlockTs);
+        Assert.Equal(Request().MatchData, refused.MatchData);
+        Assert.Equal(clock.GetUtcNow().ToUnixTimeSeconds(), refused.MatchStartTime);
         Assert.Equal(0, Session(alice).InstanceId);
+        Assert.False(Service<DungeonMatchService>().Owns(Session(alice)));
 
         clock.Advance(TimeSpan.FromMilliseconds(250));
         await Start(alice);
@@ -169,7 +178,8 @@ public sealed class DungeonMatchTests : IAsyncLifetime
         await alice.SendGameAsync(DungeonMatchService.Ready, new MatchReadyReq
         { MatchEntryId = Entry, PlayerId = (long)alice.Self.Uuid, IsReady = true });
         Assert.Equal(ErrorCodes.Parameter, (await Next(alice, DungeonMatchService.Ready, MatchReadyResp.Parser)).Result);
-        await Next(alice, DungeonMatchService.CancelNotify, CancelMatchNotify.Parser);
+        // The unconfirmed member let the ready check run out.
+        Assert.Equal((long)alice.Self.Uuid, (await Next(alice, DungeonMatchService.FailNotify, FailMatchNtf.Parser)).PenaltyMemberGuid);
         Assert.False(Service<DungeonMatchService>().Owns(Session(alice)));
 
         clock.Advance(TimeSpan.FromMilliseconds(250));
@@ -235,12 +245,9 @@ public sealed class DungeonMatchTests : IAsyncLifetime
     [ClientDataFact]
     public async Task ChickenRoutingCrossOwnerExclusionSwitchAndRoleCleanup()
     {
-        // DailyActivityConfig id 114 (Kafra): _kDay [2,4,7], _kTime [1830,2000] in the clock's civil zone. 2026-11-10 is a
-        // Tuesday (day 2); five minutes in. The old fixed 16:05 UTC is 17:05 local, before the window opens.
-        var window = Service<GameData>().Row("DailyActivityConfig", 114)!.Value.GetProperty("_kTime");
-        int open = (int)GameData.Number(window[0])!.Value;
-        var local = new DateTime(2026, 11, 10, open / 100, open % 100 + 5, 0);
-        clock.Set(new DateTimeOffset(local, clock.LocalTimeZone.GetUtcOffset(local)));
+        // Inside the exported Kafra window (activity 114); select it before role login.
+        clock.Set(DateTimeOffset.FromUnixTimeSeconds(
+            ScheduleRows.Weekly(114, new DateTime(2026, 11, 10), clock.LocalTimeZone).Start + 300));
         await using var alice = await InWorld("Alice");
         await Gm(alice, "!lvl 99");
         Assert.True(Service<TimedTodoSchedule>().IsOpen(114));

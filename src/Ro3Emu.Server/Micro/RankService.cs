@@ -215,10 +215,7 @@ public sealed class RankService(GameData data, AccountStore accounts, GuildServi
             }
             if (role.Wardrobe is { Length: > 0 })
             {
-                // LC_FashionHelper.UpdateFashionScore:496-530: permanent (overdueTimeMs 0) lit appearances' _iFashionScore.
-                long fashion = DBWardRobeInfo.Parser.ParseFrom(role.Wardrobe).AllLightUpAppearances.Values
-                    .Where(a => a.OverdueTimeMs == 0)
-                    .Sum(a => data.Row("WardRobeConfig", a.AppearanceId) is { } row ? GameData.Int(row, "_iFashionScore") : 0);
+                long fashion = WardrobeService.FashionScore(data, DBWardRobeInfo.Parser.ParseFrom(role.Wardrobe));
                 if (fashion > 0) Add(Fashion, new Candidate(role.Id, fashion, 0, 0, 0, () => []));
             }
             if (role.TimedBattle is { Length: > 0 } && JsonSerializer.Deserialize<TimedBattleService.State>(role.TimedBattle) is { } battle)
@@ -246,8 +243,9 @@ public sealed class RankService(GameData data, AccountStore accounts, GuildServi
                 }.ToByteArray()));
             }
             // Hero Registry (UI_Sys_RankCopyMainPanel): ranked by the role's displayed power, normalPower +
-            // seasonPower (spec-power-score.md §0); this server's PowerUnit is the Soul Echo season power only.
-            long power = emblems.StoredPower(role.Emblems, items);
+            // seasonPower: the total PowerService last published and saved with the Soul Echo
+            // state. A role that never logged in since has only its Soul Echo plan to rank by.
+            long power = PowerService.StoredTotal(role.Emblems) ?? emblems.StoredPower(role.Emblems, items);
             if (power > 0)
             {
                 Add(HeroAll, new Candidate(role.Id, power, 0, 0, 0, () => []));

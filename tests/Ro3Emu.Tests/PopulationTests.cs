@@ -70,7 +70,7 @@ public sealed class PopulationTests : IDisposable
     {
         using var accounts = new AccountStore(Options.Create(options));
         var friends = new FriendStore(accounts);
-        var chat = new ChatService(null!, null!, null!, friends, NullLogger<ChatService>.Instance);
+        var chat = new ChatService(null!, null!, null!, friends, new CharacterService(null!, null!, null!, world, NullLogger<CharacterService>.Instance), null!, null!, Options.Create(options), NullLogger<ChatService>.Instance);
         var player = Player(); await world.JoinAsync(player); await population.UpdateAsync(1000);
         var bot = world.AllUnits().OfType<PopulationUnit>().First();
         player.Position = bot.Pos; player.ChatGroups.Add("4_1");
@@ -523,7 +523,7 @@ public sealed class PopulationTests : IDisposable
     {
         await world.JoinAsync(Player()); await population.UpdateAsync(1000);
         var bot = (PopulationUnit)world.AllUnits().First();
-        var service = new UserDataService(null!, null!, loop, null!, null!, null!, Options.Create(options),
+        var service = new UserDataService(null!, null!, loop, null!, null!, null!, null!, TimeProvider.System, Options.Create(options),
             NullLogger<UserDataService>.Instance, population);
         var args = new Dictionary<object, object?> { ["UidFieldVersions"] = new Dictionary<object, object?>
             { [bot.Uid.ToString()] = new Dictionary<object, object?> { ["Name"] = 0L, ["Base"] = 0L } } };

@@ -123,15 +123,15 @@ namespace Ro3Emu.Loc
         private static bool HasCjk(string s)
         {
             for (int i = 0; i < s.Length; i++)
-            {
-                char c = s[i];
-                // Han and kana only: full-width punctuation alone ("World\uFF1A World") needs no translation.
-                if ((c >= '\u3040' && c <= '\u9FFF') || (c >= '\u2E80' && c <= '\u2FDF') || (c >= '\uF900' && c <= '\uFAFF')) return true;
-            }
+                if (IsCjk(s[i])) return true;
             return false;
         }
 
-        /// <summary>Normalized form, segments, then templates; null when nothing covers every CJK part.</summary>
+        // Han and kana only: full-width punctuation alone ("World\uFF1A World") needs no translation.
+        private static bool IsCjk(char c) =>
+            (c >= '\u3040' && c <= '\u9FFF') || (c >= '\u2E80' && c <= '\u2FDF') || (c >= '\uF900' && c <= '\uFAFF');
+
+        /// <summary>Normalized form, segments, then templates, then CJK runs; null when nothing covers every CJK part.</summary>
         private static string Resolve(string text)
         {
             string norm = Normalize(text);
@@ -141,31 +141,28 @@ namespace Ro3Emu.Loc
         }
 
         /// <summary>
-        /// English sentences built around a raw Chinese name ("法术重击 is on cooldown.", "The 冰箭术 skill is ..."):
-        /// each run of Han/kana (with the full-width punctuation inside it) is mapped on its own; null when a run has
-        /// no entry or the text has no Latin letter.
+        /// Text the client composed from an English format and a Chinese name ("利刃重击 is on cooldown.", a skill name
+        /// from a table the client reads in Chinese): each maximal CJK run (a middle dot may join two) is mapped on its own.
+        /// All or nothing: one unknown run leaves the whole string as it was.
         /// </summary>
         private static string CjkRuns(string text)
         {
-            bool latin = false;
-            for (int i = 0; i < text.Length && !latin; i++) latin = (text[i] | 0x20) >= 'a' && (text[i] | 0x20) <= 'z';
-            if (!latin) return null;
-            var sb = new StringBuilder(text.Length * 2);
-            int p = 0;
-            while (p < text.Length)
+            StringBuilder sb = null;
+            int i = 0, copied = 0;
+            while (i < text.Length)
             {
-                if (!IsCjk(text[p])) { sb.Append(text[p++]); continue; }
-                int end = p;
-                while (end < text.Length && (IsCjk(text[end]) || (text[end] >= '＀' && text[end] <= '￯'))) end++;
-                if (!_map.TryGetValue(text.Substring(p, end - p), out var en)) return null;
-                sb.Append(en);
-                p = end;
+                if (!IsCjk(text[i])) { i++; continue; }
+                int end = i + 1;
+                while (end < text.Length && (IsCjk(text[end]) || (text[end] == '·' || text[end] == '・') && end + 1 < text.Length && IsCjk(text[end + 1]))) end++;
+                if (i == 0 && end == text.Length) return null; // the whole string: the exact lookup already missed it
+                if (!_map.TryGetValue(text.Substring(i, end - i), out var en) || HasCjk(en)) return null;
+                if (sb == null) sb = new StringBuilder(text.Length * 2);
+                sb.Append(text, copied, i - copied).Append(en);
+                copied = i = end;
             }
-            return sb.ToString();
+            if (sb == null) return null;
+            return sb.Append(text, copied, text.Length - copied).ToString();
         }
-
-        private static bool IsCjk(char c) =>
-            (c >= '぀' && c <= '鿿') || (c >= '⺀' && c <= '⿟') || (c >= '豈' && c <= '﫿');
 
         private static string Normalize(string s)
         {

@@ -57,7 +57,7 @@ public sealed class GameSession(PhonestChannel channel, TrafficLog traffic)
         Daily = null; DailyRows = null; DailyReady = false;
         WildAfk = null; Guild = null; Tasks = null;
         Achievements = null; AchievementRuntime = null; AdventureGroupRole = null;
-        Library = null; CardLibraryReadyAttachment = null;
+        Library = null; CardLibraryReadyAttachment = null; GrowthClass = null;
         NewActivities = null; ActivitiesReady = false;
         Dungeons = null; DungeonAttempt = null;
         Tower = null; TowerAttempt = null;
@@ -67,6 +67,7 @@ public sealed class GameSession(PhonestChannel channel, TrafficLog traffic)
         LifeJob = null; Restrictions = null;
         Items = new(); Pets = null;
         WorldState = new();
+        Power = null; PowerPublishedMs = 0;
     }
     private CancellationTokenSource _pendingCharacterIntents = new();
     internal CancellationToken PendingCharacterIntent => _pendingCharacterIntents.Token;
@@ -152,6 +153,8 @@ public sealed class GameSession(PhonestChannel channel, TrafficLog traffic)
     /// <summary>Transient configured energy meters; BuffService sends each change as 31334.</summary>
     public Dictionary<int, PlayerEnergyState> Energy { get; } = new();
     public int EnergyCareer { get; set; }
+    /// <summary>EnergyConfig._iBelongMount mounts owned when the meters were last reconciled (BuffService.Energy).</summary>
+    public int EnergyMounts { get; set; }
     /// <summary>31134/31135 lethal-hit choice; only an eligible active Osiris buff may create it.</summary>
     public ImmuneDeathOffer? ImmuneDeathOffer { get; set; }
     public Dictionary<long, long> BuffEffectCds { get; } = new();
@@ -233,6 +236,16 @@ public sealed class GameSession(PhonestChannel channel, TrafficLog traffic)
     /// <summary>Emote favourites, unlocks and idle emote (5006, role blob "emoji_play"); EmojiService.</summary>
     public Romsg.DBEmojiPlayInfo? EmojiPlay { get; set; }
 
+    /// <summary>Chat emoticons unlocked by items (5041, role blob "emoji_info"); EmojiService.</summary>
+    public Romsg.DBEmojiInfo? EmojiInfo { get; set; }
+
+    /// <summary>Profile card presets and 620 item unlocks (5016, role blob "personal"; other unlockInfos are derived); PersonalService.</summary>
+    public Romsg.DBPersonalInfo? Personal { get; set; }
+
+    /// <summary>Chat cosmetics unlocked by items and the worn choices (role blob "social_outfit"; 5044 lays them over the
+    /// configuration's defaults); SocialOutfitService.</summary>
+    public Romsg.DBSocialOutfit? SocialOutfit { get; set; }
+
     /// <summary>The emote or sitting in progress (state 17 Prepare or 14 Play); runtime only, gone at logout.</summary>
     public EmojiService.Emote? Emote { get; set; }
 
@@ -284,6 +297,12 @@ public sealed class GameSession(PhonestChannel channel, TrafficLog traffic)
     /// <summary>A committed kill changed the counters; the 5053 sync follows the kill.</summary>
     public bool AreaConcurChanged { get; set; }
 
+    /// <summary>Growth Classroom claimed rank rewards (role blob "growth_class", only rankReward); GrowthClassService.</summary>
+    public Romsg.DBGrowthClassInfo? GrowthClass { get; set; }
+
+    /// <summary>Seven-Day Goal tasks, score and claims (5049, role blob "first_heart"); FirstHeartService.</summary>
+    public Romsg.DBFirstHeartTaskActivityData? FirstHeart { get; set; }
+
     /// <summary>The leased items' PendantConfig ids (EntityBase.pendantInfo), derived from <see cref="CareerSpecial"/>.</summary>
     public int[] CareerPendants { get; set; } = [];
     public Romsg.DBWardRobeInfo? Wardrobe { get; set; }
@@ -332,6 +351,13 @@ public sealed class GameSession(PhonestChannel channel, TrafficLog traffic)
     /// <summary>Current active Soul Echo plan's season score (power protocol).</summary>
     public long EmblemPower { get; set; }
     public DateTime EmblemPlanSwitchUtc { get; set; }
+
+    /// <summary>Last published role power (PowerService, 31502/31503/5066); null until this role's login publish.</summary>
+    public PowerService.Snapshot? Power { get; set; }
+    internal long PowerPublishedMs { get; set; }
+
+    /// <summary>Fills the stored plan power of 5007/5025/5026/5067 before the dataset is diffed (PowerService).</summary>
+    internal Action<uint, IMessage>? PlanPowers { get; set; }
 
     /// <summary>Durable talent plans and oath (AUTO_SYNC 5050), loaded for the selected role.</summary>
     public Romsg.DBSeasonTalent? SeasonTalent { get; set; }
