@@ -14,7 +14,7 @@ namespace Ro3Emu.Server.Game;
 /// ServerOptions.GmOpenWhenEmpty is false (a Production host, docs/guide/gm-access.md). The loopback HTTP /ro3emu/gm keeps
 /// "empty = everyone" (<see cref="Allowed(ServerOptions, string?, bool)"/>).
 /// </summary>
-public sealed class GmCommands(IOptions<ServerOptions> options, GameData data, SessionRegistry sessions, CharacterService character, SceneService scene, TaskService tasks, IServiceProvider services, ILogger<GmCommands> log)
+public sealed class GmCommands(IOptions<ServerOptions> options, GmLoginChoices loginChoices, GameData data, SessionRegistry sessions, CharacterService character, SceneService scene, TaskService tasks, IServiceProvider services, ILogger<GmCommands> log)
 {
     public const uint BroadcastNotify = 83270;
     public const uint GeneralProcGm = 30300;
@@ -38,8 +38,8 @@ public sealed class GmCommands(IOptions<ServerOptions> options, GameData data, S
 
     public bool IsCommand(string text) => text.StartsWith('!') && text.Length > 1;
 
-    /// <summary>Shared account allowlist for every GM wire entry point.</summary>
-    public bool Allowed(GameSession session) => Allowed(options.Value, session.Account, loopbackTool: false);
+    /// <summary>Shared account allowlist for every GM wire entry point, narrowed by an unticked "Login as GM" box.</summary>
+    public bool Allowed(GameSession session) => Allowed(options.Value, session.Account, loopbackTool: false) && !loginChoices.Declined(session.Account);
 
     /// <summary>
     /// A listed account always may. An empty list means everyone for the loopback HTTP tool (unchanged), and in game
@@ -84,7 +84,7 @@ public sealed class GmCommands(IOptions<ServerOptions> options, GameData data, S
 
     private async Task RunCoreAsync(GameSession session, string line, bool loopbackTool)
     {
-        if (!Allowed(options.Value, session.Account, loopbackTool))
+        if (!Allowed(options.Value, session.Account, loopbackTool) || !loopbackTool && loginChoices.Declined(session.Account))
         {
             await ReplyAsync(session, "GM commands are not enabled for this account.");
             return;

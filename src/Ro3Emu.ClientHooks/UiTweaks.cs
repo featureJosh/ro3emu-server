@@ -32,7 +32,11 @@ namespace Ro3Emu.ClientHooks
             Diagnostics.PollCommandFile();
             TextFit.Tick();
             Controller.Tick();
-            if (++_frame % 10 != 0) return;
+            bool tenth = ++_frame % 10 == 0;
+            // While still in the login flow every frame, not every 10th: the password row must be gone before the panel's first draw.
+            try { LoginTick(tenth); }
+            catch (Exception e) { Debug.LogError("[Ro3Emu.UiTweaks] " + e); }
+            if (!tenth) return;
             try
             {
                 foreach (var name in ModeWidgets)
@@ -45,8 +49,6 @@ namespace Ro3Emu.ClientHooks
                     var window = GameObject.Find(name);
                     if (window != null && Done.Add(window.GetInstanceID())) WidenStallName(window.transform);
                 }
-                var login = GameObject.Find(LoginPanel);
-                if (login != null) HidePassword(login.transform);
                 if (Done.Count > 64) Done.Clear();
                 QuitButton.Tick();
                 LuaPatches.Tick();
@@ -61,25 +63,64 @@ namespace Ro3Emu.ClientHooks
 
         private const string LoginPanel = "UI_Sys_LoginPanel(Clone)";
         private const string NoPassword = "offline";
+        private static GameObject _login;
+        private static TMPro.TMP_InputField _passwordField;
+        private static Transform _passwordRow;
+        private static bool _inWorld;
+
+        /// <summary>
+        /// Per frame. A cached panel is cheap. Without one, a Find (active objects only) runs every frame while the client
+        /// is still in the login flow, so the panel is caught the frame it appears; once the in-world HUD has been seen
+        /// it drops to every 10th frame (the panel comes back after a logout and is found again, which ends _inWorld).
+        /// On every 10th frame the field is re-checked and the GM box kept up.
+        /// </summary>
+        private static void LoginTick(bool tenth)
+        {
+            if (_login == null)
+            {
+                if (_inWorld && !tenth) return;
+                _login = GameObject.Find(LoginPanel);
+                if (_login == null)
+                {
+                    if (tenth && !_inWorld && GameObject.Find(ControllerHud.SkillWidget) != null) _inWorld = true;
+                    return;
+                }
+                _inWorld = false;
+                _passwordField = null; _passwordRow = null;
+                HidePassword(_login.transform, true); // this very frame, before the first draw
+            }
+            else if (!_login.activeInHierarchy) { _login = null; return; }
+            else HidePassword(_login.transform, tenth);
+            if (tenth) LoginGmBox.Tick(_login.transform);
+        }
 
         /// <summary>
         /// Single-player: the server opens an account with any password (ServerOptions.RequirePasswords false in our
         /// appsettings), but the client refuses an empty one ("Enter password"). The password row is hidden and its field
-        /// filled, so login is account + Start Game, also with a controller. Kept up every pump: the client can reset it.
+        /// filled, so login is account + Start Game, also with a controller. The field and row are cached once found; the
+        /// row is kept inactive every frame, the field re-checked (<paramref name="refill"/>) every 10th: the client can reset it.
         /// ponytail: always hidden; a LAN server with RequirePasswords on needs this off (a client setting) when that comes.
         /// </summary>
-        private static void HidePassword(Transform login)
+        private static void HidePassword(Transform login, bool refill)
         {
-            foreach (var field in login.GetComponentsInChildren<TMPro.TMP_InputField>(true))
+            if (_passwordField == null)
             {
-                if (field.name != "Password_TInputField") continue;
-                if (string.IsNullOrEmpty(field.text)) field.text = NoPassword;
-                var row = field.transform.parent;
-                if (row != null && row.name == "Password_Img" && row.gameObject.activeSelf)
+                foreach (var field in login.GetComponentsInChildren<TMPro.TMP_InputField>(true))
                 {
-                    row.gameObject.SetActive(false);
-                    Debug.Log("[Ro3Emu.UiTweaks] login: password row hidden (single-player)");
+                    if (field.name != "Password_TInputField") continue;
+                    _passwordField = field;
+                    var row = field.transform.parent;
+                    _passwordRow = row != null && row.name == "Password_Img" ? row : null;
+                    refill = true;
+                    break;
                 }
+                if (_passwordField == null) return;
+            }
+            if (refill && string.IsNullOrEmpty(_passwordField.text)) _passwordField.text = NoPassword;
+            if (_passwordRow != null && _passwordRow.gameObject.activeSelf)
+            {
+                _passwordRow.gameObject.SetActive(false);
+                Debug.Log("[Ro3Emu.UiTweaks] login: password row hidden (single-player)");
             }
         }
 

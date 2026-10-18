@@ -29,7 +29,7 @@ public static class SdkEndpoints
     {
         app.MapGet(GateKeyPath, (Net.GateCrypto crypto) => Results.Text(crypto.PublicKeyPem, "application/x-pem-file"));
 
-        app.MapPost(LoginPath, async (HttpRequest request, AccountStore accounts, ILogger<AccountStore> log) =>
+        app.MapPost(LoginPath, async (HttpRequest request, AccountStore accounts, Game.GmLoginChoices gmChoices, ILogger<AccountStore> log) =>
         {
             var form = await request.ReadFormAsync();
             string identity = form["identity"].ToString().Trim();
@@ -38,12 +38,16 @@ public static class SdkEndpoints
             {
                 return Results.Json(new { code = 401 });
             }
+            credential = Game.GmLoginChoices.Strip(credential, out bool? wantsGm);
             var result = await accounts.LoginAsync(identity, credential);
-            log.LogInformation("SDK login {Identity}: {Result}", identity, result);
+            string gm = wantsGm == null ? "no GM choice" : wantsGm.Value ? "GM requested" : "GM declined";
+            log.LogInformation("SDK login {Identity}: {Result}, {Gm}", identity, result, gm);
             if (result == AccountStore.LoginResult.BadPassword)
             {
                 return Results.Json(new { code = 401 });
             }
+            // Only an authenticated login may set or clear the choice.
+            gmChoices.Record(identity, wantsGm);
             return Results.Json(new { code = 0, data = new { token = await accounts.IssueSdkTokenAsync(identity) } });
         });
 

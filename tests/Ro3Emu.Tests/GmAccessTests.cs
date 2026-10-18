@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Romsg;
 using Ro3Emu.Bot;
 using Ro3Emu.Server;
@@ -78,6 +79,111 @@ public sealed class GmAccessTests
             var response = await client.PostAsync($"{http}/ro3emu/gm?account=alice", new StringContent("!where"));
             response.EnsureSuccessStatusCode();
             Assert.Contains("Scene", await Marquee(alice, "Scene"));
+        }
+        finally
+        {
+            await app.StopAsync();
+            await app.DisposeAsync();
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            try { Directory.Delete(dataDir, true); } catch (IOException) { }
+        }
+    }
+
+    [Fact]
+    public void TheLoginMarkerIsStrippedAndRecordedOnlyWhenTold()
+    {
+        var choices = new GmLoginChoices();
+        Assert.Equal("offline", GmLoginChoices.Strip("offline+gm", out bool? gm));
+        Assert.Equal(true, gm);
+        Assert.False(choices.Declined("a")); // stripping alone records nothing
+        Assert.Equal("offline", GmLoginChoices.Strip("offline+nogm", out gm));
+        Assert.Equal(false, gm);
+        choices.Record("a", gm);
+        Assert.True(choices.Declined("A"));
+        // No marker (old hooks, tests, bots): back to the plain policy, and the credential is untouched.
+        Assert.Equal("pw", GmLoginChoices.Strip("pw", out gm));
+        Assert.Null(gm);
+        choices.Record("a", gm);
+        Assert.False(choices.Declined("a"));
+        Assert.False(choices.Declined(null));
+    }
+
+    [Fact]
+    public async Task AWrongPasswordCannotChangeAnotherAccountsGmChoice()
+    {
+        var dataDir = Path.Combine(Path.GetTempPath(), "ro3emu-gmchoice-" + Guid.NewGuid().ToString("N"));
+        var (httpPort, microPort, gamePort) = TestPorts.FreePorts();
+        var app = ServerHost.Create([], o =>
+        {
+            o.DataDir = dataDir;
+            o.GameDataDir = Path.Combine(RepoRoot(), "data");
+            o.HttpPort = httpPort;
+            o.MicroGatePort = microPort;
+            o.GameGatePort = gamePort;
+            o.RequirePasswords = true;
+        });
+        await app.StartAsync();
+        try
+        {
+            using var http = new HttpClient { BaseAddress = new Uri($"http://127.0.0.1:{httpPort}") };
+            async Task<string> Login(string credential) => await (await http.PostAsync("/sdk/login", new FormUrlEncodedContent(
+                new Dictionary<string, string> { ["identity"] = "admin", ["credential"] = credential }))).Content.ReadAsStringAsync();
+            var choices = app.Services.GetRequiredService<GmLoginChoices>();
+
+            Assert.Contains("\"code\":0", await Login("secret")); // registers the account
+            Assert.False(choices.Declined("admin"));
+            Assert.Contains("\"code\":401", await Login("offline+nogm")); // wrong password + marker: no choice recorded
+            Assert.False(choices.Declined("admin"));
+            choices.Record("admin", false); // the owner declined GM
+            Assert.Contains("\"code\":401", await Login("offline+gm")); // wrong password + marker: nothing changes
+            Assert.True(choices.Declined("admin"));
+            Assert.Contains("\"code\":401", await Login("wrong"));
+            Assert.True(choices.Declined("admin")); // a bad login with no marker does not clear it either
+        }
+        finally
+        {
+            await app.StopAsync();
+            await app.DisposeAsync();
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            try { Directory.Delete(dataDir, true); } catch (IOException) { }
+        }
+    }
+
+    [Theory]
+    // GmAccounts, marker, expected GM in game for the account "pilot"
+    [InlineData("", "offline+gm", true)]          // open policy: ticked
+    [InlineData("", "offline+nogm", false)]       // open policy: the box means something locally
+    [InlineData("", "offline", true)]             // no marker: today's behaviour
+    [InlineData("pilot", "offline+gm", true)]     // listed: ticked
+    [InlineData("pilot", "offline+nogm", false)]
+    [InlineData("pilot", "offline", true)]
+    [InlineData("other", "offline+gm", false)]    // never widens a closed policy
+    [InlineData("other", "offline+nogm", false)]
+    [InlineData("other", "offline", false)]
+    public async Task TheLoginAsGmBoxOnlyNarrowsThePolicy(string list, string marker, bool expected)
+    {
+        var dataDir = Path.Combine(Path.GetTempPath(), "ro3emu-gmbox-" + Guid.NewGuid().ToString("N"));
+        var (httpPort, microPort, gamePort) = TestPorts.FreePorts();
+        var app = ServerHost.Create([], o =>
+        {
+            o.DataDir = dataDir;
+            o.GameDataDir = Path.Combine(RepoRoot(), "data");
+            o.HttpPort = httpPort;
+            o.MicroGatePort = microPort;
+            o.GameGatePort = gamePort;
+            o.GmAccounts = list.Length == 0 ? [] : [list];
+        });
+        await app.StartAsync();
+        try
+        {
+            await using var bot = new BotClient($"http://127.0.0.1:{httpPort}", File.ReadAllText(Path.Combine(dataDir, "gate_rsa_public.pem")));
+            await bot.LoginAsync("pilot", marker);
+            await bot.EnterGateAsync();
+            await bot.EnterWorldAsync((await bot.CreateRoleAsync("Pilot")).RoleBaseInfo.Id);
+            await bot.JoinChatAsync("4_1");
+            await bot.SendGameAsync(GmCommands.GeneralProcGm, new GeneralGMProcReq { ParamString = "ro3-gm-panel-capability-v1:1" });
+            string info = GeneralGMProcRsp.Parser.ParseFrom((await bot.Inbox.WaitAsync(e => e.IsGame(GmCommands.GeneralProcGm), Wait)).Body).ErrInfo;
+            Assert.EndsWith(expected ? ":1" : ":0", info);
         }
         finally
         {
