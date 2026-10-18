@@ -32,6 +32,9 @@ namespace Ro3Emu.ClientHooks
             Diagnostics.PollCommandFile();
             TextFit.Tick();
             Controller.Tick();
+            // Every frame, not every 10th: the password row must be gone before the panel's first draw.
+            try { LoginTick(); }
+            catch (Exception e) { Debug.LogError("[Ro3Emu.UiTweaks] " + e); }
             if (++_frame % 10 != 0) return;
             try
             {
@@ -45,8 +48,6 @@ namespace Ro3Emu.ClientHooks
                     var window = GameObject.Find(name);
                     if (window != null && Done.Add(window.GetInstanceID())) WidenStallName(window.transform);
                 }
-                var login = GameObject.Find(LoginPanel);
-                if (login != null) HidePassword(login.transform);
                 if (Done.Count > 64) Done.Clear();
                 QuitButton.Tick();
                 LuaPatches.Tick();
@@ -61,6 +62,17 @@ namespace Ro3Emu.ClientHooks
 
         private const string LoginPanel = "UI_Sys_LoginPanel(Clone)";
         private const string NoPassword = "offline";
+        private static GameObject _login;
+
+        /// <summary>Per frame: a cached panel is cheap; without one, a Find (active objects only) catches the panel the
+        /// frame it appears.</summary>
+        private static void LoginTick()
+        {
+            if (_login == null) _login = GameObject.Find(LoginPanel);
+            if (_login == null) return;
+            if (!_login.activeInHierarchy) { _login = null; return; }
+            HidePassword(_login.transform);
+        }
 
         /// <summary>
         /// Single-player: the server opens an account with any password (ServerOptions.RequirePasswords false in our
