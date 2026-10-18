@@ -88,6 +88,65 @@ public sealed class GmAccessTests
         }
     }
 
+    [Fact]
+    public void TheLoginMarkerIsStrippedAndRecorded()
+    {
+        var choices = new GmLoginChoices();
+        Assert.Equal("offline", choices.Take("a", "offline+gm"));
+        Assert.False(choices.Declined("a"));
+        Assert.Equal("offline", choices.Take("a", "offline+nogm"));
+        Assert.True(choices.Declined("A"));
+        // No marker (old hooks, tests, bots): back to the plain policy, and the credential is untouched.
+        Assert.Equal("pw", choices.Take("a", "pw"));
+        Assert.False(choices.Declined("a"));
+        Assert.False(choices.Declined(null));
+    }
+
+    [Theory]
+    // GmAccounts, marker, expected GM in game for the account "pilot"
+    [InlineData("", "offline+gm", true)]          // open policy: ticked
+    [InlineData("", "offline+nogm", false)]       // open policy: the box means something locally
+    [InlineData("", "offline", true)]             // no marker: today's behaviour
+    [InlineData("pilot", "offline+gm", true)]     // listed: ticked
+    [InlineData("pilot", "offline+nogm", false)]
+    [InlineData("pilot", "offline", true)]
+    [InlineData("other", "offline+gm", false)]    // never widens a closed policy
+    [InlineData("other", "offline+nogm", false)]
+    [InlineData("other", "offline", false)]
+    public async Task TheLoginAsGmBoxOnlyNarrowsThePolicy(string list, string marker, bool expected)
+    {
+        var dataDir = Path.Combine(Path.GetTempPath(), "ro3emu-gmbox-" + Guid.NewGuid().ToString("N"));
+        var (httpPort, microPort, gamePort) = TestPorts.FreePorts();
+        var app = ServerHost.Create([], o =>
+        {
+            o.DataDir = dataDir;
+            o.GameDataDir = Path.Combine(RepoRoot(), "data");
+            o.HttpPort = httpPort;
+            o.MicroGatePort = microPort;
+            o.GameGatePort = gamePort;
+            o.GmAccounts = list.Length == 0 ? [] : [list];
+        });
+        await app.StartAsync();
+        try
+        {
+            await using var bot = new BotClient($"http://127.0.0.1:{httpPort}", File.ReadAllText(Path.Combine(dataDir, "gate_rsa_public.pem")));
+            await bot.LoginAsync("pilot", marker);
+            await bot.EnterGateAsync();
+            await bot.EnterWorldAsync((await bot.CreateRoleAsync("Pilot")).RoleBaseInfo.Id);
+            await bot.JoinChatAsync("4_1");
+            await bot.SendGameAsync(GmCommands.GeneralProcGm, new GeneralGMProcReq { ParamString = "ro3-gm-panel-capability-v1:1" });
+            string info = GeneralGMProcRsp.Parser.ParseFrom((await bot.Inbox.WaitAsync(e => e.IsGame(GmCommands.GeneralProcGm), Wait)).Body).ErrInfo;
+            Assert.EndsWith(expected ? ":1" : ":0", info);
+        }
+        finally
+        {
+            await app.StopAsync();
+            await app.DisposeAsync();
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            try { Directory.Delete(dataDir, true); } catch (IOException) { }
+        }
+    }
+
     private static async Task<string> Marquee(BotClient bot, string? contains = null) =>
         BroadCastNotify.Parser.ParseFrom((await bot.Inbox.WaitAsync(e => e.IsGame(GmCommands.BroadcastNotify)
             && (contains == null || BroadCastNotify.Parser.ParseFrom(e.Body).Content.Contains(contains)), Wait)).Body).Content;

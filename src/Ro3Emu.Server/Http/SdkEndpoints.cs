@@ -29,7 +29,7 @@ public static class SdkEndpoints
     {
         app.MapGet(GateKeyPath, (Net.GateCrypto crypto) => Results.Text(crypto.PublicKeyPem, "application/x-pem-file"));
 
-        app.MapPost(LoginPath, async (HttpRequest request, AccountStore accounts, ILogger<AccountStore> log) =>
+        app.MapPost(LoginPath, async (HttpRequest request, AccountStore accounts, Game.GmLoginChoices gmChoices, ILogger<AccountStore> log) =>
         {
             var form = await request.ReadFormAsync();
             string identity = form["identity"].ToString().Trim();
@@ -38,6 +38,7 @@ public static class SdkEndpoints
             {
                 return Results.Json(new { code = 401 });
             }
+            credential = gmChoices.Take(identity, credential);
             var result = await accounts.LoginAsync(identity, credential);
             log.LogInformation("SDK login {Identity}: {Result}", identity, result);
             if (result == AccountStore.LoginResult.BadPassword)

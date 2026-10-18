@@ -147,6 +147,7 @@ public static class ServerHost
         builder.Services.AddSingleton<FriendExtraService>();
         builder.Services.AddSingleton<ChatService>();
         builder.Services.AddSingleton<FeedbackService>();
+        builder.Services.AddSingleton<GmLoginChoices>();
         builder.Services.AddSingleton<GmCommands>();
         builder.Services.AddSingleton<Ro3Emu.Server.Data.GameData>();
         builder.Services.AddSingleton<SessionRegistry>();

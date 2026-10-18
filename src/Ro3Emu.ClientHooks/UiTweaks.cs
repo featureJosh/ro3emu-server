@@ -47,6 +47,7 @@ namespace Ro3Emu.ClientHooks
                 }
                 var login = GameObject.Find(LoginPanel);
                 if (login != null) HidePassword(login.transform);
+                if (login != null) LoginGmBox.Tick(login.transform);
                 if (Done.Count > 64) Done.Clear();
                 QuitButton.Tick();
                 LuaPatches.Tick();
