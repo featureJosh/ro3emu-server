@@ -49,6 +49,7 @@ namespace Ro3Emu.ClientHooks
         {
             public RectTransform Rect;
             public Image Icon, Cd, Glyph, Frame, Flash;
+            public Color FrameColor;
             public TextMeshProUGUI CdText, Count;
             public bool Cooling;
         }
@@ -58,6 +59,11 @@ namespace Ro3Emu.ClientHooks
         private static TextMeshProUGUI _hpText, _spText;
         private static readonly List<Slot> Skills = new List<Slot>(), Potions = new List<Slot>();
         private static readonly List<Source> SkillSources = new List<Source>(), PotionSources = new List<Source>();
+        // Every stock slot with a gamepad binding in some layer; SkillSources / PotionSources are the ones the active layer shows.
+        private static readonly List<Source> AllSkills = new List<Source>(), AllPotions = new List<Source>();
+        private static int _hudLayer = 1;
+        private static Image _layerBadge;
+        private static TextMeshProUGUI _layerText;
         private static Slider _hp, _sp;
         private static readonly List<CanvasGroup> Hidden = new List<CanvasGroup>();
         private static int _frame;
@@ -81,6 +87,7 @@ namespace Ro3Emu.ClientHooks
             bool world = _hp != null && _hp.isActiveAndEnabled;
             if (world != _shown) Show(world);
             if (!world) return;
+            if (Controller.Layer != _hudLayer) Select();
             Layout();
             _hpFill.fillAmount = _hp.value;
             _hpText.text = Mathf.RoundToInt(_hp.value * 100f) + "%";
@@ -109,7 +116,7 @@ namespace Ro3Emu.ClientHooks
                     if (s.name == "HPBar_Slider") _hp = s;
                     else if (s.name == "BlueBar_Slider") _sp = s;
                 }
-            SkillSources.Clear();
+            AllSkills.Clear();
             var skills = GameObject.Find(SkillWidget);
             if (skills != null)
             {
@@ -132,18 +139,15 @@ namespace Ro3Emu.ClientHooks
                         if (t.name == "Time_TTxt") src.CdText = t;
                     byAction[action] = src;
                 }
-                // Bound actions in button order.
-                foreach (var control in ButtonOrder)
-                    foreach (var pair in byAction)
-                        if (Controller.FirstBinding(pair.Key) == "<Gamepad>/" + control) SkillSources.Add(pair.Value);
+                foreach (var pair in byAction) if (Controller.AnyBinding(pair.Key) != null) AllSkills.Add(pair.Value);
             }
-            PotionSources.Clear();
+            AllPotions.Clear();
             var props = GameObject.Find(PropsWidget);
             if (props != null)
                 foreach (var binder in props.GetComponentsInChildren<InputBinder>(false))
                 {
                     string action = KeyField.GetValue(binder) as string;
-                    if (Controller.FirstBinding(action) == null) continue;
+                    if (Controller.AnyBinding(action) == null) continue;
                     var slot = binder.transform.parent.parent; // PropsItem0N_RTransform
                     var src = new Source { Action = action, Root = slot };
                     foreach (var img in slot.GetComponentsInChildren<Image>(true))
@@ -156,15 +160,44 @@ namespace Ro3Emu.ClientHooks
                     foreach (var t in slot.GetComponentsInChildren<TMP_Text>(true))
                         if (t.name == "MaskItemTip_TTxt") src.CdText = t;
                         else if (t.name == "PropNum_TTxt") src.Count = t;
-                    PotionSources.Add(src);
+                    AllPotions.Add(src);
                 }
             HideStock(skills, props, GameObject.Find("Pattern_GraphicSwitchG"));
             Lift();
+            Select();
             string summary = string.Join(" ", SkillSources.ConvertAll(Describe)) + " | " + string.Join(" ", PotionSources.ConvertAll(Describe));
             if (summary != _summary) { _summary = summary; Debug.Log("[Ro3Emu.Hud] slots: " + summary); }
         }
 
         private static string _summary;
+
+        /// <summary>The slots of the active skill layer (Controller.Layer): the actions that have a control in that layer,
+        /// skills in button order, potions in widget order. Layer 2 / 3 are L2 / R2 held (ControllerLayers).</summary>
+        private static void Select()
+        {
+            _hudLayer = Controller.Layer;
+            SkillSources.Clear();
+            foreach (var control in ButtonOrder)
+                foreach (var src in AllSkills)
+                    if (Controller.LayerBinding(_hudLayer, src.Action) == "<Gamepad>/" + control) SkillSources.Add(src);
+            PotionSources.Clear();
+            foreach (var src in AllPotions)
+                if (Controller.LayerBinding(_hudLayer, src.Action) != null) PotionSources.Add(src);
+            Color tint = _hudLayer == 2 ? new Color(0.45f, 0.78f, 1f) : _hudLayer == 3 ? new Color(1f, 0.58f, 0.36f) : Color.white;
+            foreach (var s in Skills) s.Frame.color = _hudLayer == 1 ? s.FrameColor : tint;
+            foreach (var s in Potions) s.Frame.color = _hudLayer == 1 ? s.FrameColor : tint;
+            if (_layerBadge != null)
+            {
+                _layerBadge.gameObject.SetActive(_hudLayer > 1);
+                _layerBadge.color = new Color(tint.r * 0.35f, tint.g * 0.35f, tint.b * 0.35f, 0.92f);
+                string shift = Controller.FirstBinding("LayerShift" + _hudLayer);
+                _layerText.text = "LAYER " + _hudLayer + (shift != null ? "  " + ShiftName(shift) : "");
+                _layerText.color = tint;
+            }
+        }
+
+        private static string ShiftName(string path) =>
+            path == "<Gamepad>/leftTrigger" ? "L2" : path == "<Gamepad>/rightTrigger" ? "R2" : path.Substring(path.IndexOf('/') + 1);
 
         private static string Describe(Source s) =>
             s.Action + "(" + (s.Icon != null ? "icon" : "-") + (s.CdOn != null ? ",cd" : "") + (s.CdFill != null ? ",fill" : "")
@@ -226,7 +259,7 @@ namespace Ro3Emu.ClientHooks
         {
             bool has = src != null && src.Root != null && src.Icon != null && src.Icon.sprite != null && src.Icon.isActiveAndEnabled;
             slot.Icon.enabled = has;
-            slot.Glyph.sprite = src != null ? Glyphs.For(Controller.FirstBinding(src.Action)) : null;
+            slot.Glyph.sprite = src != null ? Glyphs.For(Controller.ActiveBinding(src.Action)) : null;
             slot.Glyph.enabled = slot.Glyph.sprite != null;
             if (!has) { slot.Cooling = false; slot.Cd.enabled = false; slot.CdText.text = ""; if (slot.Count != null) slot.Count.text = ""; return; }
             bool pressed = Pressed(src.Action);
@@ -258,7 +291,7 @@ namespace Ro3Emu.ClientHooks
         /// mode, where the binding is taken away).</summary>
         private static bool Pressed(string action)
         {
-            var path = Controller.FirstBinding(action);
+            var path = Controller.ActiveBinding(action); // the control this action has in the held layer
             var pad = UnityEngine.InputSystem.Gamepad.current;
             if (path == null || pad == null || UiNav.Active || Wheel.Open || Controller.CursorOn) return false;
             return Controller.Edge(pad.TryGetChildControl(path.Substring(path.IndexOf('/') + 1)) as UnityEngine.InputSystem.Controls.ButtonControl, true);
@@ -289,7 +322,12 @@ namespace Ro3Emu.ClientHooks
             _hpFill = Orb(-1, new Color(0.78f, 0.1f, 0.12f), out _hpText);
             _spFill = Orb(1, new Color(0.18f, 0.38f, 0.9f), out _spText);
             for (int i = 0; i < 8; i++) Skills.Add(NewSlot("Skill" + i, SkillSize, false));
-            for (int i = 0; i < 2; i++) Potions.Add(NewSlot("Potion" + i, PotionSize, true));
+            for (int i = 0; i < 6; i++) Potions.Add(NewSlot("Potion" + i, PotionSize, true)); // ShortCut_1..6, two per layer by default
+            _layerBadge = Img("LayerBadge", _root, Shapes.RoundedRect, new Color(0.1f, 0.1f, 0.1f, 0.9f), 0, 0, 1f);
+            _layerBadge.raycastTarget = false;
+            _layerText = Overlay.Text("LayerText", _layerBadge.rectTransform, 20);
+            _layerText.alignment = TextAlignmentOptions.Center;
+            _layerBadge.gameObject.SetActive(false);
         }
 
         /// <summary>One row centred on the screen: [HP orb] [potions] [skills] [SP orb], on a plate.</summary>
@@ -323,6 +361,8 @@ namespace Ro3Emu.ClientHooks
             ((RectTransform)_spFill.transform.parent).anchoredPosition = new Vector2(orbX - OrbSize / 2f, 0f);
             Place(_plate.rectTransform, -orbX, y - 22f, 2f * orbX, SkillSize + 44f);
             Place(_plateEdge.rectTransform, -orbX, y + SkillSize + 20f, 2f * orbX, 2f);
+            Place(_layerBadge.rectTransform, -90f, y + SkillSize + 8f, 180f, 28f); // straddles the plate edge, centred
+            Place(_layerText.rectTransform, 0f, 0f, 180f, 28f);
         }
 
         private static Image Orb(int side, Color color, out TextMeshProUGUI label)
@@ -363,6 +403,7 @@ namespace Ro3Emu.ClientHooks
             ControllerSkin.Bind(slot.Cd, "slot_cooldown_mask", Shapes.RoundedRect);
             slot.Frame = Img("Frame", slot.Rect, Shapes.RoundedRing, Gold, 0, 0, size);
             ControllerSkin.Bind(slot.Frame, potion ? "potion_frame" : "slot_frame", Shapes.RoundedRing);
+            slot.FrameColor = slot.Frame.color;
             slot.Flash = Img("Flash", slot.Rect, Shapes.RoundedRect, new Color(1f, 0.93f, 0.75f, 0f), 0, 0, size);
             ControllerSkin.Bind(slot.Flash, "slot_ready_flash", Shapes.RoundedRect);
             slot.Flash.enabled = false;

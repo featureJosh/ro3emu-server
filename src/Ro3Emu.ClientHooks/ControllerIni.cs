@@ -30,6 +30,7 @@ namespace Ro3Emu.ClientHooks
 # MenuUnassign also work on bag items: assign the item to, or clear, a D-pad potion slot.
 # Tuning: CameraSpeedX / CameraSpeedY (negative inverts), CursorSpeed (pixels per second), Deadzone (0-1),
 # GlyphScale (button glyph size relative to the key label it replaces), UiScale (size of our controller UI).
+# Skill layers (L2 / R2 held): see the Layer block at the end.
 
 MoveForward = <Gamepad>/leftStick/up
 MoveBackward = <Gamepad>/leftStick/down
@@ -40,8 +41,6 @@ FastPickUp = <Gamepad>/buttonEast
 NormalSkill_01 = <Gamepad>/buttonWest
 NormalSkill_02 = <Gamepad>/buttonNorth
 NormalSkill_03 = <Gamepad>/leftShoulder
-NormalSkill_04 = <Gamepad>/leftTrigger
-NormalSkill_05 = <Gamepad>/rightTrigger
 SwitchTarget = <Gamepad>/rightShoulder
 Direction_Up = <Gamepad>/dpad/up
 Direction_Down = <Gamepad>/dpad/down
@@ -68,7 +67,7 @@ CursorSpeed = 1200
 Deadzone = 0.2
 GlyphScale = 2
 UiScale = 1
-";
+" + ControllerLayers.DefaultBlock;
 
         /// <summary>"Action = &lt;Gamepad&gt;/control" lines go to binds, "Name = number" lines to tune.</summary>
         public static void Parse(string[] lines, Dictionary<string, List<string>> binds, Dictionary<string, float> tune)

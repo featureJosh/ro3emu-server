@@ -27,6 +27,10 @@ namespace Ro3Emu.ClientHooks
         };
 
         private const int VisibleRows = 10;
+        // Layer slot rows (Layer2.* then Layer3.*) sit between the action rows and the numbers; D-pad left/right or X cycles the action.
+        private static readonly int LayerRows = (ControllerLayers.Count - 1) * ControllerLayers.Slots.Length;
+        private static readonly string[] LayerPrefixes = { "NormalSkill_", "ExpandSkill_", "InteractiveSkill_", "GamePlaySkill_", "ShortCut_" };
+        private static readonly List<string> LayerChoices = new List<string>();
         private static readonly List<string> Actions = new List<string>();
         private static readonly List<TextMeshProUGUI> Rows = new List<TextMeshProUGUI>();
         private static RectTransform _root;
@@ -41,6 +45,11 @@ namespace Ro3Emu.ClientHooks
         {
             Actions.Clear();
             Actions.AddRange(Controller.ConfigurableActions());
+            LayerChoices.Clear();
+            LayerChoices.Add(""); // no entry: the slot keeps its base binding
+            foreach (var a in Actions)
+                foreach (var prefix in LayerPrefixes)
+                    if (a.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) { LayerChoices.Add(a); break; }
             Build();
             _selected = _top = 0;
             _capture = false;
@@ -88,7 +97,7 @@ namespace Ro3Emu.ClientHooks
             if (Tap(pad.buttonEast)) { Hide(); return; }
             if (Tap(pad.dpad.up)) Move(-1);
             if (Tap(pad.dpad.down)) Move(1);
-            if (Tap(pad.buttonNorth)) { Controller.ResetSetting(_selected < Actions.Count ? Actions[_selected] : Numbers[_selected - Actions.Count].name); Refresh(); return; }
+            if (Tap(pad.buttonNorth)) { Controller.ResetSetting(_selected < Actions.Count ? Actions[_selected] : _selected < Actions.Count + LayerRows ? LayerKey(_selected - Actions.Count) : Numbers[_selected - Actions.Count - LayerRows].name); Refresh(); return; }
             if (_selected < Actions.Count)
             {
                 if (Tap(pad.buttonSouth))
@@ -100,9 +109,14 @@ namespace Ro3Emu.ClientHooks
                     Refresh();
                 }
             }
+            else if (_selected < Actions.Count + LayerRows)
+            {
+                if (Tap(pad.dpad.left)) CycleLayer(_selected - Actions.Count, -1);
+                if (Tap(pad.dpad.right) || Tap(pad.buttonSouth)) CycleLayer(_selected - Actions.Count, 1);
+            }
             else
             {
-                int index = _selected - Actions.Count;
+                int index = _selected - Actions.Count - LayerRows;
                 if (Tap(pad.dpad.left)) Adjust(index, -1);
                 if (Tap(pad.dpad.right) || Tap(pad.buttonSouth)) Adjust(index, 1);
             }
@@ -112,7 +126,7 @@ namespace Ro3Emu.ClientHooks
 
         private static void Move(int step)
         {
-            _selected = Mathf.Clamp(_selected + step, 0, Actions.Count + Numbers.Length - 1);
+            _selected = Mathf.Clamp(_selected + step, 0, Actions.Count + LayerRows + Numbers.Length - 1);
             if (_selected < _top) _top = _selected;
             if (_selected >= _top + VisibleRows) _top = _selected - VisibleRows + 1;
             Refresh();
@@ -122,6 +136,20 @@ namespace Ro3Emu.ClientHooks
         {
             Controller.SaveSetting(Actions[_selected], _pending);
             _pending = _conflict = null;
+        }
+
+
+        private static string LayerKey(int row) =>
+            "Layer" + (2 + row / ControllerLayers.Slots.Length) + "." + ControllerLayers.Slots[row % ControllerLayers.Slots.Length];
+
+        private static void CycleLayer(int row, int step)
+        {
+            string key = LayerKey(row);
+            string current = Controller.LayerAction(key[5] - '0', ControllerLayers.SlotPath(key.Substring(7)));
+            int at = Math.Max(0, LayerChoices.FindIndex(c => string.Equals(c, current ?? "", StringComparison.OrdinalIgnoreCase)));
+            string next = LayerChoices[(at + step + LayerChoices.Count) % LayerChoices.Count];
+            Controller.SaveSetting(key, next.Length == 0 ? null : next);
+            Refresh();
         }
 
         private static void Adjust(int index, int direction)
@@ -161,12 +189,12 @@ namespace Ro3Emu.ClientHooks
 
         private static void Refresh()
         {
-            _title.text = "Controller  •  " + (_selected + 1) + "/" + (Actions.Count + Numbers.Length);
+            _title.text = "Controller  •  " + (_selected + 1) + "/" + (Actions.Count + LayerRows + Numbers.Length);
             for (int i = 0; i < Rows.Count; i++)
             {
                 int index = _top + i;
                 var row = Rows[i];
-                row.gameObject.SetActive(index < Actions.Count + Numbers.Length);
+                row.gameObject.SetActive(index < Actions.Count + LayerRows + Numbers.Length);
                 if (!row.gameObject.activeSelf) continue;
                 string name, value;
                 if (index < Actions.Count)
@@ -174,9 +202,14 @@ namespace Ro3Emu.ClientHooks
                     name = Actions[index];
                     value = Controller.FirstBinding(name)?.Replace("<Gamepad>/", "") ?? "Unbound";
                 }
+                else if (index < Actions.Count + LayerRows)
+                {
+                    name = LayerKey(index - Actions.Count);
+                    value = Controller.LayerAction(name[5] - '0', ControllerLayers.SlotPath(name.Substring(7))) ?? "(base)";
+                }
                 else
                 {
-                    name = Numbers[index - Actions.Count].name;
+                    name = Numbers[index - Actions.Count - LayerRows].name;
                     value = Controller.Setting(name, 0f).ToString("0.##", CultureInfo.InvariantCulture);
                 }
                 row.text = (index == _selected ? "▸  " : "    ") + name + "     " + value;
@@ -185,6 +218,7 @@ namespace Ro3Emu.ClientHooks
             _help.text = _capture ? "Press a button to bind it  •  OPTIONS cancels"
                 : _pending != null ? "Already used by " + _conflict + "  •  D-pad right: keep both  •  left / ○: cancel"
                 : _selected < Actions.Count ? "D-pad: choose  •  ✕: rebind  •  △: reset  •  ○: close"
+                : _selected < Actions.Count + LayerRows ? "Layer slot (held L2 / R2)  •  D-pad left/right: pick action  •  △: reset  •  ○: close"
                 : "D-pad left/right: adjust  •  △: reset  •  ○: close";
         }
 

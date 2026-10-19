@@ -11,6 +11,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
     <Compile Include="../../src/Ro3Emu.ClientHooks/CombatSettings.cs" Link="CombatSettings.cs" />
     <Compile Include="../../src/Ro3Emu.ClientHooks/ControllerIni.cs" Link="ControllerIni.cs" />
+    <Compile Include="../../src/Ro3Emu.ClientHooks/ControllerLayers.cs" Link="ControllerLayers.cs" />
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

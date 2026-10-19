@@ -7,7 +7,7 @@ public class ControllerIniTests
     {
         "MoveForward", "MoveBackward", "MoveLeft", "MoveRight", "OpenMap", "InteractiveSkill_01", "FastPickUp", "SwitchTarget",
         "NormalSkill_01", "NormalSkill_02", "NormalSkill_03", "NormalSkill_04", "NormalSkill_05", "Direction_Up",
-        "Direction_Down", "ShortCut_1", "ShortCut_2", "ClosePanel", "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuWheel", "QuestNav",
+        "Direction_Down", "ShortCut_1", "ShortCut_2", "ClosePanel", "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuWheel", "QuestNav", "LayerShift2", "LayerShift3",
     };
 
     [Fact]

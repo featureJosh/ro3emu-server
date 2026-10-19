@@ -57,7 +57,7 @@ namespace Ro3Emu.ClientHooks
             {
                 var tip = TipField.GetValue(binder) as TMPro.TMP_Text;
                 if (tip == null) continue;
-                Sprite sprite = on ? For(Controller.FirstBinding(KeyField.GetValue(binder) as string)) : null;
+                Sprite sprite = on ? For(Controller.AnyBinding(KeyField.GetValue(binder) as string)) : null;
                 if (sprite == null)
                 {
                     Unreplace(tip);

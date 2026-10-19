@@ -95,7 +95,7 @@ namespace Ro3Emu.ClientHooks
             Slots.Clear();
             for (int n = 1; n <= 6; n++)
             {
-                string control = Controller.FirstBinding("ShortCut_" + n);
+                string control = Controller.ActiveBinding("ShortCut_" + n);
                 if (control != null && control.StartsWith("<Gamepad>/dpad/", StringComparison.Ordinal) && Trigger(n) != null) Slots.Add((control, n));
             }
         }
