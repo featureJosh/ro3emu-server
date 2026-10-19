@@ -18,6 +18,7 @@ namespace Ro3Emu.ClientHooks
     /// state), but no client code uses them: the Lua message table (NW_Helper_PBDefine) and the decompiled assemblies
     /// have no entry, so the ids stay free for this tunnel, Diagnostics (77012) and FeedbackButton (77013).
     /// Revisit if a client update starts registering them.
+    /// Its per-frame pump and receive hook also carry the voice relay ticket (77016) and pump (VoiceClient).
     /// </summary>
     public sealed class ServerImAdapter : Obf_ci
     {
@@ -84,6 +85,7 @@ namespace Ro3Emu.ClientHooks
             n = 0;
             while (_requestCallback != null && n++ < MaxPerFrame && _inbound.TryDequeue(out var frame)) Deliver(frame);
             while (_diagnostics.TryDequeue(out var line)) Diagnostics.Run(line);
+            VoiceClient.Pump();
             UiTweaks.Tick();
         }
 
@@ -100,6 +102,7 @@ namespace Ro3Emu.ClientHooks
             while (_status.TryDequeue(out _)) { }
             _requestCallback = null;
             _requestArray = null;
+            VoiceClient.Shutdown(); // voice must not outlive the game connection (mic left open after logout)
         }
 
         /// <summary>Same hand-off as the Tencent adapter: cmd, length, pinned pointer, error code in the shared array.</summary>
@@ -146,6 +149,11 @@ namespace Ro3Emu.ClientHooks
             if (msgId == Diagnostics.MsgId)
             {
                 _diagnostics.Enqueue(System.Text.Encoding.UTF8.GetString(memory.ToArray()));
+                return;
+            }
+            if (msgId == VoiceProtocol.TicketMsgId)
+            {
+                VoiceClient.OnTicket(memory.ToArray());
                 return;
             }
             if (msgId != DownMsgId || memory.Length < 8) return;

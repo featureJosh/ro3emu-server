@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Options;
 using Ro3Emu.Server.Accounts;
 
+using Microsoft.AspNetCore.Builder;
 namespace Ro3Emu.Server.Http;
 
 /// <summary>
@@ -12,6 +13,7 @@ namespace Ro3Emu.Server.Http;
 public static class SdkEndpoints
 {
     public const string LoginPath = "/sdk/login";
+
     public const string ServerListPath = "/serverlist/v2/168/serverlist.json";
     /// <summary>Asia login notice board (ClientPatch points NoticeOrigin here).</summary>
     public const string NoticeListPath = "/notice-list";
@@ -29,8 +31,9 @@ public static class SdkEndpoints
     {
         app.MapGet(GateKeyPath, (Net.GateCrypto crypto) => Results.Text(crypto.PublicKeyPem, "application/x-pem-file"));
 
-        app.MapPost(LoginPath, async (HttpRequest request, AccountStore accounts, Game.GmLoginChoices gmChoices, ILogger<AccountStore> log) =>
+        app.MapPost(LoginPath, async (HttpRequest request, CredentialLimiter limiter, AccountStore accounts, Game.GmLoginChoices gmChoices, ILogger<AccountStore> log) =>
         {
+            if (!limiter.TryAcquire(request.HttpContext.Connection.RemoteIpAddress)) return Results.StatusCode(StatusCodes.Status429TooManyRequests);
             var form = await request.ReadFormAsync();
             string identity = form["identity"].ToString().Trim();
             string credential = form["credential"].ToString();
@@ -39,16 +42,16 @@ public static class SdkEndpoints
                 return Results.Json(new { code = 401 });
             }
             credential = Game.GmLoginChoices.Strip(credential, out bool? wantsGm);
-            var result = await accounts.LoginAsync(identity, credential);
+            var (result, account) = await accounts.SignInAsync(identity, credential);
             string gm = wantsGm == null ? "no GM choice" : wantsGm.Value ? "GM requested" : "GM declined";
-            log.LogInformation("SDK login {Identity}: {Result}, {Gm}", identity, result, gm);
+            log.LogInformation("SDK login {Identity}: {Result}, {Gm}", account, result, gm);
             if (result == AccountStore.LoginResult.BadPassword)
             {
                 return Results.Json(new { code = 401 });
             }
             // Only an authenticated login may set or clear the choice.
-            gmChoices.Record(identity, wantsGm);
-            return Results.Json(new { code = 0, data = new { token = await accounts.IssueSdkTokenAsync(identity) } });
+            gmChoices.Record(account, wantsGm);
+            return Results.Json(new { code = 0, data = new { token = await accounts.IssueSdkTokenAsync(account) } });
         });
 
         app.MapGet(ServerListPath, (HttpContext context, IOptions<ServerOptions> options) =>

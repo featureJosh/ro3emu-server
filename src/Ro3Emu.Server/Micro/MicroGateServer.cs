@@ -26,6 +26,8 @@ public sealed class MicroGateServer(IOptions<ServerOptions> options, GateCrypto 
 
     protected override string Name => "MicroGate";
 
+    protected override bool IsSignedIn(PhonestChannel channel) => (channel.Session as MicroSession)?.Account != null;
+
     protected override ValueTask OnDisconnectedAsync(PhonestChannel channel)
     {
         if (channel.Session is MicroSession session) sessions.Remove(session);
@@ -83,5 +85,6 @@ public sealed class MicroSession(PhonestChannel channel)
     public long HandshakeToken { get; set; }
 
     /// <summary>Account bound by LoginService.verifySdk.</summary>
-    public string? Account { get; set; }
+    /// <summary>The verified account; set only by <see cref="MicroSessions.SignIn"/> (tests may set it).</summary>
+    public string? Account { get; internal set; }
 }

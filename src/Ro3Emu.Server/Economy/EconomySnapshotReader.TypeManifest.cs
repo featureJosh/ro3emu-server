@@ -58,7 +58,16 @@ public static partial class EconomySnapshotReader
     // Power: role.emblems EmblemState.Power (PowerService.Record) holds the role's last published power total and its
     // best total (maxHistoryPower), as normal/season parts. Rating counters, no balance and no asset: they only gate
     // Become Stronger stage claims (whose goods come with their own daily-stage receipt) and rank the Hero Registry.
-    public const string ExpectedFormatManifestHash = "3E3E6357A1BEBDB6D354F71F6F7D95E1AD08D7C53619297182B38363E5599FB4";
+    // Realm of the Gods: dungeons Honors (Final Trial goal states) and BlessingsSeen (acknowledged blessing levels) are
+    // markers; a Received honor is only the once-only source of its event/dungeon/honor-award receipt. server_state
+    // multi_dungeon_server (DBMultiDungeonServerInfo) holds the realm's first clears: the hall of fame keeps the clearing
+    // roles' equipment as a display snapshot, never a holding.
+    // Mock Battle: role.timed_battle CasualMmr/CasualRecords/CasualBest/CasualTotal are a rating and statistics, and
+    // CasualSettled the once-only markers of each match's event/casual-battle receipt; no balance, no asset.
+    // casual_battle_obligation.payout is CasualBattleService.Payout: a frozen match result (rating delta, record,
+    // numbers) and the DropPool ids its payment rolls. No goods: they are granted by the role's event/casual-battle
+    // receipt that also writes the timed_battle state and marks the row delivered.
+    public const string ExpectedFormatManifestHash = "C30B966932EA711BC056382F73CF7189C57E143F7C7A15351BEC6D13ECDCB91F";
     public static string FormatManifestHash => State.FormatManifestHash;
 
     private sealed partial class State
@@ -117,6 +126,8 @@ public static partial class EconomySnapshotReader
             entries.Add("role-string-set:task_followup:System.String");
             entries.Add("dungeon_reward_obligation:Ro3Emu.Server.Accounts.DungeonRewardObligation");
             TypeShape(typeof(Ro3Emu.Server.Accounts.DungeonRewardObligation));
+            entries.Add("casual_battle_obligation:Ro3Emu.Server.Game.CasualBattleService+Payout");
+            TypeShape(typeof(Ro3Emu.Server.Game.CasualBattleService.Payout));
             // These JSON wrappers carry embedded protobuf bytes in addition to their explicit DTO graph.
             Message(Romsg.DBMountsInfo.Descriptor);
             Message(Romsg.DBLotteryData.Descriptor);
@@ -127,6 +138,8 @@ public static partial class EconomySnapshotReader
             TypeShape(typeof(Ro3Emu.Server.Game.FestivalService.Round));
             entries.Add("server_state/season_history:Ro3Emu.Server.Game.SeasonService.Season");
             TypeShape(typeof(Ro3Emu.Server.Game.SeasonService.Season));
+            entries.Add("server_state/multi_dungeon_server:romsg.DBMultiDungeonServerInfo");
+            Message(Romsg.DBMultiDungeonServerInfo.Descriptor);
             return Hash(string.Join("\n", entries));
         }
     }

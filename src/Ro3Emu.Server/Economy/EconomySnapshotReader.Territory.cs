@@ -202,6 +202,7 @@ public static partial class EconomySnapshotReader
             }
             if (Has("mvp_award_obligation")) Guard("mvp_award_obligation", () => ReadEventMvp(null));
             if (Has("timed_battle_obligation")) Guard("timed_battle_obligation", () => ReadEventTimedBattle(null));
+            if (Has("casual_battle_obligation")) Guard("casual_battle_obligation", ReadCasualBattle);
             if (Has("guild_challenge_clear") && new[] { "id", "pending", "state" }.All(Columns("guild_challenge_clear").ContainsKey))
             {
                 using var cmd = Command("SELECT id,pending,state FROM guild_challenge_clear ORDER BY id");
@@ -343,6 +344,10 @@ public static partial class EconomySnapshotReader
                                     Prop(season.Value, "End").GetDateTime();
                                 }
                             }
+                            break;
+                        case "multi_dungeon_server":
+                            // Realm of the Gods first clears (hall of fame, Sacred Blessing unlocks): records, no balance.
+                            ValidateProto(Convert.FromBase64String(value), DBMultiDungeonServerInfo.Descriptor);
                             break;
                         default:
                             Issue(EconomyIssueKind.UnknownSchema, key, "Unclassified server_state key.");
