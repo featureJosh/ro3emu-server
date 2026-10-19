@@ -197,7 +197,11 @@ public sealed class PowerTests : IAsyncLifetime
             Assert.Equal(low - high, Sum(lowered.ChangePower));
             roleId = (await OnLoop("Alice", s => Task.FromResult(s.Role!.Id)));
         }
-        var saved = JsonSerializer.Deserialize<EmblemService.EmblemState>(Service<RoleStore>().LoadEmblems(roleId)!)!.Power!;
+        // PublishAsync sends 31502 first and commits the emblems blob last, so the saved row can trail the push.
+        PowerService.Record Saved() => JsonSerializer.Deserialize<EmblemService.EmblemState>(Service<RoleStore>().LoadEmblems(roleId)!)!.Power!;
+        for (var wait = System.Diagnostics.Stopwatch.StartNew(); wait.Elapsed < TimeSpan.FromSeconds(10)
+            && Saved() is var now && now.CurrentNormal + now.CurrentSeason != low; ) await Task.Delay(50);
+        var saved = Saved();
         Assert.Equal(high, saved.HistoryNormal + saved.HistorySeason);
         Assert.Equal(low, saved.CurrentNormal + saved.CurrentSeason);
 

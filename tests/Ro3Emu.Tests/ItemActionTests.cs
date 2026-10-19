@@ -395,16 +395,18 @@ public sealed class ItemActionTests : IAsyncLifetime
     {
         await using var alice = await InWorld("Alice");
         await using var bob = await InWorld("Bob");
-        long guild = await GuildOfTwo(alice, bob, 20000);
+        // ShopCommodityConfig 27201 _kItemPerPrice [104, price] (10000 in this export, 5000 upstream): fund four packs.
+        long price = app.Services.GetRequiredService<Ro3Emu.Server.Data.GameData>().Row("ShopCommodityConfig", 27201)!.Value.GetProperty("_kItemPerPrice")[1].GetInt64();
+        long guild = await GuildOfTwo(alice, bob, 4 * price);
         var guilds = app.Services.GetRequiredService<GuildStore>();
         Task<BuyGuildCommodityRes> Buy(BotClient who, int commodity, int count) => Request(who, GuildService.BuyCommodity,
             new BuyGuildCommodityReq { CommodityId = commodity, Count = count }, BuyGuildCommodityRes.Parser);
 
         Assert.Equal(GuildService.ErrStorePosition, (await Buy(bob, 27201, 1)).Result); // [9007,6,3]: GM to Vice GM
-        Assert.Equal(GuildService.ErrStoreFunds, (await Buy(alice, 27203, 1)).Result); // 100000 funds
+        Assert.Equal(GuildService.ErrStoreFunds, (await Buy(alice, 27203, 1)).Result); // 27203 costs far more than four packs
         var bought = await Buy(alice, 27201, 2);
         Assert.Equal((0, 27201, 2), (bought.Result, bought.CommodityId, bought.Count));
-        Assert.Equal(20000 - 2 * 5000, guilds.Get(guild)!.Money);
+        Assert.Equal(4 * price - 2 * price, guilds.Get(guild)!.Money);
         Assert.Equal(2, Count(alice, 1211101));
         var counts = await Next(bob, GuildService.BaseChange, GuildBaseInfoChangeNtf.Parser,
             m => m.Tp == GuildBaseInfoChangeNtf.Types.ChangeType.ChangeShopCommodityInfo);
@@ -413,7 +415,7 @@ public sealed class ItemActionTests : IAsyncLifetime
         Assert.Equal(GuildService.ErrStoreLimit, (await Buy(alice, 27201, 2)).Result); // 3 a week, guild-wide
         Assert.Equal(0, (await Buy(alice, 27201, 1)).Result);
         Assert.Equal(GuildService.ErrStoreLimit, (await Buy(alice, 27201, 1)).Result);
-        Assert.Equal(5000, guilds.Get(guild)!.Money);
+        Assert.Equal(price, guilds.Get(guild)!.Money);
 
         // [114,2004,1120,6,20]: MailConfig 1120 with MultiverseGroupConfig 2004 (one 1211104) to positions <= 20.
         Assert.Equal(0, await Use(alice, 1211101));
