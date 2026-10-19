@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Romsg;
 using Ro3Emu.Bot;
 using Ro3Emu.Server;
+using Ro3Emu.Server.Data;
 using Ro3Emu.Server.Game;
 
 namespace Ro3Emu.Tests;
@@ -302,7 +303,9 @@ public sealed class PassPlayTests : IAsyncLifetime
         await Service<NewActivityService>().ReconcileAsync(Session(alice));
         await Event(alice, [(NewActivityService.PassGoal.Quests, 1)], quest: 10101010); // level 1: 9201 not open yet
         Assert.Equal(0, await Currency(alice, NewActivityService.NovicePassExpCurrency));
-        await Gm(alice, "!lvl 10");
+        // 9201 _kOpenCondition 920199 -> LC_ConditionList 920199 m_kSubConditionList [1002, N]: base level N (30 in this export, 10 upstream).
+        int open = Service<GameData>().Row("LC_ConditionList", 920199)!.Value.GetProperty("m_kSubConditionList")[0].GetProperty("m_kData")[1].GetInt32();
+        await Gm(alice, $"!lvl {open}");
         await Service<NewActivityService>().ReconcileAsync(Session(alice));
         await Event(alice, [(NewActivityService.PassGoal.Quests, 1)], quest: 10101020);
         await Event(alice, [(NewActivityService.PassGoal.Quests, 1)], quest: 9201101); // not a main quest
