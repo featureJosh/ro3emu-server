@@ -268,7 +268,7 @@ namespace Ro3Emu.ClientHooks
 
         private static bool _reportedMissing;
         private static readonly HashSet<string> Pseudo = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuWheel", "Interact", "QuestNav" };
+            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuRightClick", "MenuDoubleClick", "MenuWheel", "Interact", "QuestNav" };
 
         /// <summary>Every enabled Input System action: map, name, bindings (dev command "actions").</summary>
         internal static string DescribeActions()

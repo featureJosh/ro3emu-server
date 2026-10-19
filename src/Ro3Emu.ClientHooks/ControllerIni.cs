@@ -28,6 +28,11 @@ namespace Ro3Emu.ClientHooks
 # (D-pad / left stick move the focus, right stick scrolls). In the skill window: MenuAssign (focused skill, then press a
 # skill button to bind it to that slot) and MenuUnassign (then press a skill button to unbind that slot). MenuAssign /
 # MenuUnassign also work on bag items: assign the item to, or clear, a D-pad potion slot.
+# MenuRightClick (menus: a right click on the focus, e.g. siege add-player) and MenuDoubleClick (default unbound; a
+# double click on the focus); two quick MenuConfirm presses on the same item are also a double click. In a window with a
+# model view (equipment) the right stick left/right rotates the model.
+# Menu tuning: MenuDoubleClickWindow (seconds, default 0.3, 0 = off), MenuRotateSpeed (pixels per second, default 600), MenuLargeFocus (1 = big click
+# cards are focus targets when a panel has nothing else, 0 = off).
 # Tuning: CameraSpeedX / CameraSpeedY (negative inverts), CursorSpeed (pixels per second), Deadzone (0-1),
 # GlyphScale (button glyph size relative to the key label it replaces), UiScale (size of our controller UI).
 
@@ -61,6 +66,7 @@ MenuTabLeft = <Gamepad>/leftShoulder
 MenuTabRight = <Gamepad>/rightShoulder
 MenuAssign = <Gamepad>/buttonWest
 MenuUnassign = <Gamepad>/buttonNorth
+MenuRightClick = <Gamepad>/rightStickPress
 
 CameraSpeedX = 700
 CameraSpeedY = 400
