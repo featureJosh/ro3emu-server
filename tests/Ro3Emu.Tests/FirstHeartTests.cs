@@ -5,12 +5,14 @@ using Romsg;
 using Ro3Emu.Bot;
 using Ro3Emu.Server;
 using Ro3Emu.Server.Accounts;
+using Ro3Emu.Server.Data;
 using Ro3Emu.Server.Game;
 
 namespace Ro3Emu.Tests;
 
 /// <summary>
-/// Seven-Day Goal (FirstHeartService): 5049 starts at base level 10 (NewActivityConfig 114, condition 21000012) with day 1
+/// Seven-Day Goal (FirstHeartService): 5049 starts at the base level named by NewActivityConfig 114's open condition (21000012; 30 in
+/// this export, read by OpenLevel) with day 1
 /// open; 83500 pays a completed task once and scores its point, 83501 a score reward once the score reaches it; the state
 /// survives a relogin. Day 1 tasks: 100100200 (level 10), 101101100 (1 login day), 102101110 (a quality-3 card).
 /// </summary>
@@ -68,6 +70,15 @@ public sealed class FirstHeartTests : IAsyncLifetime
         (await client.PostAsync($"{http}/ro3emu/gm?account={bot.Account}", new StringContent(command))).EnsureSuccessStatusCode();
     }
 
+    /// <summary>The base level of NewActivityConfig 114's open condition (LC_ConditionList sub-condition 1002).</summary>
+    private int OpenLevel()
+    {
+        var data = Service<GameData>();
+        var cond = data.Row("LC_ConditionList", GameData.Int(data.Row("NewActivityConfig", 114)!.Value, "_kOpenCondition"))!.Value;
+        var sub = cond.GetProperty("m_kSubConditionList").EnumerateArray().Single(c => GameData.Number(c.GetProperty("m_kData")[0]) == 1002);
+        return (int)GameData.Number(sub.GetProperty("m_kData")[1])!.Value;
+    }
+
     private GameSession Session(BotClient bot) => Service<SessionRegistry>().All().Single(s => s.Account == bot.Account && s.Role != null);
 
     private Task<FirstHeartTaskCfgData?> Cfg(GameSession s) => Read(() => s.FirstHeart?.ActivityData.GetValueOrDefault(1)?.Clone());
@@ -120,7 +131,7 @@ public sealed class FirstHeartTests : IAsyncLifetime
         Assert.False(await Read(() => s.Synced.ContainsKey(FirstHeartService.Sync)));
         Assert.Equal(ErrorCodes.ActivityClosed, await ClaimTask(alice, LevelTen));
 
-        await Gm(alice, "!lvl 10");
+        await Gm(alice, $"!lvl {OpenLevel()}");
         var full = await Next(alice, FirstHeartService.Sync, DBFirstHeartTaskActivityDataIncrement.Parser, m => m.SyncAllMark);
         var all = full.ActivityData[1].All;
         Assert.Equal(1, all.CfgData[1001]);
@@ -147,7 +158,7 @@ public sealed class FirstHeartTests : IAsyncLifetime
     {
         await using var alice = await InWorld("Alice");
         var s = Session(alice);
-        await Gm(alice, "!lvl 10");
+        await Gm(alice, $"!lvl {OpenLevel()}");
         await Until(s, cfg => Status(cfg, LevelTen) == FirstHeartTaskState.Accept, "level 10 task completed");
 
         Assert.Equal(ErrorCodes.TaskRequirements, await ClaimTask(alice, CardTask));   // not completed
@@ -176,7 +187,7 @@ public sealed class FirstHeartTests : IAsyncLifetime
     {
         await using var alice = await InWorld("Alice");
         var s = Session(alice);
-        await Gm(alice, "!lvl 20");
+        await Gm(alice, $"!lvl {Math.Max(OpenLevel(), 20)}"); // the day 2 level task needs 20
         await Until(s, cfg => Status(cfg, LoginOne) == FirstHeartTaskState.Accept, "day 1 tasks completed");
         Assert.Equal(0, await ClaimTask(alice, LevelTen));
         Assert.Equal(0, await ClaimTask(alice, LoginOne));
