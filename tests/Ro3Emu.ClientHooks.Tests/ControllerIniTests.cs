@@ -7,7 +7,7 @@ public class ControllerIniTests
     {
         "MoveForward", "MoveBackward", "MoveLeft", "MoveRight", "OpenMap", "InteractiveSkill_01", "FastPickUp", "SwitchTarget",
         "NormalSkill_01", "NormalSkill_02", "NormalSkill_03", "NormalSkill_04", "NormalSkill_05", "Direction_Up",
-        "Direction_Down", "ShortCut_1", "ShortCut_2", "ClosePanel", "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuWheel", "QuestNav",
+        "Direction_Down", "ShortCut_1", "ShortCut_2", "ClosePanel", "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuWheel", "QuestNav", "TargetCycle", "TargetLock", "AllySelect",
     };
 
     [Fact]
@@ -16,7 +16,7 @@ public class ControllerIniTests
         var binds = new Dictionary<string, List<string>>();
         var tune = new Dictionary<string, float>();
         ControllerIni.Parse(ControllerIni.Defaults.Split('\n'), binds, tune);
-        Assert.Equal(30, binds.Count);
+        Assert.Equal(32, binds.Count);
         foreach (var (action, paths) in binds)
         {
             Assert.Contains(action, Known);
@@ -24,6 +24,10 @@ public class ControllerIniTests
         }
         Assert.Equal(["<Gamepad>/buttonSouth"], binds["InteractiveSkill_01"]);
         Assert.Equal(["<Gamepad>/touchpadButton"], binds["QuestNav"]);
+        Assert.Equal(["<Gamepad>/rightShoulder"], binds["TargetCycle"]);
+        Assert.Equal(["<Gamepad>/rightStickPress"], binds["TargetLock"]);
+        Assert.Equal(["<Gamepad>/leftShoulder"], binds["AllySelect"]);
+        Assert.False(binds.ContainsKey("SwitchTarget")); // TargetCycle replaces the stock action on R1
         Assert.Equal(["<Gamepad>/buttonWest"], binds["MenuAssign"]);
         Assert.Equal(["<Gamepad>/buttonNorth"], binds["MenuUnassign"]);
         Assert.Equal(0.2f, tune["Deadzone"]);

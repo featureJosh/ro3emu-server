@@ -24,11 +24,16 @@ namespace Ro3Emu.ClientHooks
 # cursor), LeftClick / RightClick (in cursor mode),
 # QuestNav (auto-path to the tracked quest, like clicking it in the quest tracker; default: the DualSense touchpad
 # press, <Gamepad>/touchpadButton, the one control the defaults leave free; also in the radial menu as Go to Quest),
-# CameraZoom (hold, then right stick up/down). In menus: MenuConfirm, MenuBack, MenuTabLeft, MenuTabRight
+# CameraZoom (hold, then right stick up/down; on the right stick press it shares the control with TargetLock, a tap),
+# TargetCycle (next hostile target, near and ahead of the camera first; to get the stock cycle back, remove it and bind
+# SwitchTarget), TargetLock (tap: hard lock on the target until it dies or leaves TargetLockRange), AllySelect (press:
+# select the nearest party member, again for the next; a heal or buff pressed next lands on them). In menus: MenuConfirm, MenuBack, MenuTabLeft, MenuTabRight
 # (D-pad / left stick move the focus, right stick scrolls). In the skill window: MenuAssign (focused skill, then press a
 # skill button to bind it to that slot) and MenuUnassign (then press a skill button to unbind that slot). MenuAssign /
 # MenuUnassign also work on bag items: assign the item to, or clear, a D-pad potion slot.
 # Tuning: CameraSpeedX / CameraSpeedY (negative inverts), CursorSpeed (pixels per second), Deadzone (0-1),
+# SoftLock (1/0: pick a monster when attacking or pushing the stick with no target), SoftRange / CycleRange /
+# TargetLockRange / AllyRange (metres; 15 / 25 / 30 / 30), AllyHold (seconds a hard lock yields after AllySelect; 1.5),
 # GlyphScale (button glyph size relative to the key label it replaces), UiScale (size of our controller UI).
 
 MoveForward = <Gamepad>/leftStick/up
@@ -42,7 +47,9 @@ NormalSkill_02 = <Gamepad>/buttonNorth
 NormalSkill_03 = <Gamepad>/leftShoulder
 NormalSkill_04 = <Gamepad>/leftTrigger
 NormalSkill_05 = <Gamepad>/rightTrigger
-SwitchTarget = <Gamepad>/rightShoulder
+TargetCycle = <Gamepad>/rightShoulder
+TargetLock = <Gamepad>/rightStickPress
+AllySelect = <Gamepad>/leftShoulder
 Direction_Up = <Gamepad>/dpad/up
 Direction_Down = <Gamepad>/dpad/down
 ShortCut_1 = <Gamepad>/dpad/left

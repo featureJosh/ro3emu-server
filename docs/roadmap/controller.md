@@ -74,7 +74,7 @@ it exists** (see "How it is built").
 **Next goals, in order:**
 1. **HUD polish** (checklist below, player feedback).
 2. **Reuse stock UI**: the stock prompts take our glyphs, and our duplicates are dropped (see below).
-3. **Targeting:** soft lock / R1 cycle with a target frame (the stock `UI_Sys_Main_TargetAvatarInfoWidget_PC` already
+3. **Targeting (built, unchecked in game):** soft lock / R1 cycle with a target frame (the stock `UI_Sys_Main_TargetAvatarInfoWidget_PC` already
    shows one: reuse it).
 4. **Controller settings page:** in-game remap writing `controller.ini`, glyph style, UiScale/GlyphScale, sensitivity.
 5. **Art pass** with the player's assets (section below): build the skin loader early, so the player can start drawing.
@@ -207,8 +207,12 @@ HUD) against stock equivalents: e.g. stock key-hint widgets for prompts, the sto
   icons, cooldowns, charges and SP-cost dimming; potions and shortcut items on the D-pad; EXP bar.
 - [x] Hide the stock skill bar and potion bar while Controller mode is on (kept running as data source; `3bb7fa7`).
 - [ ] Skill layers: hold L2 / R2 for a second bar (12+ skills without menus), configurable.
-- [ ] Targeting: soft lock on the nearest enemy in the stick direction, R1 cycle, R3 lock, target frame with HP and
-  casting bar, ally targeting for heals and buffs (L1 + face button or a toggle).
+- [~] Targeting (`Targeting.cs`, `TargetMath.cs`; written, NOT checked in game): everything goes through the game's own
+  `LC_SelectorManager:SelectRoleUnit` (the mouse click and stock SwitchTarget path). Soft lock (skill press or stick push with no
+  target, nearest hostile in a cone), `TargetCycle` (R1, replaces SwitchTarget), `TargetLock` (R3 tap; hold stays CameraZoom),
+  `AllySelect` (L1 press: nearest/next party member; a heal pressed next uses the selected unit). Stock target frame is not hidden
+  by ControllerHud (warns once if it is). Still open: casting bar on the frame (stock frame has none: unverified), ground-target
+  aim, in-game checks listed in the handoff.
 - [ ] Ground-target skills: aim reticle on the right stick, ✕ confirm, ○ cancel.
 - [ ] Analog movement (stick angle and magnitude instead of 8 WASD directions), auto-run toggle.
 - [x] Context prompt v1: ✕ Talk / Pick up / Gather on the nearest unit (`f566b40`, player verified).
