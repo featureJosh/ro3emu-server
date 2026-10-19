@@ -283,6 +283,16 @@ Off by default. Enable with `"Population": { "Companions": { "Enabled": true, "M
   invite also works; it accepts at once.
 - `!bots follow` / `!bots stay`: follow with a loose offset, or hold position. `!bots assist` (default) /
   `!bots passive`: help against monsters fighting you, or never attack.
+- Roles (inferred policy): a companion's role comes from its job's real skill tree. **Support** = it owns an ally Heal
+  (Acolyte line, rows 1400701/1430101-style `Heal`), and/or Blessing/Increase AGI buffs (1400101/1401001) and/or an
+  SP-cost Resurrection (Priest 1411201). **Tank** = it owns Provoke (1100401). Everything else is **damage**. Tank is
+  a label only (no threat system yet). `!bots status` lists each companion's role, SP and cast counts.
+  A support companion heals any party member (you, party humans, your other companions) below `HealBelowPercent`
+  (default 60) with the job heal, honouring SkillConfig cooldown and a bot SP pool (2 %/s regen); keeps up to two
+  buffs on you out of combat or in the first 10 s of a fight; and resurrects a dead *human* party member out of
+  combat with the SP-cost Resurrection (never the paid item revive, never inside a dungeon run). Options under
+  `Companions`: `Support` (true), `HealBelowPercent` (60), `Buffs` (true), `Revive` (true), `PreferredRole`
+  ("auto" | "support" | "tank" | "damage", only for companions spawned beside you).
 - `!bots dismiss` / `!bots dismiss all`: remove your companion(s). `!bots off` removes companions as well.
 
 Only the owner commands a companion; party friends see it in the roster and the world. The leader can kick it; it

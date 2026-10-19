@@ -20,6 +20,7 @@ public sealed partial class PopulationService
         public long OwnerGoneMs, CreatedMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         public MapPoint FollowAnchor;
         public MonsterUnit? Target;
+        public CompanionSupportState Support = new();
     }
     private const float CatchUpDistance = 40, FollowDistance = 6, AssistRadius = 20;
     private const int MaxFailedPaths = 3;
@@ -143,6 +144,7 @@ public sealed partial class PopulationService
         bot.Target = null; bot.Route.Clear(); bot.JourneyActive = false; bot.VisitingNpc = false; bot.HuntKills = 0;
         var used = companions.Values.Where(c => c.Owner == owner.Role!.Id).Select(c => c.Slot).ToHashSet();
         var c = new Companion { Bot = bot, Owner = owner.Role!.Id, Slot = Enumerable.Range(0, 4).First(s => !used.Contains(s)) };
+        c.Support.Kit = ResolveKit(bot.Career, bot.Level);
         companions[bot.Uid] = c;
         return c;
     }
@@ -155,6 +157,8 @@ public sealed partial class PopulationService
         int level = Math.Clamp(owner.Progress?.Level ?? owner.Role!.Level, 1, 100);
         int[] careers = Careers.Where(c => (level >= 10 || c == 1000) && data.Row("JobConfig", c) is { } row
             && GameData.Int(row, "_iUnitB") > 0 && GameData.Int(row, "_iUnitG") > 0).ToArray();
+        if (skills != null && !CompanionOptions.PreferredRole.Equals("auto", StringComparison.OrdinalIgnoreCase)
+            && careers.Where(c => CompanionSupportRules.WantsRole(CompanionOptions.PreferredRole, ResolveKit(c, level).Role)).ToArray() is { Length: > 0 } preferred) careers = preferred;
         var bot = new PopulationUnit
         {
             Uid = UidBase | id, SceneEntry = owner.SceneEntry, RuntimeMap = owner.RuntimeMap, Name = PopulationNames.ForSerial(id),
@@ -300,6 +304,11 @@ public sealed partial class PopulationService
                     continue;
                 }
                 float ownerDistance2 = Distance2(bot.X, bot.Z, owner.Position.X, owner.Position.Z);
+                if (ownerDistance2 <= CatchUpDistance * CatchUpDistance && c.FailedPaths < MaxFailedPaths && await SupportAsync(c, owner, owners, now))
+                {
+                    if (wasMoving) await world.MoveUnitAsync(bot, new MovementChangeNtf { Uid = bot.Uid, TransType = MovementTransitionType.MoveTransNormal, MovementInfo = bot.Movement() });
+                    continue;
+                }
                 if (ownerDistance2 > CatchUpDistance * CatchUpDistance || c.FailedPaths >= MaxFailedPaths)
                 {
                     await PlaceBesideAsync(c, owner, now); continue;
