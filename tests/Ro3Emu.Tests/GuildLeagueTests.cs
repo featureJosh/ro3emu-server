@@ -173,8 +173,8 @@ public sealed partial class GuildLeagueTests : IAsyncLifetime
         Assert.Equal((1, At(1, 3, 5, 0), At(1, 3, 20, 30), At(1, 3, 21, 0), At(1, 5, 20, 30), At(1, 6, 20, 30)),
             (tournaments[0].Index, tournaments[0].Init, tournaments[0].Preliminary.Start, tournaments[0].Preliminary.End,
              tournaments[0].Semifinal.Start, tournaments[0].Final.Start));
-        // Rows 3-4: Wed and Sat of week 3 at 20:00, the final on Saturday of week 4.
-        Assert.Equal((At(3, 3, 5, 0), At(3, 3, 20, 0), At(3, 6, 20, 0), At(4, 6, 20, 0), At(4, 6, 20, 30)),
+        // Rows 3-4: 109 Wed and 110 Sat of week 3 at 20:30, the final 111 on Saturday of week 4 (2030-2100 in this export).
+        Assert.Equal((At(3, 3, 5, 0), At(3, 3, 20, 30), At(3, 6, 20, 30), At(4, 6, 20, 30), At(4, 6, 21, 0)),
             (tournaments[1].Init, tournaments[1].Preliminary.Start, tournaments[1].Semifinal.Start, tournaments[1].Final.Start,
              tournaments[1].Final.End));
         // Then every two weeks from week 5 on the rows' own first _kDay and start (13 is Saturday of the next week).
@@ -198,7 +198,7 @@ public sealed partial class GuildLeagueTests : IAsyncLifetime
         Assert.Equal((GuildLeagueStatus.FightTwo, false, At(1, 5, 20, 30)), (info.EStatus, info.Open, info.StartTime));
         Assert.Equal(GuildLeagueStatus.FightThree, calendar.Info(At(1, 6, 12, 0)).EStatus);
         info = calendar.Info(At(2, 2, 12, 0));
-        Assert.Equal((GuildLeagueStatus.Reward, 1, At(3, 3, 20, 0)), (info.EStatus, info.Index, info.NextPreliminaryTime));
+        Assert.Equal((GuildLeagueStatus.Reward, 1, At(3, 3, 20, 30)), (info.EStatus, info.Index, info.NextPreliminaryTime));
         Assert.Equal((GuildLeagueStatus.FightThree, 3), (calendar.Info(At(6, 2, 12, 0)).EStatus, calendar.Info(At(6, 2, 12, 0)).Index));
         await Task.CompletedTask;
     }

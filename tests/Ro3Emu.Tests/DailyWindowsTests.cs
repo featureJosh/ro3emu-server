@@ -94,7 +94,10 @@ public sealed class DailyWindowsTests : IAsyncLifetime
         // Despite the task's example label, 115 is one weekday only and 125 is custom/weekly, not daily.
         var weekly = ScheduleRows.Weekly(115, new DateTime(2026, 10, 9), clock.Zone, Service<GameData>());
         Window(115, weekly.Start, weekly.End);
-        Window(125, "2026-10-25 20:00:00", "2026-10-25 21:00:00");
+        // 125 (_kDay 7, custom week 3 of the Monday opening) takes its times from the row; the first Sunday on/after 10-19 is 10-25.
+        var sunday = ScheduleRows.Weekly(125, new DateTime(2026, 10, 19), clock.Zone, Service<GameData>());
+        Assert.Equal(new DateTime(2026, 10, 25), sunday.LocalStart.Date);
+        Window(125, sunday.Start, sunday.End);
         Window(200, "2026-10-09 10:00:00", "2026-10-09 22:00:00");
         clock.Set("2026-10-09 22:00:00");
         Assert.False(Service<TimedTodoSchedule>().IsOpen(200));
