@@ -37,8 +37,17 @@ namespace Ro3Emu.ClientHooks
         private static readonly Dictionary<string, string> Fallback = new Dictionary<string, string>
             { ["MenuConfirm"] = "buttonSouth", ["MenuBack"] = "buttonEast" };
 
-        private static readonly List<TMP_Text> Skinned = new List<TMP_Text>();
-        private static readonly List<GameObject> Hidden = new List<GameObject>();
+        // Everything below is per panel instance: found once when the panel opens, then reused. The scan covers that panel's own
+        // subtree only (never the scene), and repeats every RescanFrames so labels the game builds later (choice rows are pooled
+        // and rebuilt) are picked up; a destroyed entry forces an earlier rescan.
+        private const int RescanFrames = 45;
+        private static Transform _scanned;
+        private static int _scanFrame;
+        private static readonly List<KeyValuePair<TMP_Text, string>> Labels = new List<KeyValuePair<TMP_Text, string>>();
+        private static readonly List<GameObject> ToHide = new List<GameObject>();
+        private static readonly List<Transform> Walk = new List<Transform>();
+        private static readonly HashSet<TMP_Text> Skinned = new HashSet<TMP_Text>();
+        private static readonly HashSet<GameObject> Hidden = new HashSet<GameObject>();
 
         public static Rule For(Transform panel)
         {
@@ -46,20 +55,44 @@ namespace Ro3Emu.ClientHooks
             return null;
         }
 
-        /// <summary>From UiNav every frame while the rule's panel has the pad: our glyphs on its key labels.</summary>
+        /// <summary>From UiNav every few frames while the rule's panel has the pad: our glyphs on its key labels.</summary>
         public static void Skin(Transform panel, Rule rule)
         {
-            foreach (var t in panel.GetComponentsInChildren<Transform>(false))
+            if (panel == null || rule == null) return;
+            bool stale = false;
+            foreach (var l in Labels) if (l.Key == null) { stale = true; break; }
+            if (panel != _scanned || stale || ++_scanFrame >= RescanFrames) Scan(panel, rule);
+            foreach (var go in ToHide)
+                if (go != null && go.activeSelf) { go.SetActive(false); Hidden.Add(go); }
+            foreach (var l in Labels)
             {
-                if (System.Array.IndexOf(rule.Hide, t.name) >= 0) { t.gameObject.SetActive(false); if (!Hidden.Contains(t.gameObject)) Hidden.Add(t.gameObject); continue; }
-                if (!rule.Labels.TryGetValue(t.name, out var action) || !(t.GetComponent<TMP_Text>() is TMP_Text tip)) continue;
-                var sprite = Glyphs.For(UiNav.Control(action, Fallback[action]));
+                var tip = l.Key;
+                if (tip == null || !tip.gameObject.activeInHierarchy) continue;
+                if (!Fallback.TryGetValue(l.Value, out var fallback)) continue;
+                var sprite = Glyphs.For(UiNav.Control(l.Value, fallback));
                 if (sprite == null) continue;
-                if (!Skinned.Contains(tip)) Skinned.Add(tip);
+                Skinned.Add(tip);
                 var icon = Glyphs.Replace(tip, sprite, 30f, true);
                 // At the label's right end, next to the text it belongs to ("SPACE" was a wide badge before "Continue").
                 icon.localPosition += new Vector3((((RectTransform)tip.transform).rect.width - icon.sizeDelta.x) / 2f, 0f, 0f);
             }
+        }
+
+        private static void Scan(Transform panel, Rule rule)
+        {
+            _scanned = panel;
+            _scanFrame = 0;
+            Labels.Clear();
+            ToHide.Clear();
+            panel.GetComponentsInChildren(true, Walk); // inactive too: a row's label can wake later
+            foreach (var t in Walk)
+            {
+                if (t == null) continue;
+                if (rule.Hide != null && System.Array.IndexOf(rule.Hide, t.name) >= 0) ToHide.Add(t.gameObject);
+                else if (rule.Labels != null && rule.Labels.TryGetValue(t.name, out var action) && t.GetComponent<TMP_Text>() is TMP_Text tip)
+                    Labels.Add(new KeyValuePair<TMP_Text, string>(tip, action));
+            }
+            Walk.Clear();
         }
 
         /// <summary>Controller mode off: the keyboard labels come back.</summary>
@@ -69,6 +102,9 @@ namespace Ro3Emu.ClientHooks
             Skinned.Clear();
             foreach (var go in Hidden) if (go != null) go.SetActive(true);
             Hidden.Clear();
+            Labels.Clear();
+            ToHide.Clear();
+            _scanned = null;
         }
     }
 }

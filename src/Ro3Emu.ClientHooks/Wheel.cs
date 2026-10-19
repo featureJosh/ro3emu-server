@@ -37,6 +37,7 @@ namespace Ro3Emu.ClientHooks
         private static Entry Act(string label, string action) => new Entry(label, Kind.Action, action);
         private static Entry Fn(string label, string function) => new Entry(label, Kind.Function, function);
 
+        // Settings is the function SetMenu -> UI_Sys_SetupPanel (LC_FunctionHelper.lua:903-910), not ClosePanel (Esc opens the function menu).
         // Input actions: re/clientB/lua-src/Config/Define/Lua_GameDefine.lua:9277 (enum_InputKey), their function (for the lock
         // check) from enum_InputKeyFunc (same file :9490). OpenEquip is not wired in LC_InputBinder.lua:30-90, so equipment
         // goes through Equip Growth / Equip Craft. Functions: enum_FunctionType (same file :6572) with a panel mapping in
@@ -61,7 +62,7 @@ namespace Ro3Emu.ClientHooks
             Fn("Dungeons", "Dungeon"), Fn("Challenge", "Challenge"), Fn("Competition", "Competition"),
             Fn("Climb Tower", "ClimbTower"), Fn("Become Stronger", "BecomeStronger"), Fn("Profile", "Personal"),
             Fn("School", "School"),
-            Act("Settings", "ClosePanel"), new Entry("Controller", Kind.Controller),
+            Fn("Settings", "SetMenu"), new Entry("Controller", Kind.Controller),
         };
 
         private static int Pages => (Entries.Length + PageSize - 1) / PageSize;

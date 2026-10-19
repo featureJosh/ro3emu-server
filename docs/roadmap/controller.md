@@ -92,7 +92,7 @@ Cooldown-ready flash and low-HP orb pulse now build from the stock HUD state; th
 
 ## HUD polish (player feedback 2026-10-15)
 
-- [ ] **Glyph legibility:** glyphs have no background, so on a skill icon of the same colour they are hard to read.
+- [~] **Glyph legibility** (dark rounded `glyph_plate` behind each slot glyph, skinnable; built, check in game; outlined glyph art still optional): glyphs have no background, so on a skill icon of the same colour they are hard to read.
   Switch to glyph art with a built-in stroke/outline (Kenney Input Prompts' outline variants, or another CC0 set) rather
   than drawing outlines in code or detecting pixel colours.
 - [ ] **Glyph size:** a little smaller everywhere (`GlyphScale` default and the HUD/slot glyph sizes).
@@ -100,9 +100,9 @@ Cooldown-ready flash and low-HP orb pulse now build from the stock HUD state; th
 - [ ] **HUD size:** the Diablo-style HUD is a bit too big overall; lower its base size (still times `Overlay.Scale` / `UiScale`).
 - [ ] **Feedback animations:** using □ or an item gives no visual response. Add a press animation (scale punch, flash) on
   skill and potion slots when used, and on wheel entries.
-- [ ] **Cooldown display** does not show properly: the radial sweep and seconds are unreliable. Check against the stock
+- [~] **Cooldown display** (rewritten to mirror the stock slot exactly, `CooldownMirror.cs`; built + unit tested, check in game) did not show properly: the radial sweep and seconds are unreliable. Check against the stock
   slot's state (`Mask_Img` / `BarTime_Img` fill / `Time_TTxt`; potions `CD_RTransform` / `CD_Img`) and fix.
-- [ ] **Stock prompts instead of our prompt bar:** the game already draws prompts. The NPC dialog shows
+- [~] **Stock prompts instead of our prompt bar** (`StockPrompts.cs` finished: cached per-panel scan, guarded lookups; built, check in game): the game already draws prompts. The NPC dialog shows
   "SPACE / [mouse] Continue" in its bottom-right corner, while our bar draws a second, redundant "✕ Select ○ Back" on top:
 
   ![Stock NPC dialog prompt next to our prompt bar](img/stock-continue-prompt.png)

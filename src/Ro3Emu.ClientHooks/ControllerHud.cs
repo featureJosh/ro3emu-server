@@ -43,6 +43,9 @@ namespace Ro3Emu.ClientHooks
             public Image Icon, CdFill, Disabled;
             public GameObject CdOn;
             public TMP_Text CdText, Count;
+            public GameObject Cd2On; // potions: the slot's own CD_RTransform / CD_Img / CD_TTxt, preferred while active
+            public Image Cd2Fill;
+            public TMP_Text Cd2Text;
         }
 
         private sealed class Slot
@@ -50,7 +53,8 @@ namespace Ro3Emu.ClientHooks
             public RectTransform Rect;
             public Image Icon, Cd, Glyph, Frame, Flash;
             public TextMeshProUGUI CdText, Count;
-            public bool Cooling;
+            public Image Plate;
+            public CooldownMirror.ReadyEdge Ready;
         }
 
         private static RectTransform _root;
@@ -152,9 +156,12 @@ namespace Ro3Emu.ClientHooks
                             case "ItemIcon_Img": src.Icon = img; break;
                             // The item cell's own cooldown mask (CD_RTransform / CD_Img stay off on the PC bar).
                             case "MaskItem_Img": src.CdFill = img; src.CdOn = img.gameObject; break;
+                            // The slot's own cooldown (PropsItemWidgetCtrl.lua Update ~690-750): CD_RTransform active while the item cooldown runs.
+                            case "CD_Img": src.Cd2Fill = img; src.Cd2On = img.transform.parent != null && img.transform.parent.name == "CD_RTransform" ? img.transform.parent.gameObject : img.gameObject; break;
                         }
                     foreach (var t in slot.GetComponentsInChildren<TMP_Text>(true))
                         if (t.name == "MaskItemTip_TTxt") src.CdText = t;
+                        else if (t.name == "CD_TTxt") src.Cd2Text = t;
                         else if (t.name == "PropNum_TTxt") src.Count = t;
                     PotionSources.Add(src);
                 }
@@ -222,35 +229,36 @@ namespace Ro3Emu.ClientHooks
             Hidden.Clear();
         }
 
+        /// <summary>What the stock slot shows right now (see CooldownMirror for the Lua it mirrors).</summary>
+        private static CooldownMirror.Reading Cooldown(Source src)
+        {
+            if (src.Cd2On != null && src.Cd2On.activeInHierarchy && src.Cd2Fill != null)
+                return CooldownMirror.Read(true, src.Cd2Fill.fillAmount, src.Cd2Text != null && src.Cd2Text.gameObject.activeInHierarchy, src.Cd2Text != null ? src.Cd2Text.text : null);
+            bool mask = src.CdOn != null && src.CdOn.activeInHierarchy;
+            float fill = src.CdFill != null ? src.CdFill.fillAmount : (mask ? 1f : 0f);
+            bool text = src.CdText != null && src.CdText.gameObject.activeInHierarchy;
+            return CooldownMirror.Read(mask, fill, text, src.CdText != null ? src.CdText.text : null);
+        }
+
         private static void Fill(Slot slot, Source src)
         {
             bool has = src != null && src.Root != null && src.Icon != null && src.Icon.sprite != null && src.Icon.isActiveAndEnabled;
             slot.Icon.enabled = has;
             slot.Glyph.sprite = src != null ? Glyphs.For(Controller.FirstBinding(src.Action)) : null;
             slot.Glyph.enabled = slot.Glyph.sprite != null;
-            if (!has) { slot.Cooling = false; slot.Cd.enabled = false; slot.CdText.text = ""; if (slot.Count != null) slot.Count.text = ""; return; }
+            slot.Plate.enabled = slot.Glyph.enabled;
+            if (!has) { slot.Ready.Update(false, true); slot.Cd.enabled = false; slot.CdText.text = ""; if (slot.Count != null) slot.Count.text = ""; return; }
             bool pressed = Pressed(src.Action);
             if (pressed) Punch.Play(slot.Rect, 1.18f, slot.Flash);
             if (slot.Icon.sprite != src.Icon.sprite) slot.Icon.sprite = src.Icon.sprite;
             bool disabled = src.Disabled != null && src.Disabled.gameObject.activeInHierarchy;
             slot.Icon.color = disabled ? new Color(0.45f, 0.45f, 0.45f) : Color.white;
-            bool cd = src.CdOn != null && src.CdOn.activeInHierarchy && (src.CdFill == null || src.CdFill.fillAmount > 0f);
-            if (slot.Cooling && !cd && !pressed) Punch.Play(slot.Rect, 1.12f, slot.Flash);
-            slot.Cooling = cd;
-            slot.Cd.enabled = cd;
-            if (cd && src.CdFill != null)
-            {
-                // Same sweep as the stock mask, which is mirrored (x scale -1): mirrored means the other direction.
-                slot.Cd.fillAmount = src.CdFill.fillAmount;
-                slot.Cd.fillMethod = src.CdFill.fillMethod;
-                slot.Cd.fillOrigin = src.CdFill.fillOrigin;
-                slot.Cd.fillClockwise = src.CdFill.fillClockwise != src.CdFill.transform.lossyScale.x < 0f;
-            }
-            else if (cd) slot.Cd.fillAmount = 1f;
-            string seconds = cd && src.CdText != null ? src.CdText.text : "";
-            if (string.IsNullOrEmpty(seconds) || !char.IsDigit(seconds[0])) seconds = ""; // idle labels ("获取") are not seconds
-            else if (char.IsDigit(seconds[seconds.Length - 1])) seconds += "s"; // potions show bare numbers, skills "4s"
-            slot.CdText.text = seconds;
+            var cd = Cooldown(src);
+            if (slot.Ready.Update(cd.Active) && !pressed) Punch.Play(slot.Rect, 1.12f, slot.Flash);
+            // The stock fill is remaining / total whatever its fill method or mirroring, so the sweep itself is ours, fixed.
+            slot.Cd.enabled = cd.Sweep;
+            if (cd.Sweep) slot.Cd.fillAmount = cd.Fill;
+            slot.CdText.text = cd.Seconds;
             if (slot.Count != null) slot.Count.text = src.Count != null ? src.Count.text : "";
         }
 
@@ -267,6 +275,7 @@ namespace Ro3Emu.ClientHooks
         // ---- view ----
 
         private const float OrbSize = 150f, SkillSize = 78f, PotionSize = 58f, Gap = 12f;
+        private const float GlyphPad = 4f; // glyph plate margin around the glyph
         private static readonly Color Gold = new Color(0.86f, 0.7f, 0.4f, 1f);
 
         private static void Show(bool on)
@@ -370,6 +379,10 @@ namespace Ro3Emu.ClientHooks
             slot.CdText.alignment = TextAlignmentOptions.Center;
             Place(slot.CdText.rectTransform, 0, 0, size, size);
             float glyph = potion ? 28f : 32f;
+            // Dark backing plate so a glyph reads on a same-coloured skill icon; skinnable as glyph_plate.png (controller-art.md).
+            slot.Plate = Img("GlyphPlate", slot.Rect, Shapes.RoundedRect, new Color(0.03f, 0.025f, 0.02f, 0.88f), (size - glyph) / 2f - GlyphPad, -glyph * 0.4f - GlyphPad, glyph + 2f * GlyphPad);
+            ControllerSkin.Bind(slot.Plate, "glyph_plate", Shapes.RoundedRect);
+            slot.Plate.raycastTarget = false;
             slot.Glyph = Img("Glyph", slot.Rect, null, Color.white, (size - glyph) / 2f, -glyph * 0.4f, glyph); // on the slot's bottom edge, inside the plate
             slot.Glyph.preserveAspect = true;
             if (potion)
