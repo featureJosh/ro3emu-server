@@ -12,6 +12,7 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <Compile Include="../../src/Ro3Emu.ClientHooks/CombatSettings.cs" Link="CombatSettings.cs" />
+    <Compile Include="../../src/Ro3Emu.ClientHooks/CooldownMirror.cs" Link="CooldownMirror.cs" />
     <Compile Include="../../src/Ro3Emu.ClientHooks/ControllerIni.cs" Link="ControllerIni.cs" />
     <Using Include="Xunit" />
   </ItemGroup>

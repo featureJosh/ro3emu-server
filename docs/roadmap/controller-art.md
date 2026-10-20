@@ -27,6 +27,7 @@ borders are planned but not implemented yet.
 | `settings_panel` | 840 × 750 | Controller bindings page background |
 | `osk_key`, `osk_key_focused` | 64 × 64 | On-screen keyboard keys |
 | `glyph_buttonSouth`, `glyph_buttonEast`, `glyph_buttonWest`, `glyph_buttonNorth` | 48 × 48 | Optional replacements for the embedded button glyphs |
+| `glyph_plate` | 40 × 40 (square, 9-slice not needed) | Optional backing plate drawn behind each skill/potion slot glyph so it reads on a same-coloured skill icon. Built-in: a dark rounded square (88% opaque). A present PNG is drawn untinted; keep a dark or outlined silhouette with a transparent edge |
 
 Other glyph names follow the Input System control name: `glyph_leftShoulder`, `glyph_rightShoulder`,
 `glyph_leftTrigger`, `glyph_rightTrigger`, `glyph_leftStick`, `glyph_rightStick`, `glyph_leftStickPress`,
