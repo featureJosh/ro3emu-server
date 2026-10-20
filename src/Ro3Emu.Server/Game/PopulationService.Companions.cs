@@ -43,6 +43,7 @@ public sealed partial class PopulationService
         teams.CompanionCard = CompanionCard;
         teams.CompanionDropped = droppedCompanions.Enqueue;
         teams.CompanionClaim = ClaimInvitedAsync;
+        teams.CompanionInvited = GreetParty;
     }
 
     internal TeamCompanionCard? CompanionCard(long uid)

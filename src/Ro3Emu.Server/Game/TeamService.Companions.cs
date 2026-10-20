@@ -57,18 +57,31 @@ public sealed partial class TeamService
         else _companions.Remove(bot);
     });
 
-    /// <summary>42004 aimed at a population uid: the bot answers at once instead of receiving 42005.</summary>
+    /// <summary>Called on the loop after a normal invite admitted a companion; must not block (PopulationService fires its greeting).</summary>
+    internal Action<GameSession, long, long>? CompanionInvited { get; set; }
+
+    /// <summary>
+    /// 42004 aimed at a population uid: the bot answers at once instead of receiving 42005. The stock client creates the
+    /// party first when solo (LC_System_Team._onAddCreateAndInvite sends SendCreateTeam, then SendInviteIntoTeam on the
+    /// create callback); a solo inviter is also given a party here, as AddCompanionCoreAsync does (inferred, for other callers).
+    /// </summary>
     private async Task InviteCompanionCoreAsync(GameSession s, long bot)
     {
         long self = s.Role!.Id;
-        int code = !_byMember.TryGetValue(self, out var team) ? ErrorCodes.NotInParty
-            : _byMember.ContainsKey(bot) ? ErrorCodes.InviteeInParty
-            : team!.Members.Count >= Capacity(team) ? ErrorCodes.PartyFull
+        _byMember.TryGetValue(self, out var team);
+        int code = _byMember.ContainsKey(bot) ? ErrorCodes.InviteeInParty
+            : team != null && team.Members.Count >= Capacity(team) ? ErrorCodes.PartyFull
             : CompanionClaim == null ? ErrorCodes.PlayerOffline : await CompanionClaim(s, bot);
         // The team reservation covers owner, bot and party: the claim's await cannot admit another member here.
+        if (code == 0 && team == null)
+        {
+            await CreateCoreAsync(s, new TeamCreateReq { TeamType = TeamType.Five });
+            if (!_byMember.TryGetValue(self, out team)) { code = ErrorCodes.NotInParty; ForgetCompanion(bot); }
+        }
         await s.SendGameAsync(TeamInvite, new InviteIntoTeamResp { Result = code });
         if (code != 0) return;
         await AdmitCompanionAsync(team!, self, bot);
+        CompanionInvited?.Invoke(s, bot, team!.Id);
     }
 
     private void ForgetCompanion(long role)

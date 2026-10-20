@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Romsg;
+using Tencent.IM;
 using Ro3Emu.Bot;
 using Ro3Emu.Server;
 using Ro3Emu.Server.Accounts;
@@ -73,10 +74,10 @@ public sealed class PopulationCompanionTests : IDisposable
     }
 
     [Fact]
-    public void CompanionsAreDisabledByDefaultWithOneConservativeSlot()
+    public void CompanionsAreEnabledByDefaultWithOneConservativeSlot()
     {
         var defaults = new PopulationOptions().Companions;
-        Assert.False(defaults.Enabled); Assert.Equal(1, defaults.MaxPerPlayer);
+        Assert.True(defaults.Enabled); Assert.Equal(1, defaults.MaxPerPlayer);
         Assert.Equal(60, defaults.DisconnectGraceSeconds);
     }
 
@@ -412,6 +413,53 @@ public sealed class PopulationCompanionPartyTests : IAsyncLifetime
         Assert.Equal(0, (await Next(alice, TeamService.TeamOperate, TeamOperateResp.Parser)).Result);
         var population = _app.Services.GetRequiredService<PopulationService>();
         await Until(() => population.CompanionCount == 0 && world.AllUnits().All(u => u.Uid != botUid));
+    }
+
+    [Fact]
+    public async Task SoloNormalInviteOfAVisibleBotCreatesThePartyAdmitsItAndGreetsInPartyChat()
+    {
+        var world = _app.Services.GetRequiredService<World>();
+        var teams = _app.Services.GetRequiredService<TeamService>();
+        var (alice, aliceId) = await InWorld("Alice");
+        await using var a = alice;
+        await Until(() => world.AllUnits().OfType<PopulationUnit>().Any());
+        long botUid = await OnLoop(() => world.AllUnits().OfType<PopulationUnit>().First().Uid);
+        // The card's Team Up needs teamstatus == None in the bot's role info (explicit zero, not absent).
+        var results = (object[])(await alice.GetRoleFieldsAsync([botUid], "Base", "Team"))["Results"]!;
+        var data = (IDictionary<object, object?>)((IDictionary<object, object?>)results[0])["Data"]!;
+        Assert.Equal(new byte[] { 8, 0, 16, 0, 24, 0 }, (byte[])data["Team"]!);
+        Assert.Equal(0, await OnLoop(() => teams.TeamOf(aliceId).TeamId));
+        await alice.SendGameAsync(TeamService.TeamInvite, new InviteIntoTeamReq { Guid = botUid });
+        Assert.Equal(0, (await Next(alice, TeamService.TeamInvite, InviteIntoTeamResp.Parser)).Result);
+        Assert.Equal(0, (await Next(alice, TeamService.TeamCreate, TeamCreateResp.Parser)).Result);
+        await Next(alice, TeamService.TeamNewMember, BroadCastNewMemberEnter.Parser, m => m.DetailInfo.Guid == botUid);
+        var team = await OnLoop(() => teams.TeamOf(aliceId));
+        Assert.Equal(aliceId, team.Leader); Assert.NotEqual(0, team.TeamId); Assert.Equal(1, await OnLoop(() => teams.CompanionOwner(botUid) == aliceId ? 1 : 0));
+        var hello = await alice.Inbox.WaitAsync(e => e.IsGame(ChatService.TunnelDown) && e.Body.Length > 8
+            && BitConverter.ToUInt32(e.Body, 0) == 4
+            && NotifyNewTextChatMessage.Parser.ParseFrom(e.Body.AsSpan(8)).Msg.SenderId == botUid.ToString(), Wait);
+        var line = NotifyNewTextChatMessage.Parser.ParseFrom(hello.Body.AsSpan(8)).Msg;
+        Assert.Equal($"3_{team.TeamId}", line.ReceiveId); Assert.False(string.IsNullOrWhiteSpace(line.Content));
+    }
+
+    [Fact]
+    public async Task NormalInviteBeyondTheCompanionCapIsRefusedAndDisabledCompanionsGiveASaneError()
+    {
+        var world = _app.Services.GetRequiredService<World>();
+        var options = _app.Services.GetRequiredService<IOptions<ServerOptions>>().Value;
+        var (alice, aliceId) = await InWorld("Alice");
+        await using var a = alice;
+        await Until(() => world.AllUnits().OfType<PopulationUnit>().Count() >= 2);
+        long[] bots = await OnLoop(() => world.AllUnits().OfType<PopulationUnit>().Select(b => b.Uid).Take(2).ToArray());
+        options.Population.Companions.Enabled = false;
+        await alice.SendGameAsync(TeamService.TeamInvite, new InviteIntoTeamReq { Guid = bots[0] });
+        Assert.Equal(ErrorCodes.FeatureUnavailable, (await Next(alice, TeamService.TeamInvite, InviteIntoTeamResp.Parser)).Result);
+        Assert.Equal(0, await OnLoop(() => _app.Services.GetRequiredService<TeamService>().TeamOf(aliceId).TeamId)); // no party left behind
+        options.Population.Companions.Enabled = true;
+        await alice.SendGameAsync(TeamService.TeamInvite, new InviteIntoTeamReq { Guid = bots[0] });
+        Assert.Equal(0, (await Next(alice, TeamService.TeamInvite, InviteIntoTeamResp.Parser)).Result);
+        await alice.SendGameAsync(TeamService.TeamInvite, new InviteIntoTeamReq { Guid = bots[1] }); // MaxPerPlayer = 1
+        Assert.Equal(ErrorCodes.PartyFull, (await Next(alice, TeamService.TeamInvite, InviteIntoTeamResp.Parser)).Result);
     }
 
     [Fact]
