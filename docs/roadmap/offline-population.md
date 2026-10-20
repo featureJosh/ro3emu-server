@@ -171,7 +171,9 @@ produces one response, not one per viewer; muted or disabled chat produces no me
   human owner controls it; define leader delegation and LAN ownership so players cannot command each other's bots accidentally.
 - [ ] Use loose formations and staggered movement. Handle obstacles, height layers, getting stuck and catching up.
   Follow the owner's actual map/line/instance transition after admission, without joining another party's instance.
-- [ ] Provide tank, healer/support and damage roles, with appropriate job selection and clear level scaling.
+- [~] Provide tank, healer/support and damage roles, with appropriate job selection and clear level scaling.
+  Done: role derived from the job skill tree, `PreferredRole` job selection, `!bots status` readout. Open: tank behaviour
+  (label only), level scaling beyond level-1 skill rows, in-game acceptance.
 - [x] Define death, resurrection, disconnect grace, dismissal and party-leader departure. Clean up memberships,
   targets, timers and actor state together; do not leave ghost party members after a relog or server shutdown.
 - [x] Define rewards before enabling companion kills: use the existing human party's eligibility and durable
@@ -200,7 +202,7 @@ removes all bot state; ambient characters cannot complete encounters; companion 
 - [ ] Replace basic inferred stats with map-appropriate levels, believable equipment and job attributes. Remove
   the fixed low-HP hunting cutoff once stronger monsters can be assessed using relative power and encounter policy.
 - [ ] Add skill priorities, individual cooldowns, SP costs, resource recovery, AoE checks, buffs, debuffs and interrupts.
-- [ ] Improve healing, resurrection, tank threat, ranged positioning, retreat and avoidance of visible hazards.
+- [~] Improve healing, resurrection (done for companions: threshold heal, buff upkeep, out-of-combat revive; needs in-game check), tank threat, ranged positioning, retreat and avoidance of visible hazards.
 - [ ] Respect the player's focus target and combat mode. Companions should not drag extra packs into a boss fight;
   ambient hunters should avoid player-claimed targets even while a cast or projectile is in flight.
 - [ ] Keep boss/MVP participation separately configurable and gated behind encounter/reward integration.

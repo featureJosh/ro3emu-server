@@ -104,6 +104,7 @@ public sealed partial class PopulationService : IGameTicker
         await GmCommands.ReplyAsync(session, $"Population: {Count}/{Limit} total; map {session.SceneEntry} {map.Profile}, target {map.Count}, levels {map.MinLevel}-{map.MaxLevel}, quality cap {map.MaxQuality}; chat {chatter.Mode}, muted {session.BotChatMuted}. Changes last until restart.");
         await GmCommands.ReplyAsync(session, await RoleStatusAsync(session.RuntimeMap));
         await GmCommands.ReplyAsync(session, await DensityStatusAsync(session));
+        if (await CompanionStatusAsync(session) is { } companionLine) await GmCommands.ReplyAsync(session, companionLine);
     });
 
     internal async Task SetCountAsync(int? count)
