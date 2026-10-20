@@ -104,6 +104,7 @@ namespace Ro3Emu.ClientHooks
                 bool menu = UiNav.Active || Wheel.Open || ControllerSettings.Open;
                 if (menu != _menu) { _menu = menu; EndCamera(); Sync(true); }
                 Interact.Tick(pad, !_menu && !_cursor);
+                Targeting.Tick(pad, !_menu && !_cursor);
                 if (!_menu && !_cursor && Pressed(pad, "QuestNav")) QuestNav.Go();
                 if (ControllerSettings.Open) EndCamera();
                 else if (_cursor) Cursor(pad);
@@ -268,7 +269,7 @@ namespace Ro3Emu.ClientHooks
 
         private static bool _reportedMissing;
         private static readonly HashSet<string> Pseudo = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuRightClick", "MenuDoubleClick", "MenuWheel", "Interact", "QuestNav" };
+            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuRightClick", "MenuDoubleClick", "MenuWheel", "Interact", "QuestNav", "TargetCycle", "TargetLock", "AllySelect" };
 
         /// <summary>Every enabled Input System action: map, name, bindings (dev command "actions").</summary>
         internal static string DescribeActions()
@@ -298,8 +299,8 @@ namespace Ro3Emu.ClientHooks
             return null;
         }
 
-        private static bool Pressed(Gamepad pad, string name) => Edge(Button(pad, name, out _), true);
-        private static bool Released(Gamepad pad, string name) => Edge(Button(pad, name, out _), false);
+        internal static bool Pressed(Gamepad pad, string name) => Edge(Button(pad, name, out _), true);
+        internal static bool Released(Gamepad pad, string name) => Edge(Button(pad, name, out _), false);
 
         // Per control: (held last frame, held now). wasPressedThisFrame missed short presses here (the client's input
         // updates do not line up with Update; a scripted press was never seen), so edges are computed once per frame,
@@ -325,7 +326,7 @@ namespace Ro3Emu.ClientHooks
             if (!Edges.TryGetValue(b, out var h)) { EdgeControls.Add(b); Edges[b] = h = (b.isPressed, b.isPressed); } // first look: no edge
             return down ? h.now && !h.before : !h.now && h.before;
         }
-        private static bool Held(Gamepad pad, string name) => Button(pad, name, out _)?.isPressed == true;
+        internal static bool Held(Gamepad pad, string name) => Button(pad, name, out _)?.isPressed == true;
 
         /// <summary>A number setting from controller.ini.</summary>
         public static float Setting(string name, float fallback) => Get(name, fallback);
