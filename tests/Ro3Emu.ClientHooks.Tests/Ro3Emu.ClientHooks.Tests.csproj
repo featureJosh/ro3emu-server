@@ -16,6 +16,7 @@
     <Compile Include="../../src/Ro3Emu.ClientHooks/ControllerIni.cs" Link="ControllerIni.cs" />
     <Compile Include="../../src/Ro3Emu.ClientHooks/MenuInputLogic.cs" Link="MenuInputLogic.cs" />
     <Compile Include="../../src/Ro3Emu.ClientHooks/TargetMath.cs" Link="TargetMath.cs" />
+    <Compile Include="../../src/Ro3Emu.ClientHooks/ControllerLayers.cs" Link="ControllerLayers.cs" />
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

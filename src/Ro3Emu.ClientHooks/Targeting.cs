@@ -23,7 +23,7 @@ namespace Ro3Emu.ClientHooks
     /// camera); falls back to the stock ChooseTarget when none of our candidates qualifies. It replaces the stock SwitchTarget binding.</item>
     /// <item>TargetLock (R3 tap): hard lock on the selected monster (or the soft-lock pick). The lock re-selects it when the game
     /// changes the target, and ends when the unit dies, disappears or is further than TargetLockRange metres.</item>
-    /// <item>AllySelect (default L1, press): selects the nearest party member, again for the next one (LC_CampRelationUtils.
+    /// <item>AllySelect (default L2 + R1, a layer slot; press): selects the nearest party member, again for the next one (LC_CampRelationUtils.
     /// IsSameTeamByUnit, Utility/LC_CampRelationUtils.lua:736). A skill pressed while an ally is selected is checked against that
     /// unit by CheckPreTargetValidNew, so a heal or buff whose select info allows friends lands on them (inferred; in game). A hard
     /// lock yields for AllyHold seconds after the last L1 hold, then comes back.</item>

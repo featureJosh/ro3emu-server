@@ -207,11 +207,12 @@ HUD) against stock equivalents: e.g. stock key-hint widgets for prompts, the sto
 - [ ] Bottom-centre action bar: HP orb (left), SP orb (right), six skill slots on ✕ ○ □ △ / L1+, R1+ layers with
   icons, cooldowns, charges and SP-cost dimming; potions and shortcut items on the D-pad; EXP bar.
 - [x] Hide the stock skill bar and potion bar while Controller mode is on (kept running as data source; `3bb7fa7`).
-- [ ] Skill layers: hold L2 / R2 for a second bar (12+ skills without menus), configurable.
+- [~] Skill layers: hold L2 / R2 for a second bar (12+ skills without menus), configurable (`ControllerLayers.cs`; code done, **needs a live check**, see below).
+  Defaults: L2 + ○ NormalSkill_06, L2 + □ NormalSkill_04, L2 + △ NormalSkill_05, L2 + ✕ ExpandSkill_01, L2 + L1 ExpandSkill_02; R2 + □ InteractiveSkill_02, R2 + △ InteractiveSkill_03, R2 + ○ GamePlaySkill_01, R2 + ✕ GamePlaySkill_02, R2 + L1 GamePlaySkill_03; L2 + D-pad left/right ShortCut_3/4, R2 + D-pad left/right ShortCut_5/6. **Moved:** NormalSkill_04 / 05 were on L2 / R2 (now the layer shifts, `LayerShift2/3`) and are Layer2 □ / △; an existing controller.ini is migrated on load (the two trigger lines dropped, the Layer block appended). ✕/○ talk and pick-up prompts are off while a shift is held. Settings page: Layer2.* / Layer3.* rows (D-pad left/right picks the action, △ resets). ExpandSkill_03..06 exist in the client (Lua_GameDefine.lua) and can be put on a slot in the ini.
 - [~] Targeting (`Targeting.cs`, `TargetMath.cs`; written, NOT checked in game): everything goes through the game's own
   `LC_SelectorManager:SelectRoleUnit` (the mouse click and stock SwitchTarget path). Soft lock (skill press or stick push with no
   target, nearest hostile in a cone), `TargetCycle` (R1, replaces SwitchTarget), `TargetLock` (R3 tap; hold stays CameraZoom),
-  `AllySelect` (L1 press: nearest/next party member; a heal pressed next uses the selected unit). Stock target frame is not hidden
+  `AllySelect` (L2 + R1 press: nearest/next party member; a heal pressed next uses the selected unit). Stock target frame is not hidden
   by ControllerHud (warns once if it is). Still open: casting bar on the frame (stock frame has none: unverified), ground-target
   aim, in-game checks listed in the handoff.
 - [ ] Ground-target skills: aim reticle on the right stick, ✕ confirm, ○ cancel.

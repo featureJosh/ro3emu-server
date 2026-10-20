@@ -39,6 +39,9 @@ namespace Ro3Emu.ClientHooks
         private static bool? _enabled;
         private static bool _cursor, _dragging, _zooming, _synced, _menu;
         private static float _zoomLast, _scroll;
+        private static readonly ControllerLayers.Table Layers = new ControllerLayers.Table();
+        private static readonly ControllerLayers.State LayerState = new ControllerLayers.State();
+        private static int _layer = 1;
         private static Vector2 _cursorRest;
 
         private static bool _loggedForce;
@@ -83,6 +86,7 @@ namespace Ro3Emu.ClientHooks
                     Glyphs.Refresh(on);
                 }
                 var pad = Gamepad.current;
+                UpdateLayer(pad, on);
                 if (!on || pad == null || !(Application.isFocused || Diagnostics.IgnoreFocus)) { EndCamera(); UiNav.Tick(null, false); Interact.Tick(null, false); return; }
                 if (ControllerSettings.Open)
                 {
@@ -103,7 +107,7 @@ namespace Ro3Emu.ClientHooks
                 }
                 bool menu = UiNav.Active || Wheel.Open || ControllerSettings.Open;
                 if (menu != _menu) { _menu = menu; EndCamera(); Sync(true); }
-                Interact.Tick(pad, !_menu && !_cursor);
+                Interact.Tick(pad, !_menu && !_cursor && _layer == 1); // a held layer shift is a skill layer, not Talk on the same button
                 Targeting.Tick(pad, !_menu && !_cursor);
                 if (!_menu && !_cursor && Pressed(pad, "QuestNav")) QuestNav.Go();
                 if (ControllerSettings.Open) EndCamera();
@@ -167,7 +171,17 @@ namespace Ro3Emu.ClientHooks
             var stamp = File.GetLastWriteTimeUtc(_path);
             if (stamp == _loaded) return;
             _loaded = stamp;
-            ControllerIni.Parse(File.ReadAllLines(_path), Binds, Tune);
+            var lines = File.ReadAllLines(_path);
+            var migrated = ControllerLayers.Migrate(lines);
+            if (migrated != null)
+            {
+                File.WriteAllLines(_path, migrated); // old file: triggers become layer shifts (see ControllerLayers.DefaultBlock)
+                lines = migrated;
+                _loaded = stamp = File.GetLastWriteTimeUtc(_path);
+                Debug.Log("[Ro3Emu.Controller] controller.ini migrated: L2 / R2 are skill layer shifts now");
+            }
+            ControllerIni.Parse(lines, Binds, Tune);
+            ControllerLayers.Parse(lines, Layers);
             Debug.Log("[Ro3Emu.Controller] " + _path + ": " + Binds.Count + " action(s) bound, " + Tune.Count + " setting(s)");
         }
 
@@ -183,8 +197,8 @@ namespace Ro3Emu.ClientHooks
                 var map = action.actionMap?.name;
                 if (map != "RO3Current" && map != "RO3_Fixed") continue;
                 var want = new List<string>();
-                if (on && Binds.TryGetValue(action.name, out var paths))
-                    foreach (var p in paths)
+                if (on)
+                    foreach (var p in ControllerLayers.Resolve(Binds, Layers, _layer, action.name))
                         if (!(_cursor && CursorOwns(p)) && !(_menu && action.name != "ClosePanel")) want.Add(p); // menus: UiNav has the pad; ClosePanel is Esc
                 var have = new List<string>();
                 foreach (var b in action.bindings) if (b.path != null && b.path.StartsWith(Pad)) have.Add(b.path);
@@ -203,6 +217,8 @@ namespace Ro3Emu.ClientHooks
                 foreach (var a in Actions) names.Add(a.name);
                 var missing = new List<string>();
                 foreach (var name in Binds.Keys) if (!names.Contains(name) && !Pseudo.Contains(name)) missing.Add(name);
+                for (int l = 2; l <= ControllerLayers.Count; l++)
+                    foreach (var name in Layers.Of(l).Values) if (!names.Contains(name) && !Pseudo.Contains(name) && !missing.Contains(name)) missing.Add(name);
                 if (missing.Count > 0) Debug.LogWarning("[Ro3Emu.Controller] bound in controller.ini but not an enabled game action: " + string.Join(", ", missing));
             }
             if (changed > 0) Debug.Log("[Ro3Emu.Controller] gamepad bindings updated on " + changed + " action(s)" + (_cursor ? " (cursor mode)" : _menu ? " (menu)" : ""));
@@ -211,6 +227,37 @@ namespace Ro3Emu.ClientHooks
         /// <summary>The first gamepad control bound to a game or controller action, or null.</summary>
         public static string FirstBinding(string action) =>
             !string.IsNullOrEmpty(action) && Binds.TryGetValue(action, out var list) && list.Count > 0 ? list[0] : null;
+
+        /// <summary>The active skill layer: 1 base, 2 while LayerShift2 (L2) is held, 3 while LayerShift3 (R2) is held.</summary>
+        public static int Layer => _layer;
+
+        /// <summary>The control an action has in the active layer (what a press means right now), or null.</summary>
+        public static string ActiveBinding(string action) =>
+            string.IsNullOrEmpty(action) ? null : ControllerLayers.First(Binds, Layers, _layer, action);
+
+        /// <summary>The control an action has in the given layer, or null.</summary>
+        public static string LayerBinding(int layer, string action) =>
+            string.IsNullOrEmpty(action) ? null : ControllerLayers.First(Binds, Layers, layer, action);
+
+        /// <summary>The first control the action has in any layer (base first): for labels that are not layer-aware.</summary>
+        public static string AnyBinding(string action) =>
+            string.IsNullOrEmpty(action) ? null : ControllerLayers.Any(Binds, Layers, action);
+
+        /// <summary>The action a layer assigns to a control path, or null.</summary>
+        internal static string LayerAction(int layer, string path) =>
+            layer >= 2 && layer <= ControllerLayers.Count && Layers.Of(layer).TryGetValue(path, out var action) ? action : null;
+
+        /// <summary>Tracks the shift controls; a layer change re-syncs the game bindings. Cursor mode and the wheel
+        /// own the buttons, so they are always layer 1 there.</summary>
+        private static void UpdateLayer(Gamepad pad, bool on)
+        {
+            bool live = on && pad != null && (Application.isFocused || Diagnostics.IgnoreFocus) && !_cursor && !_menu && !Wheel.Open;
+            int layer = LayerState.Update(live && Held(pad, "LayerShift2"), live && Held(pad, "LayerShift3"));
+            if (layer == _layer) return;
+            _layer = layer;
+            if (on) Sync(true);
+            Debug.Log("[Ro3Emu.Controller] skill layer " + layer);
+        }
 
         internal static List<string> ConfigurableActions()
         {
@@ -259,6 +306,7 @@ namespace Ro3Emu.ClientHooks
 
         internal static void ResetSetting(string key)
         {
+            if (ControllerLayers.IsLayerKey(key)) { SaveSetting(key, ControllerLayers.DefaultFor(key), true); return; }
             var defaults = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
             var numbers = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
             ControllerIni.Parse(ControllerIni.Defaults.Split('\n'), defaults, numbers);
@@ -269,7 +317,7 @@ namespace Ro3Emu.ClientHooks
 
         private static bool _reportedMissing;
         private static readonly HashSet<string> Pseudo = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuRightClick", "MenuDoubleClick", "MenuWheel", "Interact", "QuestNav", "TargetCycle", "TargetLock", "AllySelect" };
+            { "CursorMode", "LeftClick", "RightClick", "CameraZoom", "MenuConfirm", "MenuBack", "MenuTabLeft", "MenuTabRight", "MenuAssign", "MenuUnassign", "MenuRightClick", "MenuDoubleClick", "MenuWheel", "Interact", "QuestNav", "TargetCycle", "TargetLock", "AllySelect", "LayerShift2", "LayerShift3" };
 
         /// <summary>Every enabled Input System action: map, name, bindings (dev command "actions").</summary>
         internal static string DescribeActions()
@@ -293,8 +341,8 @@ namespace Ro3Emu.ClientHooks
         private static ButtonControl Button(Gamepad pad, string name, out bool any)
         {
             any = false;
-            if (!Binds.TryGetValue(name, out var list)) return null;
-            foreach (var p in list)
+            // Layer-aware: "Layer2.RightShoulder = AllySelect" moves a controller action too, and frees R1 from TargetCycle while L2 is held.
+            foreach (var p in ControllerLayers.Resolve(Binds, Layers, _layer, name))
                 if (pad.TryGetChildControl(p.Substring(p.IndexOf('/') + 1)) is ButtonControl b) { any = true; if (b.isPressed || b.wasReleasedThisFrame) return b; }
             return null;
         }

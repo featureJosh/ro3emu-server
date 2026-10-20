@@ -48,6 +48,7 @@ namespace Ro3Emu.ClientHooks
         private static Mode _mode;
         private static UIDragButton _source;
         private static int _startFrame;
+        private static int _targetLayer = 1; // the skill layer the targets were scanned for
         private static string _notice;
         private static float _noticeUntil;
 
@@ -102,6 +103,7 @@ namespace Ro3Emu.ClientHooks
         {
             if (Time.frameCount == _startFrame) return; // the entry button may itself be a skill button
             if (back || _mode == Mode.Bind && _source == null) { Cancel(); return; }
+            if (Controller.Layer != _targetLayer) FindTargets(); // L2 / R2 held: the buttons mean the layer's skills
             foreach (var t in Targets)
             {
                 if (t.Trigger == null || t.Button == null) continue; // pooled widgets are rebuilt; the scan at entry is stale
@@ -189,6 +191,7 @@ namespace Ro3Emu.ClientHooks
         private static void FindTargets()
         {
             Targets.Clear();
+            _targetLayer = Controller.Layer;
             var widget = GameObject.Find(ControllerHud.SkillWidget);
             if (widget == null) // inactive while a full-screen window is open
                 foreach (var t in Resources.FindObjectsOfTypeAll<Transform>())
@@ -199,7 +202,7 @@ namespace Ro3Emu.ClientHooks
             foreach (var binder in widget.GetComponentsInChildren<InputBinder>(true))
             {
                 string action = ControllerHud.KeyField.GetValue(binder) as string;
-                string control = Controller.FirstBinding(action);
+                string control = Controller.ActiveBinding(action);
                 if (string.IsNullOrEmpty(action) || control == null || control == back || control == confirm || !seen.Add(action)) continue;
                 for (var node = binder.transform; node != null && node != widget.transform; node = node.parent)
                 {
