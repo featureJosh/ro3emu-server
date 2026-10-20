@@ -23,12 +23,13 @@ namespace Ro3Emu.ClientHooks
     /// </summary>
     public static class Wheel
     {
-        private enum Kind { Action, Function, Mail, Party, Controller, QuestNav }
+        private enum Kind { Action, Function, Mail, Party, Controller, QuestNav, Companion }
 
         /// <summary>key: an input action name (Kind.Action), or an enum_FunctionType name (Kind.Function).</summary>
         private sealed class Entry
         {
-            public readonly string Label, Key;
+            public readonly string Key;
+            public string Label;
             public readonly Kind Kind;
             public bool Enabled = true;
             public Entry(string label, Kind kind, string key = null) { Label = label; Kind = kind; Key = key; }
@@ -63,7 +64,11 @@ namespace Ro3Emu.ClientHooks
             Fn("Climb Tower", "ClimbTower"), Fn("Become Stronger", "BecomeStronger"), Fn("Profile", "Personal"),
             Fn("School", "School"),
             Fn("Settings", "SetMenu"), new Entry("Controller", Kind.Controller),
+            new Entry("Bots: Stay", Kind.Companion),
         };
+
+        private static readonly string[] BotModes = { "Stay", "Follow", "Passive", "Assist" };
+        private static int _botMode;
 
         private static int Pages => (Entries.Length + PageSize - 1) / PageSize;
         private static int _page;
@@ -184,6 +189,13 @@ namespace Ro3Emu.ClientHooks
                 case Kind.Action: Run(entry.Key); break;
                 case Kind.Controller: ControllerSettings.Show(); break;
                 case Kind.QuestNav: QuestNav.Go(); break;
+                case Kind.Companion:
+                    // Party bots take the server's "!bots <mode>" command, sent like a typed chat line (LC_ChatHelper.SendMsgDirectly,
+                    // Logic/Chat/LC_ChatHelper.lua:2430-2481; nil channel = the current one). A pick sends the shown mode, then shows the next.
+                    CallLua("LC_ChatHelper.SendMsgDirectly", null, "!bots " + BotModes[_botMode].ToLowerInvariant());
+                    _botMode = (_botMode + 1) % BotModes.Length;
+                    entry.Label = "Bots: " + BotModes[_botMode];
+                    break;
                 case Kind.Function:
                     // The function menu's own click: UI_Sys_MainFunctionMenuWidgetBaseCtrl.lua:1083 -> OpenFunctionPanelDefault(id).
                     CallLua("LC_FunctionHelper.OpenFunctionPanelDefault", FunctionId(entry));

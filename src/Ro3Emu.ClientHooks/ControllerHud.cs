@@ -66,8 +66,6 @@ namespace Ro3Emu.ClientHooks
         // Every stock slot with a gamepad binding in some layer; SkillSources / PotionSources are the ones the active layer shows.
         private static readonly List<Source> AllSkills = new List<Source>(), AllPotions = new List<Source>();
         private static int _hudLayer = 1;
-        private static Image _layerBadge;
-        private static TextMeshProUGUI _layerText;
         private static Slider _hp, _sp;
         private static readonly List<CanvasGroup> Hidden = new List<CanvasGroup>();
         private static int _frame;
@@ -193,18 +191,7 @@ namespace Ro3Emu.ClientHooks
             Color tint = _hudLayer == 2 ? new Color(0.45f, 0.78f, 1f) : _hudLayer == 3 ? new Color(1f, 0.58f, 0.36f) : Color.white;
             foreach (var s in Skills) s.Frame.color = _hudLayer == 1 ? s.FrameColor : tint;
             foreach (var s in Potions) s.Frame.color = _hudLayer == 1 ? s.FrameColor : tint;
-            if (_layerBadge != null)
-            {
-                _layerBadge.gameObject.SetActive(_hudLayer > 1);
-                _layerBadge.color = new Color(tint.r * 0.35f, tint.g * 0.35f, tint.b * 0.35f, 0.92f);
-                string shift = Controller.FirstBinding("LayerShift" + _hudLayer);
-                _layerText.text = "LAYER " + _hudLayer + (shift != null ? "  " + ShiftName(shift) : "");
-                _layerText.color = tint;
-            }
         }
-
-        private static string ShiftName(string path) =>
-            path == "<Gamepad>/leftTrigger" ? "L2" : path == "<Gamepad>/rightTrigger" ? "R2" : path.Substring(path.IndexOf('/') + 1);
 
         private static string Describe(Source s) =>
             s.Action + "(" + (s.Icon != null ? "icon" : "-") + (s.CdOn != null ? ",cd" : "") + (s.CdFill != null ? ",fill" : "")
@@ -332,11 +319,6 @@ namespace Ro3Emu.ClientHooks
             _spFill = Orb(1, new Color(0.18f, 0.38f, 0.9f), out _spText);
             for (int i = 0; i < 8; i++) Skills.Add(NewSlot("Skill" + i, SkillSize, false));
             for (int i = 0; i < 6; i++) Potions.Add(NewSlot("Potion" + i, PotionSize, true)); // ShortCut_1..6, two per layer by default
-            _layerBadge = Img("LayerBadge", _root, Shapes.RoundedRect, new Color(0.1f, 0.1f, 0.1f, 0.9f), 0, 0, 1f);
-            _layerBadge.raycastTarget = false;
-            _layerText = Overlay.Text("LayerText", _layerBadge.rectTransform, 20);
-            _layerText.alignment = TextAlignmentOptions.Center;
-            _layerBadge.gameObject.SetActive(false);
         }
 
         /// <summary>One row centred on the screen: [HP orb] [potions] [skills] [SP orb], on a plate.</summary>
@@ -370,8 +352,6 @@ namespace Ro3Emu.ClientHooks
             ((RectTransform)_spFill.transform.parent).anchoredPosition = new Vector2(orbX - OrbSize / 2f, 0f);
             Place(_plate.rectTransform, -orbX, y - 22f, 2f * orbX, SkillSize + 44f);
             Place(_plateEdge.rectTransform, -orbX, y + SkillSize + 20f, 2f * orbX, 2f);
-            Place(_layerBadge.rectTransform, -90f, y + SkillSize + 8f, 180f, 28f); // straddles the plate edge, centred
-            Place(_layerText.rectTransform, 0f, 0f, 180f, 28f);
         }
 
         private static Image Orb(int side, Color color, out TextMeshProUGUI label)

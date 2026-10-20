@@ -68,8 +68,9 @@ public sealed partial class PopulationService
             return new() { Session = s, Uid = s.Role!.Id, Hp = hp, MaxHp = max, Dead = s.Dead, Owner = isOwner, Distance2 = Distance2(bot.X, bot.Z, s.Position.X, s.Position.Z) };
         }
         members.Add(Human(owner, true));
-        foreach (long id in teams?.MembersOf(owner.Role!.Id) ?? [])
-            if (id != owner.Role.Id && active.TryGetValue(id, out var s) && s.Role != null && !s.SceneLoading && s.RuntimeMap == owner.RuntimeMap)
+        long ownerId = owner.Role!.Id;
+        foreach (long id in teams?.MembersOf(ownerId) ?? [])
+            if (id != ownerId && active.TryGetValue(id, out var s) && s.Role != null && !s.SceneLoading && s.RuntimeMap == owner.RuntimeMap)
                 members.Add(Human(s, false));
         foreach (var other in companions.Values)
             if (other != c && other.Owner == c.Owner && !other.Bot.Removed && other.Bot.RuntimeMap == bot.RuntimeMap)

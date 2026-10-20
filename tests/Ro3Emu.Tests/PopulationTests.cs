@@ -514,7 +514,7 @@ public sealed class PopulationTests : IDisposable
         Assert.Equal(bot.Name, fields["Name"]); Assert.Equal(true, fields["Online"]);
         Assert.Equal(7, fields["ClusterId"]);
         var info = RoleAdditionBaseInfo.Parser.ParseFrom((byte[])fields["Base"]!);
-        Assert.Equal(bot.Career, info.Career); Assert.True(info.CantBeInvited);
+        Assert.Equal(bot.Career, info.Career); Assert.False(info.CantBeInvited); // companions are on by default: Team Up is offered
         await population.SetCountAsync(0); Assert.Null(population.Profile(bot.Uid, 124, 7));
     }
 

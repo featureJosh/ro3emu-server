@@ -47,6 +47,19 @@ public sealed class GmAccessTests
         Assert.Equal(expected, GmCommands.Allowed(options, account, loopbackTool));
     }
 
+    [Theory]
+    [InlineData("!bots stay", true)]
+    [InlineData("!BOTS Follow", true)]
+    [InlineData("!bots dismiss all", true)]
+    [InlineData("!bots recruit", true)]
+    [InlineData("!bots off", false)]
+    [InlineData("!bots 50", false)]
+    [InlineData("!bots stay now", false)]
+    [InlineData("!bots", false)]
+    [InlineData("!where", false)]
+    public void OnlyPersonalCompanionCommandsSkipTheGmCheck(string line, bool expected) =>
+        Assert.Equal(expected, GmCommands.IsPlayerCommand(line));
+
     [Fact]
     public async Task InProductionAnEmptyListRefusesChatGmButTheLoopbackToolStillRuns()
     {

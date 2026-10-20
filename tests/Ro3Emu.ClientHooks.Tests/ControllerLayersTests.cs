@@ -105,9 +105,10 @@ public class ControllerLayersTests
         Assert.Empty(ControllerLayers.Resolve(binds, table, 2, "InteractiveSkill_01"));
         Assert.Empty(ControllerLayers.Resolve(binds, table, 2, "ShortCut_1"));
         Assert.Equal(["<Gamepad>/dpad/left"], ControllerLayers.Resolve(binds, table, 1, "ShortCut_1"));
-        // inherited: D-pad up/down and R1 have no layer entry and keep their base actions.
+        // inherited: D-pad up/down have no layer entry and keep their base actions; L2 + R1 is AllySelect, not TargetCycle.
         Assert.Equal(["<Gamepad>/dpad/up"], ControllerLayers.Resolve(binds, table, 3, "Direction_Up"));
-        Assert.Equal(["<Gamepad>/rightShoulder"], ControllerLayers.Resolve(binds, table, 2, "SwitchTarget"));
+        Assert.Equal(["<Gamepad>/rightShoulder"], ControllerLayers.Resolve(binds, table, 1, "TargetCycle"));
+        Assert.Empty(ControllerLayers.Resolve(binds, table, 2, "TargetCycle"));
         Assert.Empty(ControllerLayers.Resolve(binds, table, 2, "NormalSkill_03"));
     }
 

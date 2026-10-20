@@ -42,14 +42,13 @@ namespace Ro3Emu.ClientHooks
         private static float _lockDown = -1f, _lastReselect, _stickSince = -1f, _lastSoft, _allyUntil;
         private static int _frame;
         private static bool _frameWarned, _noTeamWarned;
-        private static RectTransform _tag;
 
         /// <summary>From Controller.Tick in the world (no menu, no cursor).</summary>
         internal static void Tick(Gamepad pad, bool active)
         {
             try
             {
-                if (!active || pad == null) { _lockDown = -1f; _stickSince = -1f; ShowTag(false); return; }
+                if (!active || pad == null) { _lockDown = -1f; _stickSince = -1f; MarkFrame(false); return; }
                 _frame++;
                 float now = Time.unscaledTime;
                 if (Controller.Pressed(pad, "TargetLock")) _lockDown = now;
@@ -63,7 +62,7 @@ namespace Ro3Emu.ClientHooks
                 if (Controller.Pressed(pad, "AllySelect")) SelectAlly();
                 if (Controller.Setting("SoftLock", 1f) > 0f) SoftLock(pad, now);
                 if (_frame % 10 == 0) { EnforceLock(now); CheckFrame(); }
-                ShowTag(_lock.HasValue);
+                MarkFrame(_lock.HasValue);
             }
             catch (Exception e) { Debug.LogWarning("[Ro3Emu.Targeting] " + e.GetType().Name + ": " + e.Message); }
         }
@@ -292,7 +291,7 @@ namespace Ro3Emu.ClientHooks
         private static object First(object[] result) => result != null && result.Length > 0 ? result[0] : null;
         private static bool IsTrue(object value) => value is bool b && b;
 
-        // ---- target frame + lock tag ----
+        // ---- target frame ----
 
         /// <summary>The stock target frame must show in controller mode. ControllerHud only hides the skill bar, the item bar and
         /// Pattern_GraphicSwitchG, so it should; this warns once if something hides it while a target is selected.</summary>
@@ -306,24 +305,28 @@ namespace Ro3Emu.ClientHooks
             { _frameWarned = true; Debug.LogWarning("[Ro3Emu.Targeting] stock target frame is hidden while a target is selected"); }
         }
 
-        private static void ShowTag(bool on)
+        // The lock shows on the stock frame itself (no overlay of ours): the monster name turns gold while locked.
+        // MonsterNameDisplay_TTxt is the view's m_kTTXT_MonsterNameDisplay (UI_Sys_Main_TargetAvatarInfoWidget_PCView.lua:182).
+        private static readonly Color LockGold = new Color(0.95f, 0.76f, 0.35f, 1f);
+        private static TMP_Text _name;
+        private static Color _nameColor;
+        private static bool _marked;
+
+        private static void MarkFrame(bool on)
         {
-            if (!on) { if (_tag != null && _tag.gameObject.activeSelf) _tag.gameObject.SetActive(false); return; }
-            if (_tag == null)
+            if (on == _marked && (!on || _name != null && _name.color == LockGold)) return;
+            if (_name == null)
             {
-                _tag = Overlay.Rect("Ro3emuLockTag");
-                _tag.anchorMin = _tag.anchorMax = _tag.pivot = new Vector2(0.5f, 1f);
-                var label = Overlay.Text("Label", _tag, 26);
-                label.alignment = TextAlignmentOptions.Midline;
-                label.text = "LOCKED";
-                label.color = new Color(0.86f, 0.7f, 0.4f, 1f);
-                label.rectTransform.sizeDelta = new Vector2(200f, 36f);
-                _tag.sizeDelta = new Vector2(200f, 36f);
+                if (!on) { _marked = false; return; }
+                var widget = GameObject.Find("UI_Sys_Main_TargetAvatarInfoWidget_PC(Clone)");
+                if (widget == null) return;
+                foreach (var t in widget.GetComponentsInChildren<TMP_Text>(true))
+                    if (t.name == "MonsterNameDisplay_TTxt") { _name = t; break; }
+                if (_name == null) return;
             }
-            float s = Overlay.Scale;
-            _tag.localScale = new Vector3(s, s, 1f);
-            _tag.anchoredPosition = new Vector2(0f, -170f * s);
-            if (!_tag.gameObject.activeSelf) _tag.gameObject.SetActive(true);
+            if (on && !_marked) _nameColor = _name.color;
+            _name.color = on ? LockGold : _nameColor;
+            _marked = on;
         }
     }
 }

@@ -62,6 +62,18 @@ public sealed class GmCommands(IOptions<ServerOptions> options, GmLoginChoices l
             (parts.Length < 2 || !parts[1].Equals("goto", StringComparison.OrdinalIgnoreCase)));
     }
 
+    /// <summary>Personal companion and chat commands any player may run: they act only on the player's own party bots
+    /// or chat view (inferred offline-server policy; bots join through the normal invite without GM).</summary>
+    internal static bool IsPlayerCommand(string line)
+    {
+        var parts = line.TrimStart('!').Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        static bool Is(string s, string word) => s.Equals(word, StringComparison.OrdinalIgnoreCase);
+        return parts.Length >= 2 && Is(parts[0], "bots") && PlayerBotsArgs.Contains(parts[1])
+            && (parts.Length == 2 || parts.Length == 3 && Is(parts[1], "dismiss") && Is(parts[2], "all"));
+    }
+
+    private static readonly HashSet<string> PlayerBotsArgs = new(StringComparer.OrdinalIgnoreCase) { "recruit", "dismiss", "follow", "stay", "assist", "passive", "mute", "unmute" };
+
     /// <param name="loopbackTool">The loopback HTTP /ro3emu/gm: an empty GmAccounts still means everyone.</param>
     public Task RunAsync(GameSession session, string line, bool loopbackTool = false)
     {
@@ -84,7 +96,7 @@ public sealed class GmCommands(IOptions<ServerOptions> options, GmLoginChoices l
 
     private async Task RunCoreAsync(GameSession session, string line, bool loopbackTool)
     {
-        if (!Allowed(options.Value, session.Account, loopbackTool) || !loopbackTool && loginChoices.Declined(session.Account))
+        if (!IsPlayerCommand(line) && (!Allowed(options.Value, session.Account, loopbackTool) || !loopbackTool && loginChoices.Declined(session.Account)))
         {
             await ReplyAsync(session, "GM commands are not enabled for this account.");
             return;

@@ -26,7 +26,6 @@ public class ControllerIniTests
         Assert.Equal(["<Gamepad>/touchpadButton"], binds["QuestNav"]);
         Assert.Equal(["<Gamepad>/rightShoulder"], binds["TargetCycle"]);
         Assert.Equal(["<Gamepad>/rightStickPress"], binds["TargetLock"]);
-        Assert.Equal(["<Gamepad>/leftShoulder"], binds["AllySelect"]);
         Assert.False(binds.ContainsKey("SwitchTarget")); // TargetCycle replaces the stock action on R1
         Assert.Equal(["<Gamepad>/buttonWest"], binds["MenuAssign"]);
         Assert.Equal(["<Gamepad>/buttonNorth"], binds["MenuUnassign"]);
