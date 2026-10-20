@@ -54,10 +54,11 @@ namespace Ro3Emu.ClientHooks
         internal static void Tick(Gamepad pad, bool enabled)
         {
             if (_escDown) { ReleaseEscape(); }
-            if (!enabled || pad == null) { SkillBinding.Cancel(); Close(); return; }
+            MenuInput.PadActivity(enabled ? pad : null); // idle guide: legacy Input.anyKey may not see the pad
+            if (!enabled || pad == null) { SkillBinding.Cancel(); MenuInput.EndSwipe(); Close(); return; }
             if (Diagnostics.Verbose && pad.buttonSouth.isPressed) Debug.Log("[Ro3Emu.UiNav] dbg south: panel=" + (_panel?.name ?? "-") + " guide=" + (_guide != null) + " osk=" + Osk.Open + " focus=" + (_focus?.name ?? "-") + " edge=" + Controller.Edge(pad.buttonSouth, true));
             if (++_frame % 10 == 0) Scan(); // ponytail: FindObjectsOfType<Canvas> every 10th frame; panel open/close events if it costs
-            if (_panel == null) { SkillBinding.Cancel(); Close(); return; }
+            if (_panel == null) { SkillBinding.Cancel(); MenuInput.EndSwipe(); Close(); return; }
             if (SkillBinding.Active && !SkillBinding.InSkillPanel(FocusPanel)) SkillBinding.Cancel(); // the skill window is gone or covered
             if (Osk.Open)
             {
@@ -159,13 +160,28 @@ namespace Ro3Emu.ClientHooks
             var skip = StockPrompts.For(root)?.NoFocus;
             foreach (var s in Selectable.allSelectablesArray)
                 if (s.transform.IsChildOf(root) && Usable(s) && (skip == null || Array.IndexOf(skip, s.name) < 0)) into.Add(s);
+            int before = into.Count;
+            LargeCards.Clear();
             root.GetComponentsInChildren(false, Behaviours);
             foreach (var mb in Behaviours)
             {
                 if (!(mb is IPointerClickHandler) || mb is Selectable || mb.GetComponent<Selectable>() != null) continue;
                 if (mb.GetComponent<TMPro.TMP_Text>() != null) continue; // text with links (item tips title), not a control
-                if (Small(mb) && Usable(mb) && (skip == null || Array.IndexOf(skip, mb.name) < 0)) into.Add(mb);
+                if (!Usable(mb) || skip != null && Array.IndexOf(skip, mb.name) >= 0) continue;
+                var size = SizeOf(mb);
+                if (size == MenuInputLogic.Size.Small) into.Add(mb);
+                else if (size == MenuInputLogic.Size.Large) LargeCards.Add(mb);
             }
+            // A panel whose only click targets are big cards (not Selectables) would have no focus at all: take the cards.
+            if (MenuInputLogic.UseLarge(into.Count - before, LargeCards.Count) && Controller.Setting("MenuLargeFocus", 1f) > 0f) into.AddRange(LargeCards);
+        }
+
+        private static readonly List<Component> LargeCards = new List<Component>();
+
+        private static MenuInputLogic.Size SizeOf(Component c)
+        {
+            var r = ScreenRect(c);
+            return MenuInputLogic.Classify(r.width, r.height, Screen.width, Screen.height);
         }
 
         /// <summary>A panel with a click-blocking graphic over (nearly) the whole screen is a modal popup.</summary>
@@ -234,6 +250,10 @@ namespace Ro3Emu.ClientHooks
             root.GetComponentsInChildren(false, Behaviours);
             foreach (var mb in Behaviours)
                 if (mb is IPointerClickHandler && !(mb is Selectable) && mb.GetComponent<TMPro.TMP_Text>() == null && Usable(mb) && Small(mb)) return true;
+            if (Controller.Setting("MenuLargeFocus", 1f) <= 0f) return false;
+            foreach (var mb in Behaviours) // big cards count when there is nothing else (Collect's fallback)
+                if (mb is IPointerClickHandler && !(mb is Selectable) && mb.GetComponent<Selectable>() == null && mb.GetComponent<TMPro.TMP_Text>() == null
+                    && Usable(mb) && SizeOf(mb) == MenuInputLogic.Size.Large) return true;
             return false;
         }
 
@@ -269,6 +289,8 @@ namespace Ro3Emu.ClientHooks
             var r = ScreenRect(s);
             return r.width > 4 && r.height > 4 && r.xMax > 0 && r.yMax > 0 && r.xMin < Screen.width && r.yMin < Screen.height;
         }
+
+        internal static Rect RectOf(Component c) => ScreenRect(c);
 
         private static Rect ScreenRect(Component c)
         {
@@ -345,11 +367,13 @@ namespace Ro3Emu.ClientHooks
             {
                 string confirm = StockPrompts.For(_panel)?.Confirm;
                 if (_focus == null && confirm != null) Wheel.Run(confirm); // nothing to pick: the screen's own key (NPC dialog: Space continues)
-                else Click(_focus);
+                else Click(_focus, PointerEventData.InputButton.Left, MenuInput.ConfirmCount(_focus));
             }
+            MenuInput.Secondary(pad, _focus);
             if (Pressed(pad, "MenuBack", "buttonEast")) TapEscape();
             if (Pressed(pad, "MenuTabLeft", "leftShoulder")) Tab(-1);
             if (Pressed(pad, "MenuTabRight", "rightShoulder")) Tab(1);
+            MenuInput.Rotate(pad, FocusPanel); // model zone (equip window): right stick left/right; up/down still scrolls
             float scroll = pad.rightStick.ReadValue().y;
             if (Math.Abs(scroll) > 0.2f) Scroll(scroll);
         }
@@ -405,15 +429,18 @@ namespace Ro3Emu.ClientHooks
             slider.value = Mathf.Clamp(slider.value + sign * step, slider.minValue, slider.maxValue);
         }
 
-        internal static void Click(Component s)
+        internal static void Click(Component s) => Click(s, PointerEventData.InputButton.Left, 1);
+
+        /// <summary>A mouse click as the stock handlers see it: button Right feeds SetOnRightClick, clickCount 2 SetOnDoubleClick.</summary>
+        internal static void Click(Component s, PointerEventData.InputButton button, int clickCount)
         {
             if (s == null || EventSystem.current == null) return;
-            if (s is TMPro.TMP_InputField field) { Osk.Show(field); return; } // typing needs the on-screen keyboard
+            if (s is TMPro.TMP_InputField field && button == PointerEventData.InputButton.Left) { Osk.Show(field); return; } // typing needs the on-screen keyboard
             var data = new PointerEventData(EventSystem.current)
             {
-                button = PointerEventData.InputButton.Left,
+                button = button,
                 position = ScreenRect(s).center,
-                clickCount = 1,
+                clickCount = clickCount,
             };
             var go = s.gameObject;
             data.pointerPress = go;
@@ -423,7 +450,7 @@ namespace Ro3Emu.ClientHooks
             ExecuteEvents.Execute(go, data, ExecuteEvents.pointerUpHandler);
             ExecuteEvents.Execute(go, data, ExecuteEvents.pointerClickHandler);
             ExecuteEvents.Execute(go, data, ExecuteEvents.pointerExitHandler);
-            Debug.Log("[Ro3Emu.UiNav] click " + go.name);
+            Debug.Log("[Ro3Emu.UiNav] click " + go.name + (button == PointerEventData.InputButton.Left && clickCount == 1 ? "" : " " + button + " x" + clickCount));
         }
 
         /// <summary>The game's Esc action is a keyboard action: tap Escape for one frame.</summary>
@@ -565,7 +592,7 @@ namespace Ro3Emu.ClientHooks
         }
 
         private static readonly List<(string, string)> PromptList = new List<(string, string)>();
-        private static bool _hasTabs;
+        private static bool _hasTabs, _hasZone;
 
         private static void Prompts()
         {
@@ -599,6 +626,8 @@ namespace Ro3Emu.ClientHooks
                 PromptList.Add((Control("MenuUnassign", "buttonNorth"), "Clear slot"));
             }
             if (ScrollFor(_focus) != null) PromptList.Add(("<Gamepad>/rightStick/up", "Scroll"));
+            if (_frame % 10 == 0) _hasZone = MenuInput.ZoneIn(FocusPanel) != null;
+            if (_hasZone) PromptList.Add(("<Gamepad>/rightStick/left", "Rotate"));
             if (SkillBinding.InSkillPanel(FocusPanel))
             {
                 if (SkillBinding.CanBind(_focus)) PromptList.Add((Control("MenuAssign", "buttonWest"), "Bind"));

@@ -14,6 +14,7 @@
     <Compile Include="../../src/Ro3Emu.ClientHooks/CombatSettings.cs" Link="CombatSettings.cs" />
     <Compile Include="../../src/Ro3Emu.ClientHooks/CooldownMirror.cs" Link="CooldownMirror.cs" />
     <Compile Include="../../src/Ro3Emu.ClientHooks/ControllerIni.cs" Link="ControllerIni.cs" />
+    <Compile Include="../../src/Ro3Emu.ClientHooks/MenuInputLogic.cs" Link="MenuInputLogic.cs" />
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

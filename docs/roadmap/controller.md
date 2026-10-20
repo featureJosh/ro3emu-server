@@ -35,6 +35,7 @@ it exists** (see "How it is built").
 - `Glyphs.cs`: PS5 sprites by control path; stock key labels -> glyphs.
 - `ControllerHud.cs`: HUD, plus `Shapes` (procedural sprites).
 - `Wheel.cs`: radial menu, plus `Wheel.Run(action)`, which runs any game action.
+- `MenuInput.cs` / `MenuInputLogic.cs`: menu right/double click (MenuRightClick, quick double ✕, MenuDoubleClick), right-stick model rotate in the equip window, idle-guide pad activity; `MenuInputLogic` is tested.
 - `Interact.cs`: context interaction.
 - `Diagnostics.cs`: dev commands.
 - `UiTweaks.cs`: mode-select relabel, password row hidden.
