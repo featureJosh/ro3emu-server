@@ -275,12 +275,15 @@ viewer sees; `!bots mute` affects chat only. Wave ID 50001 is a guess that needs
 
 ## Party companions (optional)
 
-Off by default. Enable with `"Population": { "Companions": { "Enabled": true, "MaxPerPlayer": 1, "RecruitRange": 20,
+On by default (companions need visible bots: turn the population on with `Population:Enabled` or `!bots on`). Turn them off
+with `"Companions": { "Enabled": false }`. Settings: `"Population": { "Companions": { "Enabled": true, "MaxPerPlayer": 1, "RecruitRange": 20,
 "DisconnectGraceSeconds": 60 } }` (`MaxPerPlayer` 0–4, so the party never exceeds five).
 
 - `!bots recruit`: the nearest ambient bot within `RecruitRange` joins your party (one is spawned beside you if none is
   near); a party is created with you as leader if you have none. Inviting a visible bot through the normal party
-  invite also works; it accepts at once.
+  invite (click the bot, Team Up; no need to be in a party first)
+  also works; it accepts at once, greets in party chat, and a second invite beyond `MaxPerPlayer` is refused (party full).
+  With companions off the invite fails with a feature-unavailable error and no party is created.
 - `!bots follow` / `!bots stay`: follow with a loose offset, or hold position. `!bots assist` (default) /
   `!bots passive`: help against monsters fighting you, or never attack.
 - `!bots dismiss` / `!bots dismiss all`: remove your companion(s). `!bots off` removes companions as well.

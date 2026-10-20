@@ -3,7 +3,7 @@ namespace Ro3Emu.Server;
 /// <summary>Temporary party companions recruited from the offline population; limits are inferred offline policy.</summary>
 public sealed class PopulationCompanionOptions
 {
-    public bool Enabled { get; set; }
+    public bool Enabled { get; set; } = true;
     /// <summary>Clamped to 0-4: a five-person party holds the owner and at most four others.</summary>
     public int MaxPerPlayer { get; set; } = 1;
     /// <summary>Ambient bots within this many map units can be recruited; otherwise a new one is spawned beside the player.</summary>

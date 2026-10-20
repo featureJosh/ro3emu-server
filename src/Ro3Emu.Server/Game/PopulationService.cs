@@ -318,7 +318,7 @@ public sealed partial class PopulationService : IGameTicker
         info.Appearances.Add(bot.Appearances);
         var fields = new Dictionary<string, object?> { ["Name"] = bot.Name, ["Level"] = bot.Level,
             ["Base"] = info.ToByteArray(), ["Online"] = true, ["OfflineTime"] = -1L, ["ClusterId"] = cluster,
-            ["GuildSnap"] = new GuildSnapInfo().ToByteArray() };
+            ["GuildSnap"] = new GuildSnapInfo().ToByteArray(), ["Team"] = BotTeamInfo() };
         return new() { ["Uid"] = uid, ["FieldsVersion"] = fields.Keys.ToDictionary(k => k, _ => (object?)version), ["Data"] = fields };
     }
 

@@ -71,7 +71,10 @@ in-game or two-player LAN acceptance yet. Settings are in the [usage guide](../g
   groups, role chat weighting and packs.
 - [x] Reactions and gestures: shared-fight and boss lines; wave, sit and face-the-speaker through the emote state
   machine. Heal/buff/revive thanks are wired but inactive until bots are valid friendly-skill targets; wave ID inferred.
-- [x] Party companions (off by default): `!bots recruit` or a normal invite, real roster entry, follow/stay/assist/
+- [x] Party companions (on by default; `Companions.Enabled=false` turns them off): `!bots recruit` or a normal invite
+  (player card / Team Up on a visible bot, solo or in a party: the server creates the party for a solo inviter, the bot
+  joins at once and says a short hello in party chat "3_<teamId>"; its role info carries an explicit Team slice so the
+  card offers Team Up), real roster entry, follow/stay/assist/
   passive, owner-only commands, disconnect grace, cleanup on leave/disband/relog, wait outside private dungeons.
   Companions never land killing blows, so the human's kill settles once and bots receive nothing.
 
