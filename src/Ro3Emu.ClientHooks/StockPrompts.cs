@@ -35,7 +35,7 @@ namespace Ro3Emu.ClientHooks
         };
 
         private static readonly Dictionary<string, string> Fallback = new Dictionary<string, string>
-            { ["MenuConfirm"] = "buttonSouth", ["MenuBack"] = "buttonEast" };
+        { ["MenuConfirm"] = "buttonSouth", ["MenuBack"] = "buttonEast" };
 
         // Everything below is per panel instance: found once when the panel opens, then reused. The scan covers that panel's own
         // subtree only (never the scene), and repeats every RescanFrames so labels the game builds later (choice rows are pooled

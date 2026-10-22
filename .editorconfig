@@ -16,18 +16,51 @@ csharp_new_line_before_members_in_object_initializers = false
 csharp_new_line_before_members_in_anonymous_types = false
 csharp_preserve_single_line_statements = true
 csharp_preserve_single_line_blocks = true
-csharp_style_namespace_declarations = file_scoped:suggestion
+# Enforced in the build (EnforceCodeStyleInBuild): every file outside the client projects is file-scoped.
+csharp_style_namespace_declarations = file_scoped:warning
 csharp_style_var_for_built_in_types = true:silent
 csharp_style_var_when_type_is_apparent = true:silent
 dotnet_style_qualification_for_field = false:suggestion
 dotnet_style_qualification_for_property = false:suggestion
 dotnet_style_qualification_for_method = false:suggestion
 dotnet_style_qualification_for_event = false:suggestion
+# Collections are created with [] where the target type allows it (the rules older code breaks are in the baseline).
+dotnet_style_prefer_collection_expression = when_types_loosely_match
+dotnet_diagnostic.IDE0302.severity = warning
+dotnet_diagnostic.IDE0303.severity = warning
+dotnet_diagnostic.IDE0304.severity = warning
+# A class whose constructor only stores its parameters uses a primary constructor.
+csharp_style_prefer_primary_constructors = true
+dotnet_diagnostic.IDE0290.severity = warning
+# Field names: const and static readonly fields are PascalCase, every other private field is _camelCase.
+dotnet_naming_symbols.constant_fields.applicable_kinds = field
+dotnet_naming_symbols.constant_fields.applicable_accessibilities = *
+dotnet_naming_symbols.constant_fields.required_modifiers = const
+dotnet_naming_symbols.static_readonly_fields.applicable_kinds = field
+dotnet_naming_symbols.static_readonly_fields.applicable_accessibilities = *
+dotnet_naming_symbols.static_readonly_fields.required_modifiers = static, readonly
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+dotnet_naming_style.underscore_camel_case.capitalization = camel_case
+dotnet_naming_style.underscore_camel_case.required_prefix = _
+dotnet_naming_rule.constant_fields_are_pascal_case.symbols = constant_fields
+dotnet_naming_rule.constant_fields_are_pascal_case.style = pascal_case
+dotnet_naming_rule.constant_fields_are_pascal_case.severity = warning
+dotnet_naming_rule.static_readonly_fields_are_pascal_case.symbols = static_readonly_fields
+dotnet_naming_rule.static_readonly_fields_are_pascal_case.style = pascal_case
+dotnet_naming_rule.static_readonly_fields_are_pascal_case.severity = warning
+dotnet_naming_rule.private_fields_are_underscore_camel_case.symbols = private_fields
+dotnet_naming_rule.private_fields_are_underscore_camel_case.style = underscore_camel_case
+dotnet_naming_rule.private_fields_are_underscore_camel_case.severity = warning
 
-# Analyzer baseline. Rules of AnalysisLevel 10.0-recommended that code written before it still breaks, with the
-# number of violations when it was turned on. They show as suggestions until they are fixed: don't add new ones,
-# and delete a rule's lines once its count reaches zero. Every other rule of that level fails the build.
-[*.cs]
+# Analyzer baseline: rules of AnalysisLevel 10.0-recommended and of the style above that older code still breaks, each
+# with its number of violations. They show as suggestions; every other rule fails the build. CI checks the numbers
+# (dotnet run --project tools/AnalyzerBaseline -c Release): more violations fail, and fewer fail until the number is
+# lowered, so new code cannot add any. Delete a rule's two lines once it reaches zero. The counts are the ones of the
+# SDK band global.json pins: after an SDK update, run the tool and write the numbers it prints. IDE1006 stays: the
+# fields of DbPlan types and of the values they hold keep their names, because EconomyChildIntent and
+# EventPlanFingerprint write those names into stored receipts (ReceiptFieldNamesTests pins them).
 # 23: types that own disposable fields should be disposable
 dotnet_diagnostic.CA1001.severity = suggestion
 # 1: declare types in namespaces
@@ -62,11 +95,7 @@ dotnet_diagnostic.CA1720.severity = suggestion
 dotnet_diagnostic.CA1725.severity = suggestion
 # 1: do not initialize unnecessarily
 dotnet_diagnostic.CA1805.severity = suggestion
-# 2: do not ignore method results
-dotnet_diagnostic.CA1806.severity = suggestion
-# 1: call GC.SuppressFinalize correctly
-dotnet_diagnostic.CA1816.severity = suggestion
-# 166: mark members as static
+# 165: mark members as static
 dotnet_diagnostic.CA1822.severity = suggestion
 # 4: use a property instead of a LINQ method
 dotnet_diagnostic.CA1826.severity = suggestion
@@ -80,7 +109,7 @@ dotnet_diagnostic.CA1832.severity = suggestion
 dotnet_diagnostic.CA1836.severity = suggestion
 # 4: prefer Dictionary.Contains methods
 dotnet_diagnostic.CA1841.severity = suggestion
-# 381: use LoggerMessage delegates
+# 380: use LoggerMessage delegates
 dotnet_diagnostic.CA1848.severity = suggestion
 # 5: prefer TryGetValue
 dotnet_diagnostic.CA1854.severity = suggestion
@@ -94,20 +123,36 @@ dotnet_diagnostic.CA1861.severity = suggestion
 dotnet_diagnostic.CA1862.severity = suggestion
 # 10: cache and reuse JsonSerializerOptions
 dotnet_diagnostic.CA1869.severity = suggestion
-# 148: avoid potentially expensive logging
+# 147: avoid potentially expensive logging
 dotnet_diagnostic.CA1873.severity = suggestion
-# 1: use ValueTasks correctly
-dotnet_diagnostic.CA2012.severity = suggestion
-# 6: forward the CancellationToken
-dotnet_diagnostic.CA2016.severity = suggestion
-# 1: do not raise reserved exception types
-dotnet_diagnostic.CA2201.severity = suggestion
 # 15: instantiate argument exceptions correctly
 dotnet_diagnostic.CA2208.severity = suggestion
-# 6: the logging template should be a static expression
-dotnet_diagnostic.CA2254.severity = suggestion
-# 2: do not use weak cryptographic algorithms
-dotnet_diagnostic.CA5350.severity = suggestion
+# 778: use a collection initializer or expression
+dotnet_diagnostic.IDE0028.severity = suggestion
+# 139: use a collection expression for an array
+dotnet_diagnostic.IDE0300.severity = suggestion
+# 13: use a collection expression for an empty collection
+dotnet_diagnostic.IDE0301.severity = suggestion
+# 589: use a collection expression for a fluent call
+dotnet_diagnostic.IDE0305.severity = suggestion
+# 28: naming rule violations (fields persisted by name, see above)
+dotnet_diagnostic.IDE1006.severity = suggestion
+
+# The client projects keep their block-scoped namespaces (built only against a local client).
+[src/Ro3Emu.{ClientHooks,Loc}/**.cs]
+csharp_style_namespace_declarations = block_scoped:silent
+
+# Projects that build only against a local client keep their style rules as suggestions.
+[src/Ro3Emu.{ClientHooks,Loc,ClientTools}/**.cs]
+dotnet_diagnostic.IDE0028.severity = suggestion
+dotnet_diagnostic.IDE0300.severity = suggestion
+dotnet_diagnostic.IDE0301.severity = suggestion
+dotnet_diagnostic.IDE0302.severity = suggestion
+dotnet_diagnostic.IDE0303.severity = suggestion
+dotnet_diagnostic.IDE0304.severity = suggestion
+dotnet_diagnostic.IDE0305.severity = suggestion
+dotnet_diagnostic.IDE0290.severity = suggestion
+dotnet_diagnostic.IDE1006.severity = suggestion
 
 # Generated protobuf code is not ours to format or analyze.
 [**/obj/**.cs]

@@ -31,8 +31,43 @@ jobs:
       - name: Check C# layout
         run: dotnet format whitespace --folder --verify-no-changes
 
-  build-and-test:
-    name: Server and export tools build; patcher tests
+  # Rebuilds everything that builds without the client with the baseline rules as warnings, and fails when a rule's
+  # count no longer matches the one in .editorconfig (tools/AnalyzerBaseline).
+  analyzer-baseline:
+    # Pinned for the offline fork: upstream's exact counts exclude our existing features. Keep a manual audit
+    # available until the fork violations are migrated, without changing or inflating upstream's baseline.
+    if: github.repository == 'aethai/ro3emu-server' || github.event_name == 'workflow_dispatch'
+    name: Analyzer baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: |
+            Directory.Packages.props
+            **/*.csproj
+      - name: Check the analyzer baseline
+        run: dotnet run --project tools/AnalyzerBaseline -c Release
+
+  # The release packs the committed prebuilt/client DLLs; it refuses them when they were built from other hooks or
+  # loc sources. This fails the change that makes them stale instead of the next release.
+  prebuilt-client:
+    name: Prebuilt client DLLs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check prebuilt/client against the hooks and loc sources
+        run: ./tools/release/client-stamp.ps1 -Check
+        shell: pwsh
+
+  # The server, the setup tool and the patcher are built and tested on Linux and Windows by tests.yml; this job
+  # builds what no test project references.
+  build:
+    name: Export tools and launcher build
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -44,17 +79,12 @@ jobs:
           cache-dependency-path: |
             Directory.Packages.props
             **/*.csproj
-      # Warnings are errors (Directory.Build.props), so every build step below also checks for new warnings.
-      - name: Build server
-        run: dotnet build src/Ro3Emu.Server/Ro3Emu.Server.csproj -c Release
-      - name: Build export tools and launcher
+      # Compiler and analyzer warnings are errors (Directory.Build.props); warnings of MSBuild tasks such as protoc
+      # are not.
+      - name: Build export tools, bot CLI and launcher
         run: |
-          dotnet build tools/LuaDecode/LuaDecode.csproj -c Release
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet build tools/ConfigExport/ConfigExport.csproj -c Release
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet build src/Ro3Emu.Launcher/Ro3Emu.Launcher.csproj -c Release
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          foreach ($project in 'tools/LuaDecode', 'tools/ConfigExport', 'tools/ProtoDump', 'src/Ro3Emu.BotCli', 'src/Ro3Emu.Launcher') {
+            dotnet build $project -c Release
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
         shell: pwsh
-      - name: Test patcher
-        run: dotnet test tests/Ro3Emu.Patcher.Tests/Ro3Emu.Patcher.Tests.csproj -c Release

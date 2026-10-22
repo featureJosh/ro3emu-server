@@ -287,7 +287,7 @@ namespace Ro3Emu.ClientHooks
             for (int i = 0; i < lines.Count; i++)
             {
                 var line = lines[i].Trim();
-                if (line.StartsWith("#") || line.Length == 0) continue;
+                if (line.StartsWith('#') || line.Length == 0) continue;
                 int eq = line.IndexOf('=');
                 if (eq < 0 || !string.Equals(line.Substring(0, eq).Trim(), key, StringComparison.OrdinalIgnoreCase)) continue;
                 if (!replaced && value != null) { lines[i] = key + " = " + value; replaced = true; }
@@ -327,7 +327,7 @@ namespace Ro3Emu.ClientHooks
             var sb = new System.Text.StringBuilder();
             foreach (var a in list)
             {
-                sb.Append("\n  ").Append(a.actionMap?.name ?? "-").Append('/').Append(a.name).Append(" [").Append(a.type).Append("]");
+                sb.Append("\n  ").Append(a.actionMap?.name ?? "-").Append('/').Append(a.name).Append(" [").Append(a.type).Append(']');
                 foreach (var b in a.bindings) sb.Append(' ').Append(b.isComposite ? "{" + b.path + "}" : b.path);
             }
             return list.Count + " enabled action(s)" + sb;

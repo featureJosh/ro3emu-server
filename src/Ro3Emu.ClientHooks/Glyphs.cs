@@ -37,7 +37,13 @@ namespace Ro3Emu.ClientHooks
                 if (stream != null)
                 {
                     var bytes = new byte[stream.Length];
-                    stream.Read(bytes, 0, bytes.Length);
+                    int offset = 0;
+                    while (offset < bytes.Length)
+                    {
+                        int read = stream.Read(bytes, offset, bytes.Length - offset);
+                        if (read == 0) throw new System.IO.EndOfStreamException("Incomplete embedded glyph: " + control);
+                        offset += read;
+                    }
                     var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false) { name = "ro3emu_glyph_" + control };
                     ImageConversion.LoadImage(tex, bytes);
                     sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);

@@ -9,7 +9,7 @@ public sealed partial class CombatService : ICompanionSupportCaster
     public (long Hp, long MaxHp) Vitals(GameSession s)
     {
         if (s.Progress == null || s.Role == null) return (0, 0);
-        var stats = character.Stats(s);
+        var stats = _character.Stats(s);
         return (stats[2000], stats[101]);
     }
 
@@ -17,7 +17,7 @@ public sealed partial class CombatService : ICompanionSupportCaster
     public bool InFight(GameSession s) => (s.StatusBits & FightBit) != 0;
 
     public bool Lacks(GameSession s, int skill) =>
-        CompanionSupportRules.BuffOf(data, skill) is var (buff, _) && buff != 0 && !s.Buffs.Any(b => b.ConfigId == buff);
+        CompanionSupportRules.BuffOf(_data, skill) is var (buff, _) && buff != 0 && !s.Buffs.Any(b => b.ConfigId == buff);
 
     /// <summary>
     /// A companion's support cast: the usual 31100 cast notice, then the effect 40 % into the action like the other bot
@@ -27,13 +27,13 @@ public sealed partial class CombatService : ICompanionSupportCaster
     /// </summary>
     public async Task CastAsync(PopulationUnit bot, SupportAction action, long now)
     {
-        if (bot.Removed || bot.Dead || action.Target == null || data.Row("SkillConfig", action.Skill) is not { } row) return;
+        if (bot.Removed || bot.Dead || action.Target == null || _data.Row("SkillConfig", action.Skill) is not { } row) return;
         long cast = ++_sessionIds;
         int duration = (int)Math.Clamp(GameData.Int(row, "_iActionTime"), 300, 3000);
         long targetId = action.Kind == SupportKind.Buff ? bot.Uid : action.Target.Uid;
         var targetPos = action.Target.Session?.Position ?? action.Target.Bot?.Pos ?? bot.Pos;
         bot.Face = MonsterService.Angle(bot.X, bot.Z, targetPos.X, targetPos.Z);
-        await world.ToUnitViewersAsync(bot, UseInSkill, new UseInSkillInfo
+        await _world.ToUnitViewersAsync(bot, UseInSkill, new UseInSkillInfo
         {
             SrcID = bot.Uid, SkillID = action.Skill, TargetId = targetId, TargetPos = targetPos, Face = bot.Face,
             SessionId = cast, SkillMs = duration, StartTime = now, PlayAct = true,
@@ -60,18 +60,18 @@ public sealed partial class CombatService : ICompanionSupportCaster
             if (s.Role == null || s.Dead || s.SceneLoading || s.WorldScene != bot.WorldScene || s.Progress == null) return;
             var (hp, max) = Vitals(s);
             actual = Math.Min(amount, Math.Max(0, max - hp));
-            await character.SetHpSpAsync(s, hp + amount, null);
+            await _character.SetHpSpAsync(s, hp + amount, null);
         }
         else if (target.Bot is { } ally)
         {
             if (ally.Removed || ally.Dead || ally.WorldScene != bot.WorldScene) return;
             actual = Math.Min(amount, Math.Max(0, ally.MaxHp - ally.Hp));
             ally.Hp += actual;
-            await world.ToUnitViewersAsync(ally, AoiAttrChange, new AOIAttrChange
-                { EntityUuid = (ulong)ally.Uid, Property = { new AoIProperty { Idx = 2000, Data = ally.Hp, BaseData = ally.Hp } } });
+            await _world.ToUnitViewersAsync(ally, AoiAttrChange, new AOIAttrChange
+            { EntityUuid = (ulong)ally.Uid, Property = { new AoIProperty { Idx = 2000, Data = ally.Hp, BaseData = ally.Hp } } });
         }
         else return;
-        await world.ToUnitViewersAsync(bot, SkillHit, new SkillHitInfo
+        await _world.ToUnitViewersAsync(bot, SkillHit, new SkillHitInfo
         {
             SrcID = bot.Uid, SkillId = action.Skill, SessionId = cast, ShowPoint = HitEffect(GameData.Int(row, "_iScriptShow")),
             SrcElement = (int)Math.Max(1, GameData.Int(row, "_iEleType")),
@@ -81,11 +81,11 @@ public sealed partial class CombatService : ICompanionSupportCaster
 
     private async Task ApplyCompanionBuffAsync(PopulationUnit bot, SupportAction action, System.Text.Json.JsonElement row)
     {
-        var (buff, duration) = CompanionSupportRules.BuffOf(data, action.Skill);
+        var (buff, duration) = CompanionSupportRules.BuffOf(_data, action.Skill);
         if (buff == 0) return;
         foreach (var member in new[] { action.Target! }.Concat(action.Also ?? []))
             if (member.Session is { Role: not null, Dead: false, SceneLoading: false } s && s.WorldScene == bot.WorldScene)
-                await buffs.AddAsync(s, buff, duration, bot.Uid);
+                await _buffs.AddAsync(s, buff, duration, bot.Uid);
     }
 
     private async Task ApplyCompanionReviveAsync(PopulationUnit bot, SupportAction action, System.Text.Json.JsonElement row, long cast)
@@ -111,5 +111,5 @@ public sealed partial class CombatService : ICompanionSupportCaster
     /// <summary>Revive guards a companion must pass: attached role, loaded public scene, no dungeon allowance involved, no 16 restraint.</summary>
     internal int CompanionReviveError(PopulationUnit bot, GameSession s) =>
         s.Role == null || !s.Dead || s.SceneLoading || s.WorldScene != bot.WorldScene || s.InstanceId != 0 || s.DungeonAttempt != null
-        || buffs.HasForbidden(s, 16) ? ErrorCodes.SkillReviveNotAllowed : ReviveCheck?.Invoke(s) ?? 0;
+        || _buffs.HasForbidden(s, 16) ? ErrorCodes.SkillReviveNotAllowed : ReviveCheck?.Invoke(s) ?? 0;
 }

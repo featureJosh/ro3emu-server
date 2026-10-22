@@ -43,8 +43,14 @@ public sealed class PopulationDensityTests : IDisposable
         BitConverter.GetBytes(64).CopyTo(grid, 48);
         for (int i = 64; i < grid.Length; i += 4) grid[i] = 0x80;
         File.WriteAllBytes(Path.Combine(root, "nav", "test_dynamicmapdata.bytes"), grid);
-        options = new ServerOptions { DataDir = root, Population = new() { Enabled = true, PerMap = 6, MaxTotal = 10, MaxSpawnsPerTick = 100,
-            DespawnDelaySeconds = 1, MaxDespawnsPerTick = 2, Maps = new() { [1] = new() { AreaLevel = 5, MinLevel = 5, MaxLevel = 5 } } } };
+        options = new ServerOptions
+        {
+            DataDir = root, Population = new()
+            {
+                Enabled = true, PerMap = 6, MaxTotal = 10, MaxSpawnsPerTick = 100,
+                DespawnDelaySeconds = 1, MaxDespawnsPerTick = 2, Maps = new() { [1] = new() { AreaLevel = 5, MinLevel = 5, MaxLevel = 5 } }
+            }
+        };
         var wrapped = Options.Create(options);
         var data = new GameData(wrapped, NullLogger<GameData>.Instance);
         world = new World(new NullSink(), loop, NullLogger<World>.Instance);

@@ -92,7 +92,7 @@ UiScale = 1
                 int eq = line.IndexOf('=');
                 if (line.Length == 0 || line[0] == '#' || eq <= 0) continue;
                 string key = line.Substring(0, eq).Trim(), value = line.Substring(eq + 1).Trim();
-                if (value.StartsWith("<"))
+                if (value.StartsWith('<'))
                 {
                     if (!binds.TryGetValue(key, out var list)) binds[key] = list = new List<string>();
                     if (!list.Contains(value)) list.Add(value);

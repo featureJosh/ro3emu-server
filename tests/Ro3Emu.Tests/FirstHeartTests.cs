@@ -22,35 +22,35 @@ public sealed class FirstHeartTests : IAsyncLifetime
         LoginSeven = 101101106, CardTask = 102101110;
     private const int Zeny = 1;
     private static readonly TimeSpan Wait = TimeSpan.FromSeconds(15);
-    private readonly string dataDir = Path.Combine(Path.GetTempPath(), "ro3emu-firstheart-" + Guid.NewGuid().ToString("N"));
-    private WebApplication app = null!;
-    private string http = "";
+    private readonly string _dataDir = Path.Combine(Path.GetTempPath(), "ro3emu-firstheart-" + Guid.NewGuid().ToString("N"));
+    private WebApplication _app = null!;
+    private string _http = "";
 
-    private T Service<T>() where T : notnull => app.Services.GetRequiredService<T>();
+    private T Service<T>() where T : notnull => _app.Services.GetRequiredService<T>();
     private Task<T> Read<T>(Func<T> read) => Service<GameLoop>().InvokeAsync(() => Task.FromResult(read()));
 
     public async Task InitializeAsync()
     {
         var (httpPort, microPort, gamePort) = TestPorts.FreePorts();
-        app = ServerHost.Create([], o =>
+        _app = ServerHost.Create([], o =>
         {
-            o.DataDir = dataDir; o.GameDataDir = Path.Combine(ClientData.RepoRoot, "data");
+            o.DataDir = _dataDir; o.GameDataDir = Path.Combine(ClientData.RepoRoot, "data");
             o.HttpPort = httpPort; o.MicroGatePort = microPort; o.GameGatePort = gamePort;
         });
-        await app.StartAsync();
-        http = $"http://127.0.0.1:{httpPort}";
+        await _app.StartAsync();
+        _http = $"http://127.0.0.1:{httpPort}";
     }
 
     public async Task DisposeAsync()
     {
-        await app.StopAsync(); await app.DisposeAsync();
+        await _app.StopAsync(); await _app.DisposeAsync();
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
-        try { Directory.Delete(dataDir, true); } catch (IOException) { }
+        try { Directory.Delete(_dataDir, true); } catch (IOException) { }
     }
 
     private async Task<BotClient> InWorld(string name, bool create = true)
     {
-        var bot = new BotClient(http, File.ReadAllText(Path.Combine(dataDir, "gate_rsa_public.pem")));
+        var bot = new BotClient(_http, File.ReadAllText(Path.Combine(_dataDir, "gate_rsa_public.pem")));
         await bot.LoginAsync(name.ToLowerInvariant(), "pw"); await bot.EnterGateAsync();
         long id = create ? (await bot.CreateRoleAsync(name)).RoleBaseInfo.Id : bot.Roles.Single().Id;
         await bot.EnterWorldAsync(id);
@@ -67,7 +67,7 @@ public sealed class FirstHeartTests : IAsyncLifetime
     private async Task Gm(BotClient bot, string command)
     {
         using var client = new HttpClient();
-        (await client.PostAsync($"{http}/ro3emu/gm?account={bot.Account}", new StringContent(command))).EnsureSuccessStatusCode();
+        (await client.PostAsync($"{_http}/ro3emu/gm?account={bot.Account}", new StringContent(command))).EnsureSuccessStatusCode();
     }
 
     /// <summary>The base level of NewActivityConfig 114's open condition (LC_ConditionList sub-condition 1002).</summary>
@@ -122,13 +122,15 @@ public sealed class FirstHeartTests : IAsyncLifetime
     }
 
     [ClientDataFact]
-    public async Task SyncStartsAtLevelTenWithDayOneOpenAndAnInitializedRewardMap()
+    public async Task SyncStartsAtItsOpenLevelWithDayOneOpenAndAnInitializedRewardMap()
     {
         await using var alice = await InWorld("Alice");
         var s = Session(alice);
         // Below the open condition nothing is shown (the DAL indexes activityData[1] unguarded) and claims are refused.
         Assert.Null(await Cfg(s));
         Assert.False(await Read(() => s.Synced.ContainsKey(FirstHeartService.Sync)));
+        Assert.Equal(ErrorCodes.ActivityClosed, await ClaimTask(alice, LevelTen));
+        await Gm(alice, $"!lvl {OpenLevel() - 1}");
         Assert.Equal(ErrorCodes.ActivityClosed, await ClaimTask(alice, LevelTen));
 
         await Gm(alice, $"!lvl {OpenLevel()}");

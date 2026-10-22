@@ -194,7 +194,7 @@ namespace Ro3Emu.ClientHooks
             if (_release != null && --_releaseIn <= 0) { var r = _release; _release = null; r(); }
             if (_waitMenu != null)
             {
-                bool found = UiNav.MenuName.IndexOf(_waitMenu, StringComparison.OrdinalIgnoreCase) >= 0;
+                bool found = UiNav.MenuName.Contains(_waitMenu, StringComparison.OrdinalIgnoreCase);
                 if (found || Time.realtimeSinceStartup > _waitUntil)
                 {
                     Debug.Log("[Ro3Emu.Diag] waitmenu " + _waitMenu + (found ? ": " + UiNav.MenuName : ": timed out"));
@@ -310,11 +310,11 @@ namespace Ro3Emu.ClientHooks
             {
                 if (c == null || c is Transform) continue;
                 sb.Append(' ').Append(c.GetType().Name);
-                if (c is Image img) sb.Append("(").Append(img.sprite != null ? img.sprite.name : "-").Append(img.type == Image.Type.Filled ? " fill=" + img.fillAmount.ToString("F2") : "").Append(")");
-                else if (c is RawImage raw) sb.Append("(").Append(raw.texture != null ? raw.texture.name : "-").Append(")");
+                if (c is Image img) sb.Append('(').Append(img.sprite != null ? img.sprite.name : "-").Append(img.type == Image.Type.Filled ? " fill=" + img.fillAmount.ToString("F2") : "").Append(')');
+                else if (c is RawImage raw) sb.Append('(').Append(raw.texture != null ? raw.texture.name : "-").Append(')');
                 else if (c is TMPro.TMP_Text tmp) sb.Append("(\"").Append(tmp.text.Replace("\n", " ")).Append("\")");
-                else if (c is Slider sl) sb.Append("(").Append(sl.value.ToString("F2")).Append(")");
-                else if (c is CanvasGroup cg) sb.Append("(a=").Append(cg.alpha.ToString("F2")).Append(")");
+                else if (c is Slider sl) sb.Append('(').Append(sl.value.ToString("F2")).Append(')');
+                else if (c is CanvasGroup cg) sb.Append("(a=").Append(cg.alpha.ToString("F2")).Append(')');
             }
             if (level >= depth) { if (t.childCount > 0) sb.Append(" +").Append(t.childCount); return; }
             for (int i = 0; i < t.childCount; i++) TreeNode(t.GetChild(i), level + 1, depth, sb);

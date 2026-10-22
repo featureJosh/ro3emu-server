@@ -18,7 +18,7 @@ public sealed class UserDataService(SocialOwnerCache cache, OwnerRegistry owners
 {
     // (inferred) Full profile replies use increasing versions, so a previous guild/online snapshot is replaceable.
     // The original per-field version allocation is not exported; this service already returns all requested roles.
-    private long version = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    private long _version = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
     public string Name => "UserDataService";
 
@@ -34,7 +34,7 @@ public sealed class UserDataService(SocialOwnerCache cache, OwnerRegistry owners
                 .Where(id => id > 0 && !PopulationService.IsUid(id)).Distinct().ToArray();
             foreach (var key in uids.Keys)
                 if (long.TryParse(key.ToString(), out long botId) && PopulationService.IsUid(botId)
-                    && population.Profile(botId, Interlocked.Increment(ref version), options.Value.ClusterId) is { } botProfile)
+                    && population.Profile(botId, Interlocked.Increment(ref _version), options.Value.ClusterId) is { } botProfile)
                     results.Add(botProfile);
             if (ids.Length == 0)
                 return new Dictionary<string, object?> { ["Ret"] = MicroServiceRouter.Ret(true), ["Results"] = results.ToArray() };
@@ -91,7 +91,7 @@ public sealed class UserDataService(SocialOwnerCache cache, OwnerRegistry owners
     private Dictionary<string, object?>? GuildEntry(long uid)
     {
         if (uid <= 0 || guildStore.Get(uid) is not { Status: (int)GuildStatus.Normal } guild) return null;
-        long snapshotVersion = Interlocked.Increment(ref version);
+        long snapshotVersion = Interlocked.Increment(ref _version);
         return new()
         {
             ["Uid"] = uid,
@@ -166,7 +166,7 @@ public sealed class UserDataService(SocialOwnerCache cache, OwnerRegistry owners
         var upvotes = PersonalService.Upvotes(profile.PersonalUpvotes);
         if (asked.Contains("PersonalUpvoteCount")) fields["PersonalUpvoteCount"] = Explicit(upvotes?.Infos.Count ?? 0);
         if (asked.Contains("PersonalUpvoteList") && upvotes != null) fields["PersonalUpvoteList"] = upvotes.ToByteArray();
-        long snapshotVersion = Interlocked.Increment(ref version);
+        long snapshotVersion = Interlocked.Increment(ref _version);
         return new()
         {
             ["Uid"] = role.Id,

@@ -249,7 +249,13 @@ public sealed class VoiceRelayTests : IAsyncLifetime
         var notMember = await carolVoice.WaitTypeAsync(VoiceDown.JoinResult, Wait);
         Assert.Equal(VoiceJoinCode.NotMember, notMember.Payload[0]);
 
+        // A guild voice channel she does not sit in (GuildVoiceAudioTests covers the guild rooms).
         await carolVoice.JoinAsync("2_5_1");
+        var notSeated = await carolVoice.WaitTypeAsync(VoiceDown.JoinResult, Wait);
+        Assert.Equal(VoiceJoinCode.NotMember, notSeated.Payload[0]);
+
+        // Tavern rooms (talk type 3) are not served.
+        await carolVoice.JoinAsync("3_5_1");
         var unsupported = await carolVoice.WaitTypeAsync(VoiceDown.JoinResult, Wait);
         Assert.Equal(VoiceJoinCode.UnsupportedRoom, unsupported.Payload[0]);
     }
@@ -520,17 +526,18 @@ public sealed class VoiceRelayTests : IAsyncLifetime
         // Toggling as fast as the socket goes: the budget (ControlBurst 20 + ControlPerSecond 10, already spent
         // above) lets a handful through, and the sustained flood disconnects Alice, not the room.
         var started = DateTime.UtcNow;
-        bool writeFailed = false;
+        // The relay reads on after the kick, so her writes keep succeeding until she sees its orderly close; only a
+        // write after the socket's final close (KickedCloseDelay later) can fail.
         try { for (int i = 0; i < 400 && !aliceVoice.Closed; i++) await aliceVoice.MicAsync(i % 2 == 1); }
-        catch (IOException) { writeFailed = true; } // the server closed her socket under a pending write
+        catch (IOException) { }
         int toggles = await CountAtBob((t, p) => t == VoiceDown.MicState && BitConverter.ToInt64(p) == aliceRole);
         double seconds = (DateTime.UtcNow - started).TotalSeconds;
         Assert.InRange(toggles, 0, 20 + 10 + (int)Math.Ceiling(seconds * 10));
-        if (!writeFailed)
-        {
-            var kicked = await aliceVoice.WaitTypeAsync(VoiceDown.Kicked, Wait);
-            Assert.Equal(VoiceKickCode.Flood, kicked.Payload[0]);
-        }
+        // However fast she wrote, the Kicked frame reaches her before the connection ends.
+        var kicked = await aliceVoice.WaitTypeAsync(VoiceDown.Kicked, Wait);
+        Assert.Equal(VoiceKickCode.Flood, kicked.Payload[0]);
+        await Wait200UntilAsync(() => aliceVoice.Closed, Wait);
+        Assert.True(aliceVoice.Closed);
         await bobVoice.WaitAsync((t, p) => t == VoiceDown.MemberChange && BitConverter.ToInt64(p) == aliceRole && p[8] == 0, Wait);
 
         Assert.False(bobVoice.Closed);

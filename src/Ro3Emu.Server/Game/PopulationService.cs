@@ -276,8 +276,11 @@ public sealed partial class PopulationService : IGameTicker
                     }
                 }
                 if (wasMoving || bot.Moving || turned)
-                    await world.MoveUnitAsync(bot, new MovementChangeNtf { Uid = bot.Uid,
-                        TransType = MovementTransitionType.MoveTransNormal, MovementInfo = bot.Movement() });
+                    await world.MoveUnitAsync(bot, new MovementChangeNtf
+                    {
+                        Uid = bot.Uid,
+                        TransType = MovementTransitionType.MoveTransNormal, MovementInfo = bot.Movement()
+                    });
             }
             if (chat != null)
                 foreach (var line in chatter.Plan(bots, scene => Settings(scene).Profile, now, chat.PopulationAudience))
@@ -314,12 +317,18 @@ public sealed partial class PopulationService : IGameTicker
     internal Dictionary<string, object?>? Profile(long uid, long version, int cluster)
     {
         if ((bots.FirstOrDefault(b => b.Uid == uid) ?? CompanionActor(uid)) is not { } bot) return null;
-        var info = new RoleAdditionBaseInfo { Career = bot.Career, Gender = bot.Gender, JobLevel = 1,
-            BornArea = 1, CantBeInvited = !Invitable(bot), Offlinetime = -1 };
+        var info = new RoleAdditionBaseInfo
+        {
+            Career = bot.Career, Gender = bot.Gender, JobLevel = 1,
+            BornArea = 1, CantBeInvited = !Invitable(bot), Offlinetime = -1
+        };
         info.Appearances.Add(bot.Appearances);
-        var fields = new Dictionary<string, object?> { ["Name"] = bot.Name, ["Level"] = bot.Level,
+        var fields = new Dictionary<string, object?>
+        {
+            ["Name"] = bot.Name, ["Level"] = bot.Level,
             ["Base"] = info.ToByteArray(), ["Online"] = true, ["OfflineTime"] = -1L, ["ClusterId"] = cluster,
-            ["GuildSnap"] = new GuildSnapInfo().ToByteArray(), ["Team"] = BotTeamInfo() };
+            ["GuildSnap"] = new GuildSnapInfo().ToByteArray(), ["Team"] = BotTeamInfo()
+        };
         return new() { ["Uid"] = uid, ["FieldsVersion"] = fields.Keys.ToDictionary(k => k, _ => (object?)version), ["Data"] = fields };
     }
 

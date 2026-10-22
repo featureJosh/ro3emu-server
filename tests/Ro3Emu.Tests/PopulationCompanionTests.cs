@@ -47,9 +47,15 @@ public sealed class PopulationCompanionTests : IDisposable
     public PopulationCompanionTests()
     {
         CompanionFixture.Write(root, 1);
-        options = new ServerOptions { DataDir = root, Population = new() { Enabled = true, PerMap = 6, MaxTotal = 10, MaxSpawnsPerTick = 100,
-            Maps = new() { [1] = new() { AreaLevel = 5, MinLevel = 5, MaxLevel = 5 } },
-            Companions = new() { Enabled = true, DisconnectGraceSeconds = 1 } } };
+        options = new ServerOptions
+        {
+            DataDir = root, Population = new()
+            {
+                Enabled = true, PerMap = 6, MaxTotal = 10, MaxSpawnsPerTick = 100,
+                Maps = new() { [1] = new() { AreaLevel = 5, MinLevel = 5, MaxLevel = 5 } },
+                Companions = new() { Enabled = true, DisconnectGraceSeconds = 1 }
+            }
+        };
         var wrapped = Options.Create(options);
         data = new GameData(wrapped, NullLogger<GameData>.Instance);
         world = new World(new NullSink(), loop, NullLogger<World>.Instance);
@@ -231,7 +237,7 @@ public sealed class PopulationCompanionTests : IDisposable
         var monsters = new MonsterService(world, worldData, data, loop, NullLogger<MonsterService>.Instance);
         var scene = new SceneService(Options.Create(options), world, worldData, monsters, buffs, data,
             NullLogger<SceneService>.Instance, new PublicLineManager(data, world), TimeProvider.System);
-        var combat = new CombatService(world, monsters, character, skills, scene, buffs, worldData, sessions, data, loop, NullLogger<CombatService>.Instance);
+        var combat = new CombatService(world, monsters, character, skills, scene, buffs, worldData, sessions, data, loop, NullLogger<CombatService>.Instance, new PetService(data, character, null!, null!, null!, TimeProvider.System, null!));
         population = new PopulationService(world, worldData, data, loop, Options.Create(options), combat);
         int rewards = 0;
         combat.BeforeKilled.Add((_, _) => { rewards++; return Task.CompletedTask; });

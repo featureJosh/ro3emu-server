@@ -128,8 +128,11 @@ public sealed class PopulationAppearanceTests : IDisposable
             Assert.Equal(new[] { 7 }, bot.Appearances.Keys); // plain: hair and real job gear only
         }
         var bound = Microsoft.Extensions.Configuration.ConfigurationBinder.Get<ServerOptions>(new Microsoft.Extensions.Configuration.ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Population:Appearance:Profiles:city:Fashion"] = "90",
-                ["Population:Appearance:DistinctRetries"] = "2", ["Population:Appearance:Enabled"] = "false" }).Build())!;
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Population:Appearance:Profiles:city:Fashion"] = "90",
+                ["Population:Appearance:DistinctRetries"] = "2", ["Population:Appearance:Enabled"] = "false"
+            }).Build())!;
         Assert.Equal(90, bound.Population.Appearance.Profiles["city"].Fashion); Assert.Equal(80, bound.Population.Appearance.Profiles["field"].Plain);
         Assert.Equal(2, bound.Population.Appearance.DistinctRetries); Assert.False(bound.Population.Appearance.Enabled);
     }
@@ -189,15 +192,21 @@ public sealed class PopulationAppearanceTests : IDisposable
         BitConverter.GetBytes(256).CopyTo(grid, 28); BitConverter.GetBytes(64).CopyTo(grid, 48);
         for (int i = 64; i < grid.Length; i += 4) grid[i] = 0x80;
         File.WriteAllBytes(Path.Combine(root, "nav", "test_dynamicmapdata.bytes"), grid);
-        options.Population = new() { Enabled = true, PerMap = 8, MaxTotal = 8, MaxSpawnsPerTick = 100,
+        options.Population = new()
+        {
+            Enabled = true, PerMap = 8, MaxTotal = 8, MaxSpawnsPerTick = 100,
             Appearance = new() { DistinctRetries = 8 },
-            Maps = new() { [1] = new() { Profile = "city", AreaLevel = 5, MinLevel = 5, MaxLevel = 5 } } };
+            Maps = new() { [1] = new() { Profile = "city", AreaLevel = 5, MinLevel = 5, MaxLevel = 5 } }
+        };
         using var loop = new GameLoop(NullLogger<GameLoop>.Instance);
         var world = new World(new NullSink(), loop, NullLogger<World>.Instance);
         var wrapped = Options.Create(options);
         var population = new PopulationService(world, new WorldData(wrapped, data, NullLogger<WorldData>.Instance), data, loop, wrapped);
-        var player = new GameSession(null!, null!) { Role = new Ro3Emu.Server.Accounts.Role(1, "test", 1, "Player1", 1, 1000, 5, 0, 0, 0, 1, 128, 0, 128, 0),
-            SceneEntry = 1, LineNumber = 1, Position = new Vec3 { X = 128, Z = 128 } };
+        var player = new GameSession(null!, null!)
+        {
+            Role = new Ro3Emu.Server.Accounts.Role(1, "test", 1, "Player1", 1, 1000, 5, 0, 0, 0, 1, 128, 0, 128, 0),
+            SceneEntry = 1, LineNumber = 1, Position = new Vec3 { X = 128, Z = 128 }
+        };
         await world.JoinAsync(player);
         await population.UpdateAsync(1000);
         var bots = world.AllUnits().OfType<PopulationUnit>().ToArray();

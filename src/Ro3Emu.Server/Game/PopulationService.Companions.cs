@@ -367,8 +367,11 @@ public sealed partial class PopulationService
                     }
                 }
                 if (wasMoving || bot.Moving)
-                    await world.MoveUnitAsync(bot, new MovementChangeNtf { Uid = bot.Uid,
-                        TransType = MovementTransitionType.MoveTransNormal, MovementInfo = bot.Movement() });
+                    await world.MoveUnitAsync(bot, new MovementChangeNtf
+                    {
+                        Uid = bot.Uid,
+                        TransType = MovementTransitionType.MoveTransNormal, MovementInfo = bot.Movement()
+                    });
             }
         }
         finally { gate.Release(); }

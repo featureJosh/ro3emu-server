@@ -46,8 +46,14 @@ public sealed class PopulationSupportTests : IDisposable
         Template(14001, """[{"m_kSelectRaceType":-1,"m_kSelectSubType":-1,"m_kSelectType":2}]""");
         Template(14112, """[{"m_kSelectRaceType":-1,"m_kSelectSubType":-1,"m_kSelectType":32}]""");
         Template(10003, """[{"m_kSelectRaceType":-1,"m_kSelectSubType":2,"m_kSelectType":2}]""");
-        options = new ServerOptions { DataDir = root, Population = new() { Enabled = false, PerMap = 6, MaxTotal = 10, MaxSpawnsPerTick = 100,
-            Maps = new() { [1] = new() { AreaLevel = 5, MinLevel = 5, MaxLevel = 5 } }, Companions = new() { Enabled = true, DisconnectGraceSeconds = 60 } } };
+        options = new ServerOptions
+        {
+            DataDir = root, Population = new()
+            {
+                Enabled = false, PerMap = 6, MaxTotal = 10, MaxSpawnsPerTick = 100,
+                Maps = new() { [1] = new() { AreaLevel = 5, MinLevel = 5, MaxLevel = 5 } }, Companions = new() { Enabled = true, DisconnectGraceSeconds = 60 }
+            }
+        };
         var wrapped = Options.Create(options);
         data = new GameData(wrapped, NullLogger<GameData>.Instance);
         world = new World(new NullSink(), loop, NullLogger<World>.Instance);
@@ -77,10 +83,10 @@ public sealed class PopulationSupportTests : IDisposable
 
     private static SupportContext Context(SupportKit kit, IReadOnlyList<SupportMember> members, bool combat = false, bool lacks = true, Func<int, bool>? ready = null,
         CompanionRole? role = null, int percent = 60, long fightAge = 0) => new()
-    {
-        Kit = kit, Role = role ?? kit.Role, HealBelowPercent = percent, OwnerInCombat = combat, FightAgeMs = fightAge, Now = 1,
-        Ready = ready ?? (_ => true), Range = id => id == Blessing ? 30 : 20, OwnerLacks = _ => lacks, Members = members,
-    };
+        {
+            Kit = kit, Role = role ?? kit.Role, HealBelowPercent = percent, OwnerInCombat = combat, FightAgeMs = fightAge, Now = 1,
+            Ready = ready ?? (_ => true), Range = id => id == Blessing ? 30 : 20, OwnerLacks = _ => lacks, Members = members,
+        };
 
     private static readonly SupportKit Priest = new(Heal, [Blessing], Revive, false);
 

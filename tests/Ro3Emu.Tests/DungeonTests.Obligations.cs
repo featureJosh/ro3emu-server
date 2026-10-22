@@ -86,8 +86,8 @@ public sealed partial class DungeonTests
             FixtureSql.Execute(Service<AccountStore>(), "DROP TRIGGER fail_dungeons");
         }
 
-        await app.StopAsync();
-        await app.DisposeAsync();
+        await _app.StopAsync();
+        await _app.DisposeAsync();
         SqliteConnection.ClearAllPools();
         await InitializeAsync();
 
@@ -118,6 +118,8 @@ public sealed partial class DungeonTests
             // sessions.All() is empty), so hold the GameSession from before the fault instead of re-resolving it.
             var aliceSession = Session(alice);
             var faulted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            // Held from here on: the fault closes the connection, after which the registry may already have dropped it.
+            var session = Session(alice);
             var accounts = Service<AccountStore>();
             accounts.BeforeOwnedApplyForTest = label =>
             {
@@ -133,18 +135,18 @@ public sealed partial class DungeonTests
             finally { accounts.BeforeOwnedApplyForTest = null; }
             source = $"dungeon/{Service<CharacterService>().RewardRealmId}/{room}/{role}";
             Assert.True(await Service<CharacterService>().RewardSourceCommittedAsync(source));
-            for (int i = 0; i < 100 && aliceSession.Owner?.State !=
+            for (int i = 0; i < 100 && session.Owner?.State !=
                      Ro3Emu.Server.Game.Ownership.RoleOwnerState.RecoveryRequired; i++) await Task.Delay(20);
-            Assert.Equal(Ro3Emu.Server.Game.Ownership.RoleOwnerState.RecoveryRequired, aliceSession.Owner!.State);
-            for (int i = 0; i < 100 && !aliceSession.Channel.PeerClosed; i++) await Task.Delay(20);
-            Assert.True(aliceSession.Channel.PeerClosed);
+            Assert.Equal(Ro3Emu.Server.Game.Ownership.RoleOwnerState.RecoveryRequired, session.Owner!.State);
+            for (int i = 0; i < 100 && !session.Channel.PeerClosed; i++) await Task.Delay(20);
+            Assert.True(session.Channel.PeerClosed);
             Assert.DoesNotContain(alice.Inbox.Snapshot(), packet => packet.IsGame(DungeonService.Result));
             Assert.Equal(1, FrozenRowCount(room, activated: 1, completed: 1));
             Assert.Empty(Service<DungeonObligationStore>().Pending(role));
             Assert.Equal(100, Items(alice, 1250900));
         }
-        await app.StopAsync();
-        await app.DisposeAsync();
+        await _app.StopAsync();
+        await _app.DisposeAsync();
         SqliteConnection.ClearAllPools();
         await InitializeAsync();
         await using var recovered = await InWorld("Alice", create: false);
@@ -202,8 +204,8 @@ public sealed partial class DungeonTests
             }
             finally { FixtureSql.Execute(Service<AccountStore>(), "DROP TRIGGER fail_bob_dungeons"); }
         }
-        await app.StopAsync();
-        await app.DisposeAsync();
+        await _app.StopAsync();
+        await _app.DisposeAsync();
         SqliteConnection.ClearAllPools();
         await InitializeAsync();
         foreach (var (name, role) in new[] { ("Bob", bobRole), ("Alice", aliceRole), ("Carol", carolRole) })
@@ -221,7 +223,7 @@ public sealed partial class DungeonTests
     private long FrozenRowCount(long room, int activated, int? completed = null)
     {
         using var db = new SqliteConnection(new SqliteConnectionStringBuilder
-        { DataSource = Path.Combine(dataDir, "ro3emu.db"), Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
+        { DataSource = Path.Combine(_dataDir, "ro3emu.db"), Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
         db.Open();
         using var cmd = db.CreateCommand();
         cmd.CommandText = "SELECT count(*) FROM dungeon_reward_obligation WHERE room_id=$room AND activated=$active"
@@ -235,7 +237,7 @@ public sealed partial class DungeonTests
     private long EarnedSourceCount(long room)
     {
         using var db = new SqliteConnection(new SqliteConnectionStringBuilder
-        { DataSource = Path.Combine(dataDir, "ro3emu.db"), Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
+        { DataSource = Path.Combine(_dataDir, "ro3emu.db"), Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
         db.Open();
         using var cmd = db.CreateCommand();
         cmd.CommandText = "SELECT count(*) FROM operation_receipt WHERE command_kind='dungeon-obligation-earn'"
@@ -253,7 +255,7 @@ public sealed partial class DungeonTests
         string original = Service<GameData>().Row("DungeonConfig", story)!.Value
             .GetProperty("_kResSceneEditorName").GetString()!;
         string source = Path.Combine(RepoRoot(), "data", "sceneeditor", original + ".json");
-        string directory = Path.Combine(dataDir, "sceneeditor");
+        string directory = Path.Combine(_dataDir, "sceneeditor");
         Directory.CreateDirectory(directory);
         string stem = Path.Combine(directory, "synthetic_aoe_1054001");
         var editor = JsonNode.Parse(File.ReadAllText(source))!.AsObject();
@@ -438,8 +440,8 @@ public sealed partial class DungeonTests
             Assert.Single(Service<DungeonObligationStore>().FrozenRoom(room));
             Assert.Empty(Service<DungeonObligationStore>().Pending(role));
         }
-        await app.StopAsync();
-        await app.DisposeAsync();
+        await _app.StopAsync();
+        await _app.DisposeAsync();
         SqliteConnection.ClearAllPools();
         await InitializeAsync();
         await using var recovered = await InWorld("Alice", create: false);

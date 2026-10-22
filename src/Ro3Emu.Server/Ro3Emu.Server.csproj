@@ -6,7 +6,6 @@
     <ServerGarbageCollection>false</ServerGarbageCollection>
     <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
     <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -33,6 +32,12 @@
     <!-- The voice frame cipher: one copy for the relay, the bot (through this project) and the in-game client hooks,
          which compile it against the client's own mscorlib. -->
     <Compile Include="..\Ro3Emu.ClientHooks\VoiceCipher.cs" Link="Voice\VoiceCipher.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Typed views of the client's config tables, generated at compile time from Data/Config. -->
+    <ProjectReference Include="..\Ro3Emu.Server.Generators\Ro3Emu.Server.Generators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

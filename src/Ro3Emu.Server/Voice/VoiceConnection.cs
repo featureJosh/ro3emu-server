@@ -12,7 +12,7 @@ namespace Ro3Emu.Server.Voice;
 /// Frames are queued in the clear and sealed by that one writer, in wire order, once <see cref="Cipher"/> is set
 /// (after Auth); reads are opened with it, and a frame that fails to open ends the connection.
 /// </summary>
-public sealed class VoiceConnection : IDisposable
+public sealed class VoiceConnection(Socket socket) : IDisposable
 {
     /// <summary>Audio frames queued for one slow listener before the oldest is dropped.</summary>
     public const int MaxQueuedAudio = 64;
@@ -20,8 +20,8 @@ public sealed class VoiceConnection : IDisposable
     /// <summary>Control frames queued before the connection is considered stuck and closed.</summary>
     public const int MaxQueuedControl = 256;
 
-    private readonly Socket _socket;
-    private readonly NetworkStream _stream;
+    private readonly Socket _socket = socket;
+    private readonly NetworkStream _stream = new NetworkStream(socket, ownsSocket: false);
     private readonly CancellationTokenSource _cts = new();
     private readonly object _sync = new();
     private readonly Queue<(byte Type, byte[] Payload)> _control = new();
@@ -30,15 +30,7 @@ public sealed class VoiceConnection : IDisposable
     private volatile bool _closed;
     private volatile bool _closeAfterDrain;
 
-    public VoiceConnection(Socket socket)
-    {
-        _socket = socket;
-        _stream = new NetworkStream(socket, ownsSocket: false);
-        RemoteAddress = ((IPEndPoint)socket.RemoteEndPoint!).Address;
-        LastActivityAtMs = Environment.TickCount64;
-    }
-
-    public IPAddress RemoteAddress { get; }
+    public IPAddress RemoteAddress { get; } = ((IPEndPoint)socket.RemoteEndPoint!).Address;
     public CancellationToken StopToken => _cts.Token;
 
     /// <summary>Set once the Auth frame is accepted; everything but Auth is refused before that.</summary>
@@ -79,7 +71,7 @@ public sealed class VoiceConnection : IDisposable
     // limiter all need real elapsed time, and the injected clock is also the one VoiceTicketRegistry tests
     // advance by hand to expire a ticket without a real wait; sharing it here would freeze these too.
     public long LastAudioAtMs { get; set; }
-    public long LastActivityAtMs { get; set; }
+    public long LastActivityAtMs { get; set; } = Environment.TickCount64;
 
     public void Touch() => LastActivityAtMs = Environment.TickCount64;
 
@@ -138,12 +130,19 @@ public sealed class VoiceConnection : IDisposable
     /// <summary>True once <see cref="Kick"/> ran: the connection is on its way out and its frames are ignored.</summary>
     public bool Kicked => _closeAfterDrain;
 
-    /// <summary>Queues a Kicked frame, then ends the connection once the writer has flushed it.</summary>
+    /// <summary>Queues a Kicked frame as the connection's last: queued audio is dropped, nothing is queued after it,
+    /// and the connection ends once the writer has flushed it.</summary>
     public void Kick(byte code)
     {
-        // Flag first: the writer may dequeue the Kicked frame the moment it is queued and must already see it.
-        _closeAfterDrain = true;
-        Enqueue(VoiceDown.Kicked, [code]);
+        lock (_sync)
+        {
+            if (_closed || _closeAfterDrain) return;
+            _audio.Clear();
+            _control.Enqueue((VoiceDown.Kicked, [code]));
+            // Under the same lock as the frame: the writer that dequeues it also sees the flag.
+            _closeAfterDrain = true;
+        }
+        _signal.Release();
     }
 
     /// <summary>Builds one Audio-down payload (speaker i64 | seq u16 | opus) for the caller to fan out to every
@@ -162,7 +161,7 @@ public sealed class VoiceConnection : IDisposable
     {
         lock (_sync)
         {
-            if (_closed) return;
+            if (_closed || _closeAfterDrain) return;
             if (_audio.Count >= MaxQueuedAudio) _audio.Dequeue();
             _audio.Enqueue((VoiceDown.Audio, payload));
         }
@@ -173,7 +172,7 @@ public sealed class VoiceConnection : IDisposable
     {
         lock (_sync)
         {
-            if (_closed) return;
+            if (_closed || _closeAfterDrain) return;
             if (_control.Count >= MaxQueuedControl) { CloseLocked(); return; }
             _control.Enqueue((type, payload));
         }
@@ -207,21 +206,22 @@ public sealed class VoiceConnection : IDisposable
         catch (Exception e) when (e is OperationCanceledException or IOException or SocketException or ObjectDisposedException) { }
     }
 
-    /// <summary>How long a kicked client has to close its side after the Kicked frame before the socket closes.</summary>
+    /// <summary>How long a kicked client has to close its side after its Kicked frame before the socket closes.</summary>
     public static readonly TimeSpan KickedCloseDelay = TimeSpan.FromSeconds(2);
 
     // FIN right behind the Kicked frame; the serve task reads on (and drops) until the client closes its side, and
-    // the socket closes after KickedCloseDelay at the latest. Closing at once sends RST while the client's own
+    // the socket closes KickedCloseDelay later at the latest. Closing at once sends RST while the client's own
     // frames are still unread here, and a Windows client then loses the Kicked frame before it reads it.
     private void EndAfterKick()
     {
         try { _socket.Shutdown(SocketShutdown.Send); }
         catch (Exception e) when (e is SocketException or ObjectDisposedException) { Close(); return; }
-        _ = CloseLaterAsync();
+        _ = CloseLaterAsync(_cts.Token);
 
-        async Task CloseLaterAsync()
+        async Task CloseLaterAsync(CancellationToken closed)
         {
-            await Task.Delay(KickedCloseDelay);
+            try { await Task.Delay(KickedCloseDelay, closed); }
+            catch (OperationCanceledException) { return; } // the client closed first, or the server stopped
             Close();
         }
     }

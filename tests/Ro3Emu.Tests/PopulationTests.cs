@@ -525,8 +525,11 @@ public sealed class PopulationTests : IDisposable
         var bot = (PopulationUnit)world.AllUnits().First();
         var service = new UserDataService(null!, null!, loop, null!, null!, null!, null!, TimeProvider.System, Options.Create(options),
             NullLogger<UserDataService>.Instance, population);
-        var args = new Dictionary<object, object?> { ["UidFieldVersions"] = new Dictionary<object, object?>
-            { [bot.Uid.ToString()] = new Dictionary<object, object?> { ["Name"] = 0L, ["Base"] = 0L } } };
+        var args = new Dictionary<object, object?>
+        {
+            ["UidFieldVersions"] = new Dictionary<object, object?>
+            { [bot.Uid.ToString()] = new Dictionary<object, object?> { ["Name"] = 0L, ["Base"] = 0L } }
+        };
         await loop.StartAsync(default);
         try
         {
@@ -659,7 +662,12 @@ public sealed class PopulationTests : IDisposable
     }
 
     [Theory]
-    [InlineData(1, 2)] [InlineData(19, 2)] [InlineData(20, 3)] [InlineData(40, 4)] [InlineData(60, 5)] [InlineData(80, 6)]
+    [InlineData(1, 2)]
+    [InlineData(19, 2)]
+    [InlineData(20, 3)]
+    [InlineData(40, 4)]
+    [InlineData(60, 5)]
+    [InlineData(80, 6)]
     public void EquipmentRarityTracksStrengthTier(int level, int quality) => Assert.Equal(quality, PopulationLoadouts.QualityForLevel(level));
 
     private void WriteLoadoutConfig()
@@ -762,7 +770,7 @@ public sealed class PopulationTests : IDisposable
         var scene = new SceneService(Options.Create(options), world, worldData, monsters, buffs, data,
             NullLogger<SceneService>.Instance, new PublicLineManager(data, world), TimeProvider.System);
         return (new CombatService(world, monsters, character, skills, scene, buffs, worldData, sessions, data, loop,
-            NullLogger<CombatService>.Instance), monsters);
+            NullLogger<CombatService>.Instance, new PetService(data, character, null!, null!, null!, TimeProvider.System, null!)), monsters);
     }
 
     private static MonsterUnit Monster(long hp = 100) => new()
@@ -774,7 +782,7 @@ public sealed class PopulationTests : IDisposable
     };
 
     private static PopulationUnit Fighter() => new()
-        { Uid = 1L << 50, Name = "Test", SceneEntry = 1, X = 128, Z = 128, Level = 5, Hp = 100 };
+    { Uid = 1L << 50, Name = "Test", SceneEntry = 1, X = 128, Z = 128, Level = 5, Hp = 100 };
 
     [Fact]
     public void BotsYieldToPlayerTargetsDamageAndOtherBots()
@@ -801,8 +809,11 @@ public sealed class PopulationTests : IDisposable
         await loop.StartAsync(default);
         try
         {
-            await loop.InvokeAsync(async () => { await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
-                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs); });
+            await loop.InvokeAsync(async () =>
+            {
+                await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
+                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs);
+            });
             await WaitFor(() => monster.Dead);
             Assert.Equal(0, monster.Hp); Assert.Equal(1, bot.HuntKills); Assert.Equal(0, rewards);
             Assert.Null(monster.RewardCommit); Assert.False(monster.DeathDurable);
@@ -819,8 +830,11 @@ public sealed class PopulationTests : IDisposable
         await loop.StartAsync(default);
         try
         {
-            await loop.InvokeAsync(async () => { await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
-                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs); monster.Hp = 99; });
+            await loop.InvokeAsync(async () =>
+            {
+                await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
+                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs); monster.Hp = 99;
+            });
             await Task.Delay(300);
             Assert.Equal(99, await loop.InvokeAsync(() => Task.FromResult(monster.Hp)));
         }
@@ -837,8 +851,11 @@ public sealed class PopulationTests : IDisposable
         await loop.StartAsync(default);
         try
         {
-            await loop.InvokeAsync(async () => { await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
-                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs); });
+            await loop.InvokeAsync(async () =>
+            {
+                await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
+                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs);
+            });
             await WaitFor(() => monster.Hp < 1000);
             Assert.True(1000 - monster.Hp > 100, "Gear was shown visually but omitted from actual damage.");
         }
@@ -854,8 +871,11 @@ public sealed class PopulationTests : IDisposable
         await loop.StartAsync(default);
         try
         {
-            await loop.InvokeAsync(async () => { await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
-                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs); await world.RemoveUnitAsync(bot); });
+            await loop.InvokeAsync(async () =>
+            {
+                await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
+                await combat.PopulationAttackAsync(bot, monster, 1000001, MonsterService.NowMs); await world.RemoveUnitAsync(bot);
+            });
             await Task.Delay(300);
             Assert.Equal(100, await loop.InvokeAsync(() => Task.FromResult(monster.Hp)));
         }
@@ -871,8 +891,11 @@ public sealed class PopulationTests : IDisposable
         await loop.StartAsync(default);
         try
         {
-            await loop.InvokeAsync(async () => { await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
-                monsters.Engage(monster, bot); await monsters.AttackPopulation!(monster, bot); });
+            await loop.InvokeAsync(async () =>
+            {
+                await world.AddUnitAsync(bot); await world.AddUnitAsync(monster);
+                monsters.Engage(monster, bot); await monsters.AttackPopulation!(monster, bot);
+            });
             await WaitFor(() => bot.Hp < 100);
             long damaged = await loop.InvokeAsync(() => Task.FromResult(bot.Hp));
             await loop.InvokeAsync(() => combat.PopulationHealAsync(bot, MonsterService.NowMs));

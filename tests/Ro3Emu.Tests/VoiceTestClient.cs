@@ -14,9 +14,9 @@ namespace Ro3Emu.Tests;
 /// After Auth every frame both ways is sealed with <see cref="VoiceCipher"/>, like the real client; the raw bytes sent
 /// and received are kept (<see cref="RawSent"/>, <see cref="RawReceived"/>) so a test can look at the wire itself.
 /// </summary>
-public sealed class VoiceTestClient : IAsyncDisposable
+public sealed class VoiceTestClient(int port) : IAsyncDisposable
 {
-    private readonly int _port;
+    private readonly int _port = port;
     private readonly List<(byte Type, byte[] Payload)> _buffer = new();
     private readonly object _sync = new();
     private readonly SemaphoreSlim _signal = new(0);
@@ -26,8 +26,6 @@ public sealed class VoiceTestClient : IAsyncDisposable
     private Task? _reader;
     private volatile VoiceCipher? _cipher;
     private readonly MemoryStream _rawSent = new(), _rawReceived = new();
-
-    public VoiceTestClient(int port) => _port = port;
 
     public string Tag { get; set; } = "?";
     public bool Closed { get; private set; }
@@ -151,7 +149,7 @@ public sealed class VoiceTestClient : IAsyncDisposable
         try
         {
             var (type, _) = await WaitAsync(predicate, timeout);
-            throw new Exception($"expected no matching voice frame, but type 0x{type:x2} arrived");
+            throw new InvalidOperationException($"expected no matching voice frame, but type 0x{type:x2} arrived");
         }
         catch (TimeoutException) { }
     }

@@ -74,8 +74,11 @@ public sealed partial class PopulationService
                 members.Add(Human(s, false));
         foreach (var other in companions.Values)
             if (other != c && other.Owner == c.Owner && !other.Bot.Removed && other.Bot.RuntimeMap == bot.RuntimeMap)
-                members.Add(new() { Bot = other.Bot, Uid = other.Bot.Uid, Hp = other.Bot.Hp, MaxHp = other.Bot.MaxHp, Dead = other.Bot.Dead,
-                    Distance2 = Distance2(bot.X, bot.Z, other.Bot.X, other.Bot.Z) });
+                members.Add(new()
+                {
+                    Bot = other.Bot, Uid = other.Bot.Uid, Hp = other.Bot.Hp, MaxHp = other.Bot.MaxHp, Dead = other.Bot.Dead,
+                    Distance2 = Distance2(bot.X, bot.Z, other.Bot.X, other.Bot.Z)
+                });
         return members;
     }
 
@@ -109,7 +112,7 @@ public sealed partial class PopulationService
         if (action.Kind == SupportKind.Heal) st.Heals++; else if (action.Kind == SupportKind.Buff) st.Buffs++; else st.Revives++;
         if (cost.Hp > 0)
             await world.ToUnitViewersAsync(bot, CombatService.AoiAttrChange, new AOIAttrChange
-                { EntityUuid = (ulong)bot.Uid, Property = { new AoIProperty { Idx = 2000, Data = bot.Hp, BaseData = bot.Hp } } });
+            { EntityUuid = (ulong)bot.Uid, Property = { new AoIProperty { Idx = 2000, Data = bot.Hp, BaseData = bot.Hp } } });
         await caster.CastAsync(bot, action, now);
         return true;
     }

@@ -51,7 +51,7 @@ public sealed class PopulationRolesTests : IDisposable
     };
 
     private static PopulationUnit Bot(PopulationRole role, long id = 1) => new()
-        { Uid = (1L << 50) | id, Name = "Bot" + id, SceneEntry = 1, X = 128, Z = 128, Level = 5, Hp = 100, Behavior = role };
+    { Uid = (1L << 50) | id, Name = "Bot" + id, SceneEntry = 1, X = 128, Z = 128, Level = 5, Hp = 100, Behavior = role };
 
     private static WorldNpc Npc(WorldNpcKind kind, float x, float z, int index) =>
         new((1L << 40) | (uint)index, 1, kind, 100 + index, "npc" + index, 0, x, 0, z, 0, JsonDocument.Parse("{}").RootElement);

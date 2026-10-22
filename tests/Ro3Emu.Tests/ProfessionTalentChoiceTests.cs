@@ -11,7 +11,7 @@ public sealed class ProfessionTalentChoiceTests
 {
     private sealed class Fixture : IAsyncDisposable
     {
-        private readonly string configRoot = Path.Combine(Path.GetTempPath(), "ro3emu-profession-" + Guid.NewGuid().ToString("N"));
+        private readonly string _configRoot = Path.Combine(Path.GetTempPath(), "ro3emu-profession-" + Guid.NewGuid().ToString("N"));
         public SyntheticHost Host { get; private set; } = null!;
         public GameSession Session => Host.Service<SessionRegistry>().All().Single(s => s.Role != null);
         public SeasonTalentService Talents => Host.Service<SeasonTalentService>();
@@ -20,7 +20,7 @@ public sealed class ProfessionTalentChoiceTests
         {
             foreach (string path in Directory.EnumerateFiles(SyntheticData.Dir, "*", SearchOption.AllDirectories))
             {
-                string dest = Path.Combine(configRoot, Path.GetRelativePath(SyntheticData.Dir, path));
+                string dest = Path.Combine(_configRoot, Path.GetRelativePath(SyntheticData.Dir, path));
                 Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
                 File.Copy(path, dest);
             }
@@ -52,11 +52,11 @@ public sealed class ProfessionTalentChoiceTests
             {
                 _iGroup = 100 + id, _iLevel = 1, _iJobId = new[] { id == 8 ? 0 : id is 6 or 7 ? 2000 : 1000 },
             }));
-            Host = await SyntheticHost.StartAsync(o => { o.GameDataDir = configRoot; o.PlayBook = 101; });
+            Host = await SyntheticHost.StartAsync(o => { o.GameDataDir = _configRoot; o.PlayBook = 101; });
         }
 
         private void Write(string table, object value) =>
-            File.WriteAllText(Path.Combine(configRoot, "config", table + ".json"), JsonSerializer.Serialize(value));
+            File.WriteAllText(Path.Combine(_configRoot, "config", table + ".json"), JsonSerializer.Serialize(value));
 
         public Task Unlock(bool parentPurchased = true) => Host.Service<GameLoop>().InvokeAsync(async () =>
         {
@@ -74,7 +74,7 @@ public sealed class ProfessionTalentChoiceTests
         public async ValueTask DisposeAsync()
         {
             if (Host != null) await Host.DisposeAsync();
-            Directory.Delete(configRoot, true);
+            Directory.Delete(_configRoot, true);
         }
     }
 
@@ -95,6 +95,7 @@ public sealed class ProfessionTalentChoiceTests
         await using var bot = await f.Host.InWorldAsync("Choice");
         await f.Unlock();
         Assert.False(f.Session.SeasonTalent!.UnlockedNode[4]); // the old handler refused here
+        Assert.False(f.Session.SeasonTalent.UnlockedTrees[20]); // node 1 alone: total Talent Lv 1 of 2
         Assert.Equal(0, await Choose(bot, 11)); // an unrelated choice must survive replacements
         Assert.Equal(0, await Choose(bot, 4));
         var before = f.Saved();
@@ -103,7 +104,8 @@ public sealed class ProfessionTalentChoiceTests
         Assert.Equal(1, before.Plan[0].TalentNodes[4].CurrentLevel);
         Assert.True(before.Plan[0].TalentNodes[4].IsActivated);
         Assert.Equal(0, before.Plan[1].TalentNodes[4].CurrentLevel);
-        Assert.False(before.UnlockedTrees[20]); // free choice markers are not purchased levels
+        // The panel's grade counts the chosen Profession_L/Profession_M but not the SkillPoint gate: 1 + 2 + 2 = 5.
+        Assert.True(before.UnlockedTrees[20]);
         Assert.Equal(0, await Choose(bot, 4)); // retry does not increment or charge for the choice
         Assert.Equal(before, f.Saved());
 
@@ -121,7 +123,7 @@ public sealed class ProfessionTalentChoiceTests
         foreach (var (id, node) in before.Plan[1].TalentNodes)
             Assert.Equal(node.CurrentLevel, after.Plan[1].TalentNodes[id].CurrentLevel);
         Assert.Equal(after, f.Session.SeasonTalent);
-        Assert.False(after.UnlockedTrees[20]);
+        Assert.True(after.UnlockedTrees[20]); // switching replaced a path, it never added levels: 1 + 1 + 2 = 4
     }
 
     [Fact]

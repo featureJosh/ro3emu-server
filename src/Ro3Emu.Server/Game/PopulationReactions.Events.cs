@@ -32,8 +32,11 @@ internal sealed partial class PopulationReactions
 
     private bool Allowed(string context) => context switch
     {
-        Thanks => options.HealReactionsEnabled, Revived => options.ReviveReactionsEnabled,
-        SharedFight => options.SharedFightReactionsEnabled, Boss => options.BossReactionsEnabled, _ => false,
+        Thanks => options.HealReactionsEnabled,
+        Revived => options.ReviveReactionsEnabled,
+        SharedFight => options.SharedFightReactionsEnabled,
+        Boss => options.BossReactionsEnabled,
+        _ => false,
     };
 
     /// <summary>A real player's heal/buff (revive=false) or resurrection (revive=true) landed on this bot.
@@ -45,8 +48,11 @@ internal sealed partial class PopulationReactions
         {
             if (!accepting || !Allowed(context) || player.Role == null || bot.Removed || player.RuntimeMap != bot.RuntimeMap
                 || events.Count >= 256 || events.Any(e => e.Bot == bot.Uid && e.Context == context)) return;
-            events.Add(new() { Context = context, Map = bot.RuntimeMap, Bot = bot.Uid, Players = [player.Role.Id],
-                Generation = player.SceneGeneration, Ready = now + 5000, Until = now + 90_000 });
+            events.Add(new()
+            {
+                Context = context, Map = bot.RuntimeMap, Bot = bot.Uid, Players = [player.Role.Id],
+                Generation = player.SceneGeneration, Ready = now + 5000, Until = now + 90_000
+            });
         }
     }
 
@@ -101,8 +107,11 @@ internal sealed partial class PopulationReactions
                     // (inferred) a quick comment fits a kill better than the five-second greeting delay; bots hunt again soon.
                     if (fight.Players.Count > 0 && fight.Bots.Count > 0 && now - fight.LastHit <= 10_000 && events.Count < 256
                         && options.SharedFightReactionsEnabled)
-                        events.Add(new() { Context = SharedFight, Map = fight.Map, Bots = fight.Bots, Players = fight.Players,
-                            X = monster.X, Z = monster.Z, Ready = now + 2000, Until = now + 30_000 });
+                        events.Add(new()
+                        {
+                            Context = SharedFight, Map = fight.Map, Bots = fight.Bots, Players = fight.Players,
+                            X = monster.X, Z = monster.Z, Ready = now + 2000, Until = now + 30_000
+                        });
                 }
                 else if (monster.Removed || now - fight.LastHit > 60_000) fights.Remove(monster);
             }

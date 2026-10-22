@@ -65,28 +65,43 @@ internal static class PopulationRoles
 
     internal static double HuntChance(PopulationRole role) => role switch
     {
-        PopulationRole.None or PopulationRole.Hunter => 1, PopulationRole.Explorer => 0.35, PopulationRole.Rester => 0.15,
-        PopulationRole.Crafter => 0.1, PopulationRole.Socializer => 0.05, _ => 0,
+        PopulationRole.None or PopulationRole.Hunter => 1,
+        PopulationRole.Explorer => 0.35,
+        PopulationRole.Rester => 0.15,
+        PopulationRole.Crafter => 0.1,
+        PopulationRole.Socializer => 0.05,
+        _ => 0,
     };
 
     /// <summary>Arrival pause range in milliseconds; randomized per stop so bots drift out of step.</summary>
     internal static (int Min, int Max) Pause(PopulationRole role) => role switch
     {
-        PopulationRole.Explorer => (2000, 7000), PopulationRole.Hunter => (2000, 9000), PopulationRole.Socializer => (25000, 60000),
-        PopulationRole.Crafter => (12000, 30000), PopulationRole.Merchant => (35000, 90000), PopulationRole.Rester => (25000, 70000),
+        PopulationRole.Explorer => (2000, 7000),
+        PopulationRole.Hunter => (2000, 9000),
+        PopulationRole.Socializer => (25000, 60000),
+        PopulationRole.Crafter => (12000, 30000),
+        PopulationRole.Merchant => (35000, 90000),
+        PopulationRole.Rester => (25000, 70000),
         _ => (5000, 10000),
     };
 
     /// <summary>Multiplier on the existing per-bot chat cooldown; map budgets are unchanged.</summary>
     internal static double ChatScale(PopulationRole role) => role switch
     {
-        PopulationRole.Socializer => 0.6, PopulationRole.Merchant => 0.85, PopulationRole.Hunter => 1.6, _ => 1,
+        PopulationRole.Socializer => 0.6,
+        PopulationRole.Merchant => 0.85,
+        PopulationRole.Hunter => 1.6,
+        _ => 1,
     };
 
     internal static string? ChatKey(PopulationRole role) => role switch
     {
-        PopulationRole.Explorer => "explorer", PopulationRole.Socializer => "socializer", PopulationRole.Crafter => "crafter",
-        PopulationRole.Merchant => "merchant", PopulationRole.Rester => "rest", _ => null,
+        PopulationRole.Explorer => "explorer",
+        PopulationRole.Socializer => "socializer",
+        PopulationRole.Crafter => "crafter",
+        PopulationRole.Merchant => "merchant",
+        PopulationRole.Rester => "rest",
+        _ => null,
     };
 
     internal static string Mix(IEnumerable<PopulationUnit> bots, int clusters)

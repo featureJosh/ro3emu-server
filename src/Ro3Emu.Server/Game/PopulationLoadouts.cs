@@ -74,8 +74,14 @@ internal sealed partial class PopulationLoadouts(GameData data)
         // Rank/level labels alone are insufficient: exported debug items can claim level 1 and green rarity.
         foreach (var (attribute, amount) in GameData.Pairs(equip, "_kBasicAttribute"))
         {
-            double cap = attribute switch { 101 => (200 + bot.Level * 50) * 2, 103 or 104 => (12 + bot.Level * 4) * 2,
-                105 or 106 => Math.Max(20, bot.Level * 6), >= 1 and <= 6 => Math.Max(10, bot.Level * 3), _ => 10000 };
+            double cap = attribute switch
+            {
+                101 => (200 + bot.Level * 50) * 2,
+                103 or 104 => (12 + bot.Level * 4) * 2,
+                105 or 106 => Math.Max(20, bot.Level * 6),
+                >= 1 and <= 6 => Math.Max(10, bot.Level * 3),
+                _ => 10000
+            };
             if (amount < 0 || amount > cap) return false;
         }
         return true;

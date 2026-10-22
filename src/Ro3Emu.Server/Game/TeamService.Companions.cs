@@ -47,7 +47,7 @@ public sealed partial class TeamService
     {
         Join(team, bot); // no RecordTeammatesAsync: an ephemeral actor is never a durable recent teammate
         _companions[bot] = new(owner, CompanionCard?.Invoke(bot));
-        log.LogInformation("Companion {Bot} joins party {Team} for {Owner}", bot, team.Id, owner);
+        _log.LogInformation("Companion {Bot} joins party {Team} for {Owner}", bot, team.Id, owner);
         await PublishAdmissionAsync(team, bot);
     }
 

@@ -27,10 +27,26 @@ client cannot establish is marked `(inferred)` where it is implemented. Never pr
 
 - Game state changes only on the game loop (`GameLoop`). Persist first, then change the in-memory state from the
   commit callback.
+- Mutable state belongs to a host instance (a service, `AccountStore`), never to a `static` field: tests run several
+  hosts in one process. The only process-wide state is diagnostic: `MessageCoverage`, the SQLite trace hooks of
+  `SqliteMetrics` (native callbacks) and the GC event listener.
+- The field names of a `DbPlan` and of the values it holds are written into receipts. Don't rename or move them:
+  `ReceiptFieldNamesTests` fails, and an operation recorded before the change would refuse its replay.
 - Validate every client request against the configuration and refuse it with an `ErrorCodes` value.
+- Read configuration through the typed views in `Data/Config/Tables` (`SkillConfig.Get(_data, id)?.Cd`), which hold
+  the client's own table and field names; add a property to the view rather than writing a field name in code
+  ([config tables](docs/guide/config-tables.md)). Read maps through `WorldData`. Don't copy config values into code.
 - Name message ids, error codes, attribute ids and feature ids; don't scatter numeric literals. Reuse the existing
-  constant before adding one.
-- Keep methods short and split along the steps they perform. Match the surrounding file's naming and comment style.
+  constant before adding one:
+  - a message id shared across services goes in `MsgId`, one that only its service handles is a `public const uint`
+    of that service (`GatheringService.Interaction`);
+  - result codes go in `ErrorCodes`, with the client's text in a comment;
+  - a function, activity or condition id is a named `const` of the service that owns it
+    (`AdventureGroupService.Function`).
+- Keep a method under about 40 lines and split it along the steps it performs; a longer one needs a reason.
+- Style: private fields are `_camelCase`, `const` and `static readonly` fields are PascalCase, collections are
+  created with `[]`, and a class whose constructor only stores its parameters uses a primary constructor. CI
+  enforces these (`.editorconfig` and its baseline). Match the surrounding file's comment style.
 
 ## Tests
 

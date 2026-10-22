@@ -13,7 +13,7 @@ public sealed partial class ChatService
     /// </summary>
     internal async Task PublishPartyLineAsync(GameSession owner, long bot, long teamId, string content)
     {
-        if (string.IsNullOrWhiteSpace(content) || content.Length > 180 || owner.Role == null || friends.Blocks(owner.Role.Id, bot)) return;
+        if (string.IsNullOrWhiteSpace(content) || content.Length > 180 || owner.Role == null || _friends.Blocks(owner.Role.Id, bot)) return;
         string group = $"3_{teamId}";
         lock (_sync)
             if (!owner.ChatGroups.Contains(group) && owner.ChatGroups.Contains($"@TGS#_{group}")) group = $"@TGS#_{group}";
