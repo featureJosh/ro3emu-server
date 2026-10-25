@@ -142,7 +142,7 @@ public sealed class ConfigViewTests
 
     // Each client field name written as a string outside Data/Config is a read the startup check cannot see. The
     // count only goes down: lower it when a change removes such reads, never raise it.
-    private const int FieldNamesOutsideViews = 2720;
+    private const int FieldNamesOutsideViews = 2691;
     private static readonly string Obj = Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar;
 
     [Fact(Skip = "Pinned a679f7b: upstream source census excludes fork features; migrate their reads before enabling.")]

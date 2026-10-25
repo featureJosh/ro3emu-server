@@ -152,7 +152,7 @@ public sealed partial class DungeonTests
     public async Task PaidReviveDetachedDuringPublicationDoesNotFault()
     {
         await using var alice = await InWorld("Alice");
-        ChangeRow("MapConfig", RoleStore.SpawnSceneEntry.ToString(), row => row["_kItemRevive"] = new JsonArray(1112001, 1));
+        ChangeRow("MapConfig", RoleStore.SpawnSceneEntry.ToString(System.Globalization.CultureInfo.InvariantCulture), row => row["_kItemRevive"] = new JsonArray(1112001, 1));
         await Gm(alice, "!item 1112001 2");
         var session = Session(alice);
         var role = session.Role;
@@ -166,7 +166,15 @@ public sealed partial class DungeonTests
         // RoleHandover.cs:100 clears Role while PublishReviveAsync is still awaiting its packets.
         combat.ReviveBroadcastedForTest = s => { s.Role = null; return Task.CompletedTask; };
         try { await OnLoop(() => Service<WorldCoreService>().ItemReviveAsync(session)); }
-        finally { combat.ReviveBroadcastedForTest = null; session.Role = role; }
+        finally
+        {
+            await OnLoop(() =>
+            {
+                combat.ReviveBroadcastedForTest = null;
+                session.Role = role;
+                return Task.CompletedTask;
+            });
+        }
         Assert.False(session.Dead);
         Assert.Equal(before - 1, Items(alice, 1112001));
     }
@@ -330,7 +338,7 @@ public sealed partial class DungeonTests
     }
 
     [ClientDataTheory]
-    [InlineData(false, 1022001L, 5300001, 10101L)]
+    [InlineData(false, 1021851L, 5000025, 10101L)] // Eastern Payon: its elite Mandragora at entry
     [InlineData(true, Scene, Boss, RoleStore.SpawnSceneEntry)]
     public async Task LethalDungeonHitReturnsAliveThrough30402AfterDeathPublication(
         bool multi, long dungeonScene, int npc, long outside)

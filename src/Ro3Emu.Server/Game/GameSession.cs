@@ -289,6 +289,13 @@ public sealed class GameSession(PhonestChannel channel, TrafficLog traffic)
     /// <summary>Leased Special Class Items (5002, role blob "career_special"); CareerSpecialService.</summary>
     public Romsg.DBCareerSpecial? CareerSpecial { get; set; }
 
+    /// <summary>The title rank (role blob "title", 5031); TitleService.</summary>
+    public Romsg.DBTitleInfo? TitleInfo { get; set; }
+
+    /// <summary>Astral Level stars and Star Cores (role blob "paragon", runegroup only; level and EXP are progress
+    /// columns); ParagonService.</summary>
+    public Romsg.DBParagonLevel? Paragon { get; set; }
+
     /// <summary>Valhalla Trials Blessing statue (role blob "heroic_spirit"); ValhallaService. Cleared layers live in <see cref="Dungeons"/>.</summary>
     public Romsg.DBOdinStatue? OdinStatue { get; set; }
 
@@ -381,6 +388,23 @@ public sealed class GameSession(PhonestChannel channel, TrafficLog traffic)
 
     /// <summary>Current playbook and delivered tasks permit this role's purchased talent attributes.</summary>
     public bool TalentEffectsEnabled { get; set; }
+
+    /// <summary>The active talent plan's skill parameter modifiers, with the weapon and the buff group each needs
+    /// (SeasonTalentService).</summary>
+    internal IReadOnlyList<(long Weapon, long Buff, SkillParameterRules.Modifier Modifier)> TalentSkillModifiers { get; set; } = [];
+
+    /// <summary>The skill tuples of the talents' armed next-cast charges (TalentProcs.Charges).</summary>
+    internal IReadOnlyList<SkillParameterRules.Modifier> TalentChargeModifiers { get; set; } = [];
+
+    /// <summary>The learned passives' skill tuples with the weapons each needs (CombatService.PassiveModifiers),
+    /// refreshed with 31132.</summary>
+    internal IReadOnlyList<(long[] Weapons, SkillParameterRules.Modifier Modifier)> PassiveSkillModifiers { get; set; } = [];
+
+    /// <summary>The active talent plan's Buff(2) rows with their effect's _kDescData (TalentProcs).</summary>
+    internal IReadOnlyList<(long Buff, string[] Description)> TalentProcBuffs { get; set; } = [];
+
+    /// <summary>The active talent plan's changes to other buffs' values (BuffConfig._kBuffAttributeList, op 12).</summary>
+    internal IReadOnlyList<SeasonTalentService.BuffAttribute> TalentBuffAttributes { get; set; } = [];
 
     /// <summary>Last accepted 83552 switch in this session (PublicParamConfig.SchemeCD).</summary>
     public DateTime TalentPlanSwitchUtc { get; set; }

@@ -97,6 +97,10 @@ public static class ServerHost
         builder.Services.AddSingleton<MvpService>();
         builder.Services.AddSingleton<CardService>();
         builder.Services.AddSingleton<CardEffects>();
+        builder.Services.AddSingleton<TalentProcs>();
+        builder.Services.AddSingleton<PassiveSkills>();
+        builder.Services.AddSingleton<RidingEffects>();
+        builder.Services.AddSingleton<StealthEffects>();
         builder.Services.AddSingleton<SeasonService>();
         builder.Services.AddSingleton<SeasonPageService>();
         builder.Services.AddSingleton<SeasonRefineService>();
@@ -138,6 +142,9 @@ public static class ServerHost
         builder.Services.AddSingleton<ValhallaService>();
         builder.Services.AddSingleton<MonsterHuntService>();
         builder.Services.AddSingleton<GrowthClassService>();
+        builder.Services.AddSingleton<ParagonService>();
+        builder.Services.AddSingleton<FlyingDragonService>();
+        builder.Services.AddSingleton<TitleService>();
         builder.Services.AddSingleton<FirstHeartService>();
         builder.Services.AddSingleton<AppraisalService>();
         builder.Services.AddSingleton<EnchantService>();
@@ -379,6 +386,9 @@ public static class ServerHost
         app.Services.GetRequiredService<GuildChallengeService>().Participated.Add(questTasks.OnGveJoined); // 103014
         league.MatchCommitted.Add(questTasks.OnGuildLeagueMatch); // 106603, 106019
         territory.SiegeSettled.Add(questTasks.OnSiegeSettled); // 106611, 106605, 106606
+        territory.SiegeSettled.Add((role, _, _) => questTasks.OnGuildEventJoined(role, TaskService.GuildEvent.RoyalCity)); // 106010
+        territory.BattleSettled.Add(questTasks.OnTerritoryBattleSettled); // 106010 Stronghold / Regional Capital War
+        escort.CartStarted.Add(s => questTasks.OnGuildEventJoined(s, TaskService.GuildEvent.Escort)); // 106010 Escort
         app.Services.GetRequiredService<EmblemService>().Upgraded.Add(questTasks.OnEchoUpgraded); // 317002
         app.Services.GetRequiredService<TowerService>().Settled.Add(questTasks.OnTowerSettled); // 101007, 101010
         app.Services.GetRequiredService<PersonalService>().Upvoted.Add(questTasks.OnProfileLiked); // 106902
@@ -392,6 +402,10 @@ public static class ServerHost
         app.Services.GetRequiredService<Micro.FriendService>().RelationChanged.Add(questTasks.OnRelationChanged);
         app.Services.GetRequiredService<ReconnectService>(); // hooks the handover and registers !netdrop
         app.Services.GetRequiredService<CardEffects>(); // socketed-card passives and procs (sockets, scene loads, hits)
+        app.Services.GetRequiredService<TalentProcs>(); // profession talent procs (cast resolutions)
+        app.Services.GetRequiredService<PassiveSkills>(); // learned passives' procs, shields and reactions
+        app.Services.GetRequiredService<RidingEffects>(); // a ridden mount's buffs and the riding passives
+        app.Services.GetRequiredService<StealthEffects>(); // hiding and detection attributes, reveals, Ruwach
         // Create the key before the first client connects, so ClientPatch can read the public half.
         app.Services.GetRequiredService<GateCrypto>();
         app.Logger.LogInformation("Data dir {DataDir}", options.DataDir);
@@ -472,6 +486,9 @@ internal sealed class GameLoopTickers(IServiceProvider services) : IHostedServic
         Add<CombatService>();
         Add<SeasonService>();
         Add<MountService>();
+        Add<RidingEffects>();
+        Add<StealthEffects>();
+        Add<PassiveSkills>();
         Add<TeamService>();
         Add<DailyActivityService>();
         Add<TimedEventService>();

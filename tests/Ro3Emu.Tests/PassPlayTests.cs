@@ -125,12 +125,14 @@ public sealed class PassPlayTests : IAsyncLifetime
         Assert.True(pass.Premium); // no item 703 spent
         Assert.Equal(0, await Currency(alice, 703));
 
+        // 60 points x 6, doubled while behind the season pace; the daily challenge pays 300 more (also doubled) when drawn.
+        // The day's challenges are drawn already; the challenge's share may land after the points' share.
+        bool challenge = (await Play(alice)).Daily.Contains("d.activity");
+        long expected = (60 * 6 + (challenge ? 300 : 0)) * 2;
         await Gm(alice, "!item 5 60"); // 60 daily activity points
-        await Until(async () => await Currency(alice, NewActivityService.PassExpCurrency) > 0, "pass EXP from daily activity");
+        await Until(async () => await Currency(alice, NewActivityService.PassExpCurrency) >= expected, "pass EXP from daily activity");
         var play = await Play(alice);
         Assert.Equal(60, play.WeeklyProgress["w.activity"]);
-        // 60 points x 6, doubled while behind the season pace; the daily challenge pays 300 more (also doubled) when drawn.
-        long expected = (60 * 6 + (play.Daily.Contains("d.activity") ? 300 : 0)) * 2;
         Assert.Equal(expected, await Currency(alice, NewActivityService.PassExpCurrency));
         Assert.Equal(expected, play.Earned);
         pass = await Pass(alice);
@@ -300,15 +302,13 @@ public sealed class PassPlayTests : IAsyncLifetime
     }
 
     [ClientDataFact]
-    public async Task NovicePassLevelsFromMainStoryQuestsFromLevelTen()
+    public async Task NovicePassLevelsFromMainStoryQuestsFromItsOpenLevel()
     {
         await using var alice = await InWorld("Alice");
         await Service<NewActivityService>().ReconcileAsync(Session(alice));
         await Event(alice, [(NewActivityService.PassGoal.Quests, 1)], quest: 10101010); // level 1: 9201 not open yet
         Assert.Equal(0, await Currency(alice, NewActivityService.NovicePassExpCurrency));
-        // 9201 _kOpenCondition 920199 -> LC_ConditionList 920199 m_kSubConditionList [1002, N]: base level N (30 in this export, 10 upstream).
-        int open = Service<GameData>().Row("LC_ConditionList", 920199)!.Value.GetProperty("m_kSubConditionList")[0].GetProperty("m_kData")[1].GetInt32();
-        await Gm(alice, $"!lvl {open}");
+        await Gm(alice, $"!lvl {PassOpenLevel.Novice(Service<GameData>())}");
         await Service<NewActivityService>().ReconcileAsync(Session(alice));
         await Event(alice, [(NewActivityService.PassGoal.Quests, 1)], quest: 10101020);
         await Event(alice, [(NewActivityService.PassGoal.Quests, 1)], quest: 9201101); // not a main quest

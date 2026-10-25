@@ -770,7 +770,8 @@ public sealed class PopulationTests : IDisposable
         var scene = new SceneService(Options.Create(options), world, worldData, monsters, buffs, data,
             NullLogger<SceneService>.Instance, new PublicLineManager(data, world), TimeProvider.System);
         return (new CombatService(world, monsters, character, skills, scene, buffs, worldData, sessions, data, loop,
-            NullLogger<CombatService>.Instance, new PetService(data, character, null!, null!, null!, TimeProvider.System, null!)), monsters);
+            NullLogger<CombatService>.Instance, new PetService(data, character, null!, null!, null!, TimeProvider.System, null!),
+            new SeasonTalentService(data, character, null!, null!, null!, NullLogger<SeasonTalentService>.Instance)), monsters);
     }
 
     private static MonsterUnit Monster(long hp = 100) => new()

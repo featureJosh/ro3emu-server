@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Romsg;
 using Ro3Emu.Server.Data;
+using Ro3Emu.Server.Data.Config;
 using Ro3Emu.Server.Maps;
 using Ro3Emu.Server.Game.Ownership;
 
@@ -19,6 +20,8 @@ public sealed class ActiveSkillCast
     public required Vec3 Origin { get; set; }
     /// <summary>Accepted while the caster still walked (WalkSlack): its stop right after is where it cast from.</summary>
     public bool StartedWalking { get; set; }
+    /// <summary>The caster's last walk message when the cast was accepted: the walk its stop can have covered starts there.</summary>
+    public DateTime WalkFromUtc { get; init; }
     public required long StartMs { get; init; }
     public required int ChantMs { get; init; }
     public required int ActionMs { get; init; }
@@ -111,7 +114,8 @@ public sealed partial class CombatService
             else if (s.SkillCast is { Cancelled: false } active2 && Now < active2.StartMs + active2.ChantMs + active2.ActionMs
                 && GameData.Int(active2.Row, "_iIsNormalAtk") != 1
                 && GameData.Int(row.Value, "_bCancelCast") == 0) error = ErrorCodes.SkillBusy;
-            else error = ValidateTarget(s, row.Value, req, origin, owned == null ? WalkSlack(s) : 0);
+            else error = ValidateTarget(s, row.Value, req, origin, owned == null ? WalkSlack(s) : 0,
+                _data.Row("SkillConfig", request.SkillId) is { } askedRow ? Range(askedRow) : 0);
         }
         var costs = row is { } value ? ResolveCosts(s, value) : new CastCosts();
         long errorParam = 0;
@@ -152,7 +156,8 @@ public sealed partial class CombatService
             {
                 Target = target, SkillId = loopSkill,
                 NextSwingMs = Now + SkillMs(s, row.Value) + ChantMs(s, row.Value) + 1,
-                StartX = s.Position.X, StartZ = s.Position.Z
+                StartX = s.Position.X, StartZ = s.Position.Z, StartedWalking = s.Walking, StartMs = Now,
+                ArrivalSpeed = s.Speed / 100f, WalkFromUtc = s.LastWalkUtc
             };
         }
         else if (owned == null && s.Attack is { } attack && CanHitMonster(s, attack.Target)
@@ -166,7 +171,7 @@ public sealed partial class CombatService
             _eventAttacks[s] = new EventAttack(playerTarget, loopSkill,
                 Now + SkillMs(s, row.Value) + ChantMs(s, row.Value) + 1,
                 s.Position.X, s.Position.Z);
-        await StartCooldownAsync(s, row.Value);
+        await StartCooldownAsync(s, row.Value, SkillConfig.Get(_data, request.SkillId) is { } asked ? (int)asked.Mode : null);
         await StartCastAsync(s, row.Value, req, id, owned);
     }
 
@@ -245,11 +250,16 @@ public sealed partial class CombatService
 
     // The client casts on reaching range while it still walks; its stop arrives just after the cast (in-game 11.10:
     // 13 ms later, refused 3024 "invalid skill distance" on most approaches). The cast carries no caster position, so
-    // a walking caster's range allows the distance it can have covered since its last walk, at most 0.75 s of it.
-    private static float WalkSlack(GameSession s) => !s.Walking ? 0
-        : (float)(s.Speed / 100.0 * Math.Clamp((DateTime.UtcNow - s.LastWalkUtc).TotalSeconds, 0, 0.75));
+    // a walking caster's range allows the distance it can have covered since its last walk. The client sends a walk
+    // only when its direction changes (in-game 22.10: straight legs of 0.86 s and 0.9 s), so the time is not capped
+    // below the 5 s SceneService.AcceptWalkAsync allows.
+    internal const double MaxWalkSlackSeconds = 5;
+    private static double WalkedSeconds(DateTime since) => Math.Clamp((DateTime.UtcNow - since).TotalSeconds, 0, MaxWalkSlackSeconds);
+    private static float WalkSlack(GameSession s) => !s.Walking ? 0 : (float)(s.Speed / 100.0 * WalkedSeconds(s.LastWalkUtc));
 
-    private int ValidateTarget(GameSession s, JsonElement row, CastSkillReq req, Vec3 origin, float slack = 0)
+    /// <param name="askedRange">The range of the row the client asked for: it walks into that range, not into the
+    /// range of a mode row a talent or a mount selects (Arrow Smash 18 m, its wolf row 5 m; issue #62).</param>
+    private int ValidateTarget(GameSession s, JsonElement row, CastSkillReq req, Vec3 origin, float slack = 0, float askedRange = 0)
     {
         int release = (int)GameData.Int(row, "_iRelease");
         var monster = FindMonster(s.WorldScene, req.TargetId);
@@ -282,7 +292,8 @@ public sealed partial class CombatService
         else { req.TargetPos ??= origin.Clone(); return 0; }
         if (!_buffs.CanSeePosition(s, targetPosition)) return ErrorCodes.SkillTargetInvalid;
         float d = Distance(origin, targetPosition);
-        if (d < GameData.Int(row, "_iDistanceMin") / 100f - slack || d > Range(row) + 0.5f + slack) return ErrorCodes.SkillDistance;
+        if (d < GameData.Int(row, "_iDistanceMin") / 100f - slack || d > Math.Max(Range(row), askedRange) + 0.5f + slack)
+            return ErrorCodes.SkillDistance;
         float height = GameData.Int(row, "_iHeightRange") / 100f;
         if (height > 0 && MathF.Abs(origin.Y - targetPosition.Y) > height) return ErrorCodes.SkillHeight;
         if (GameData.Int(row, "_iPassBlock") == 2 && _worldData.Map(s.SceneEntry)?.Nav is { } nav
@@ -369,20 +380,40 @@ public sealed partial class CombatService
             await _buffs.ConsumeBuffPilesAsync(s, group, (int)count);
     }
 
-    private async Task StartCooldownAsync(GameSession s, JsonElement row)
+    /// <summary>Ends a skill group's running cooldowns now, each under the mode it was shown (a talent's reset).</summary>
+    internal static async Task ResetCooldownAsync(GameSession s, int group)
+    {
+        long now = Now;
+        var notice = new SkillCdNotify { Uuid = s.Role!.Id };
+        foreach (var (key, end) in s.SkillModeCds.Where(c => c.Key.Group == group && c.Value > now).ToArray())
+        {
+            s.SkillModeCds.Remove(key);
+            notice.Infos.Add(new SkillCdInfo { SkillId = group, SkillMode = key.Mode, CdStartTimestampMs = now, CdEndTimestampMs = now });
+        }
+        if (s.SkillCds.Remove(group) && notice.Infos.Count == 0)
+            notice.Infos.Add(new SkillCdInfo { SkillId = group, CdStartTimestampMs = now, CdEndTimestampMs = now });
+        if (notice.Infos.Count > 0) await s.SendGameAsync(SkillCdUpdate, notice);
+    }
+
+    private async Task StartCooldownAsync(GameSession s, JsonElement row, int? askedMode = null)
     {
         int group = (int)GameData.Int(row, "_iSkillID"), mode = (int)GameData.Int(row, "_iMode");
         long now = Now, cd = GameData.Int(row, "_iCD");
         var notice = new SkillCdNotify { Uuid = s.Role!.Id };
-        void Set(int g, int m, long duration, bool shared)
+        void Set(int g, int m, long duration, bool shared, int shownMode)
         {
             if (duration <= 0) return;
             long end = now + duration;
             s.SkillModeCds[(g, m)] = Math.Max(end, s.SkillModeCds.GetValueOrDefault((g, m)));
             if (shared) s.SkillCds[g] = Math.Max(end, s.SkillCds.GetValueOrDefault(g));
-            notice.Infos.Add(new SkillCdInfo { SkillId = g, SkillMode = m, CdStartTimestampMs = now, CdEndTimestampMs = end });
+            notice.Infos.Add(new SkillCdInfo { SkillId = g, SkillMode = shownMode, CdStartTimestampMs = now, CdEndTimestampMs = end });
         }
-        Set(group, mode, cd, GameData.Int(row, "_iCdModeGroup") < 0);
+        // The client files a 31113 under group * 10000 + its mode (LC_Skill_Function.GetSkillCDInfoKey) and its bar reads
+        // the key of the row it keeps, the row it asks to cast. A mode a talent or a mount selects (type 15: Joint Beat,
+        // Spear Throw, Arrow Smash on the wolf) casts another row, and a cooldown sent under that row's mode never showed
+        // (issue #62): it goes under the asked row's mode. Without one, a mode row's _iCdModeGroup (0: mode 0's) decides.
+        int cdModeGroup = (int)new SkillConfig(row).CdModeGroup;
+        Set(group, mode, cd, cdModeGroup < 0, askedMode ?? (cdModeGroup >= 0 ? cdModeGroup : mode));
         var shared = Numbers(row, "_iPubCD");
         var groups = Numbers(row, "_iPubCDGroup");
         // Parallel arrays, e.g. BackSlide [15104,15330,15329] / [1000,15000,0] (inferred server application).
@@ -390,7 +421,7 @@ public sealed partial class CombatService
         {
             int sibling = (int)groups[i];
             if (_data.Row("SkillConfig", sibling) is { } siblingRow) sibling = (int)GameData.Int(siblingRow, "_iSkillID");
-            if (sibling > 0) Set(sibling, 0, (long)shared[i], true);
+            if (sibling > 0) Set(sibling, 0, (long)shared[i], true, 0);
         }
         if (notice.Infos.Count > 0) await s.SendGameAsync(SkillCdUpdate, notice);
     }
@@ -448,7 +479,7 @@ public sealed partial class CombatService
         var action = new ActiveSkillCast
         {
             Id = id, OwnerId = s.Role!.Id, WorldScene = s.WorldScene, SceneGeneration = s.SceneGeneration,
-            Attachment = s.Attachment, Request = req, Row = row, Origin = origin, StartedWalking = actor == null && s.Walking,
+            Attachment = s.Attachment, Request = req, Row = row, Origin = origin, StartedWalking = actor == null && s.Walking, WalkFromUtc = s.LastWalkUtc,
             StartMs = Now, ChantMs = ChantMs(s, row), ActionMs = SkillMs(s, row), Operator = actor,
         };
         s.SkillCast = action;
@@ -533,12 +564,23 @@ public sealed partial class CombatService
     {
         if (_eventAttacks.TryGetValue(s, out var eventAttack)
             && MonsterService.Distance(eventAttack.StartX, eventAttack.StartZ, s.Position.X, s.Position.Z) > 1.5f) _eventAttacks.Remove(s);
-        if (s.Attack is { } a && MonsterService.Distance(a.StartX, a.StartZ, s.Position.X, s.Position.Z) > 0.1f) s.Attack = null;
+        if (s.Attack is { } a && MonsterService.Distance(a.StartX, a.StartZ, s.Position.X, s.Position.Z) > 0.1f)
+        {
+            // Clicking an enemy from afar: the client attacks on reaching range and stops a few ms later (in-game
+            // 11.10), so that first stop is where the auto-attack starts, not a step away that ends it. The 300 ms grace is inferred.
+            if (a.StartedWalking && !s.Walking && Now - a.StartMs <= 300
+                && MonsterService.Distance(a.StartX, a.StartZ, s.Position.X, s.Position.Z) <= a.ArrivalSpeed * WalkedSeconds(a.WalkFromUtc) + 0.5)
+            {
+                a.StartX = s.Position.X; a.StartZ = s.Position.Z;
+                a.StartedWalking = false;
+            }
+            else s.Attack = null;
+        }
         if (s.SkillCast is not { } cast || Distance(cast.Origin, s.Position) <= 0.1f || GameData.Int(cast.Row, "_bMovement") != 0) return;
         // The client casts on reaching range and stops 1 ms later (in-game 11.10): that first stop is the cast's real
         // origin, within the distance the walk can have covered, not a move that interrupts it.
         if (cast.StartedWalking && !s.Walking && Now - cast.StartMs <= 300
-            && Distance(cast.Origin, s.Position) <= s.Speed / 100f * 0.75f + 0.5f)
+            && Distance(cast.Origin, s.Position) <= s.Speed / 100.0 * WalkedSeconds(cast.WalkFromUtc) + 0.5)
         {
             cast.Origin = s.Position.Clone();
             cast.StartedWalking = false;

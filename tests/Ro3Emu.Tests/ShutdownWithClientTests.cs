@@ -9,7 +9,7 @@ namespace Ro3Emu.Tests;
 /// <summary>POST /ro3emu/shutdown (StopApplication) must stop the host in bounded time while a client is in the world.</summary>
 public sealed class ShutdownWithClientTests
 {
-    [ClientDataTheory]
+    [Theory]
     [InlineData(false, false)]
     [InlineData(true, false)]
     [InlineData(false, true)]
@@ -20,7 +20,7 @@ public sealed class ShutdownWithClientTests
         var app = ServerHost.Create([], o =>
         {
             o.DataDir = dataDir;
-            o.GameDataDir = Path.Combine(ClientData.RepoRoot, "data");
+            o.GameDataDir = SyntheticData.Dir;
             o.HttpPort = httpPort;
             o.MicroGatePort = microPort;
             o.GameGatePort = gamePort;
@@ -51,7 +51,9 @@ public sealed class ShutdownWithClientTests
             app.Services.GetRequiredService<IHostApplicationLifetime>().StopApplication();
             var done = await Task.WhenAny(stopped, Task.Delay(TimeSpan.FromSeconds(15)));
             cts.Cancel();
+            await chatter;
             Assert.True(done == stopped, $"host still stopping after {watch.Elapsed.TotalSeconds:F1} s with a client connected");
+            await stopped; // propagate shutdown failures instead of treating any completed task as success
         }
         finally
         {

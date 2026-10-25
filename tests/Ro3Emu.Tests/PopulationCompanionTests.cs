@@ -237,7 +237,8 @@ public sealed class PopulationCompanionTests : IDisposable
         var monsters = new MonsterService(world, worldData, data, loop, NullLogger<MonsterService>.Instance);
         var scene = new SceneService(Options.Create(options), world, worldData, monsters, buffs, data,
             NullLogger<SceneService>.Instance, new PublicLineManager(data, world), TimeProvider.System);
-        var combat = new CombatService(world, monsters, character, skills, scene, buffs, worldData, sessions, data, loop, NullLogger<CombatService>.Instance, new PetService(data, character, null!, null!, null!, TimeProvider.System, null!));
+        var combat = new CombatService(world, monsters, character, skills, scene, buffs, worldData, sessions, data, loop, NullLogger<CombatService>.Instance, new PetService(data, character, null!, null!, null!, TimeProvider.System, null!),
+            new SeasonTalentService(data, character, null!, null!, null!, NullLogger<SeasonTalentService>.Instance));
         population = new PopulationService(world, worldData, data, loop, Options.Create(options), combat);
         int rewards = 0;
         combat.BeforeKilled.Add((_, _) => { rewards++; return Task.CompletedTask; });
