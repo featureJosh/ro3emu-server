@@ -25,8 +25,6 @@ public sealed partial class TeamService
     internal static bool IsCompanion(long role) => PopulationService.IsUid(role);
     internal long CompanionOwner(long bot) => _companions.TryGetValue(bot, out var c) ? c.Owner : 0;
     private IEnumerable<long> Humans(Team team) => team.Members.Where(m => !IsCompanion(m));
-    private long[] OwnedCompanions(Team team, long owner) =>
-        team.Members.Where(m => IsCompanion(m) && CompanionOwner(m) == owner).ToArray();
 
     /// <summary>Join a companion to its owner's party, creating one through the normal create path when solo.</summary>
     internal Task<int> AddCompanionAsync(GameSession owner, long bot) =>
@@ -89,16 +87,6 @@ public sealed partial class TeamService
         if (!IsCompanion(role)) return;
         _companions.Remove(role);
         CompanionDropped?.Invoke(role);
-    }
-
-    /// <summary>Companions never keep a party open without a human member.</summary>
-    private void DissolveCompanions(Team team)
-    {
-        foreach (long bot in team.Members.ToArray())
-        {
-            team.Members.Remove(bot); _byMember.Remove(bot);
-            ForgetCompanion(bot);
-        }
     }
 
     private TeamMemberDetailInfo CompanionDetail(Team team, long bot)

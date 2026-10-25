@@ -358,7 +358,7 @@ public sealed class PopulationCompanionPartyTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task RecruitedCompanionIsARealRosterMemberSeenByAFriendAndLeavesWithItsOwner()
+    public async Task RecruitedCompanionIsARealRosterMemberSeenByAFriendAndStaysWhenItsOwnerLeaves()
     {
         var population = _app.Services.GetRequiredService<PopulationService>();
         var (alice, aliceId) = await InWorld("Alice");
@@ -390,14 +390,16 @@ public sealed class PopulationCompanionPartyTests : IAsyncLifetime
         await Gm("bob", "!bots passive"); // not Bob's companion: nothing changes
         Assert.Equal(1, await OnLoop(() => population.CompanionCount));
 
-        // The owner leaves: the companion leaves the roster with her and the remaining member sees both go.
+        // The owner leaves like any member: the companion stays in the party, which disbands only at 0 members, and
+        // leadership passes to the first remaining member as it would between players.
         await alice.SendGameAsync(TeamService.TeamLeave, new LeaveTeamReq());
         Assert.Equal(0, (await Next(alice, TeamService.TeamLeave, LeaveTeamResp.Parser)).Result);
-        await Next(bob, TeamService.TeamBroadcastLeave, BroadCastMemberLeave.Parser, m => m.Guid == aliceId);
-        var botLeft = await Next(bob, TeamService.TeamBroadcastLeave, BroadCastMemberLeave.Parser, m => m.Guid == botUid);
-        Assert.DoesNotContain(botUid, botLeft.MemberIndex.Keys);
-        await Until(() => population.CompanionCount == 0);
-        Assert.Equal(bobId, await OnLoop(() => _app.Services.GetRequiredService<TeamService>().TeamOf(bobId).Leader));
+        var aliceLeft = await Next(bob, TeamService.TeamBroadcastLeave, BroadCastMemberLeave.Parser, m => m.Guid == aliceId);
+        Assert.Contains(botUid, aliceLeft.MemberIndex.Keys);
+        Assert.Equal(2, aliceLeft.MemberIndex.Count);
+        long first = aliceLeft.MemberIndex.Single(m => m.Value == 0).Key;
+        Assert.Equal(first, await OnLoop(() => _app.Services.GetRequiredService<TeamService>().TeamOf(bobId).Leader));
+        Assert.Equal(1, await OnLoop(() => population.CompanionCount));
     }
 
     [Fact]

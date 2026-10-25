@@ -183,7 +183,7 @@ public sealed class BattlePassActivityTests : IAsyncLifetime
     public async Task MonthCardClaimsEachOwnedCardOncePerLocalDayAndExpires()
     {
         var alice = await InWorld("Alice");
-        await Gm(alice, "!lvl 99");
+        await Gm(alice, "!lvl 20");
         await Reconcile(alice);
         Assert.Equal(ErrorCodes.MonthCardNotOwned, (await Common(alice, new CommonActivityReq
         {

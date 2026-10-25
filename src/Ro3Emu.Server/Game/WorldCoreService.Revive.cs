@@ -151,12 +151,12 @@ public sealed partial class WorldCoreService
             }
             // The payment's commit can yield the loop: a role detached meanwhile has its durable revive restored on
             // reconnect, and there is no attached role to project it to now.
-            if (!ReferenceEquals(s.Role, role) || !ReferenceEquals(s.Attachment, attachment)) return;
+            // The sends below await too, so the same check guards the publication after them.
+            bool Attached() => ReferenceEquals(s.Role, role) && ReferenceEquals(s.Attachment, attachment);
+            if (!Attached()) return;
             if (committed) await _character.ItemsChangedAsync(s, stats: false);
             await s.SendGameAsync(ReliveItem, new EntityReliveCostItemResp { Result = error });
-            // The debit and revive are durable; a handover that detached the session while the packets above were
-            // awaited (Role = null, RoleHandover.cs:100) leaves nobody to publish to, and the reconnect reloads the state.
-            if (committed && s.Role != null)
+            if (committed && Attached())
             {
                 await _combat.PublishReviveAsync(s, null);
                 await _dungeons.PublishExternalReviveAsync(s);

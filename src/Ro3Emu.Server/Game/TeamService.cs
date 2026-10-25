@@ -276,17 +276,15 @@ public sealed partial class TeamService(SessionRegistry sessions, CharacterServi
         ForgetCompanion(role);
         _log.LogInformation("{Name} leaves party {Team} ({Left} left)", name, team.Id, team.Members.Count);
         await NotifyRosterAsync([.. team.Members, role]);
-        if (team.Members.All(IsCompanion))
+        if (team.Members.Count == 0)
         {
-            DissolveCompanions(team);
             _teams.Remove(team.Id);
             return;
         }
-        if (team.Leader == role) await ChangeLeaderAsync(team, Humans(team).First());
+        if (team.Leader == role) await ChangeLeaderAsync(team, team.Members[0]);
         var leave = new BroadCastMemberLeave { TeamId = team.Id, LeaveType = (ELeaveType)leaveType, Guid = role, Name = name };
         for (int i = 0; i < team.Members.Count; i++) leave.MemberIndex[team.Members[i]] = i;
         await ToOthersAsync(team, role, TeamBroadcastLeave, leave);
-        foreach (long bot in OwnedCompanions(team, role)) await RemoveAsync(team, bot, leaveType);
     }
 
     /// <summary>42008 to everyone first (its tip reads the current leader's name), then the two changed cards (42050).</summary>
