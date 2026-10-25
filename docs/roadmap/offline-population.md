@@ -1,5 +1,9 @@
 # Bot improvement roadmap
 
+> **Superseded in part (2026-10-24):** the owner rule is that bots are players whose client is software. Companion
+> rules below that make bots differ from players (never leading, waiting outside dungeons, no killing blows, no
+> rewards) are replaced by the [player emulation roadmap](player-emulation.md).
+
 This is a proposal for future work, not a list of available settings. It builds on the population feature
 merged into `linux-asia-offline`. All new milestones below are unimplemented unless marked complete.
 

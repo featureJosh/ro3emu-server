@@ -334,9 +334,10 @@ public sealed class OpenContentOptions
     /// <summary>
     /// NewActivityConfig rows whose own open condition is a level the cap never reaches (e.g. 112 Novice Challenge).
     /// 200 Pass I asks for base level 99 (condition 21000019). Pass II (201, the same condition and EXP currency) opens
-    /// after Pass I, when the owner adds it here.
+    /// after Pass I, when the owner adds it here. 199 Month Card asks for base level 99 in the Asia export (condition
+    /// 21000018); the Genesis client opens it earlier, so it is listed here for the Asia client.
     /// </summary>
-    public long[] Activities { get; set; } = [200];
+    public long[] Activities { get; set; } = [200, 199];
 
     /// <summary>
     /// The season page's stage activities (MultiverseStage._kStageActivity of the playbook: for 101 that is 105 Fragment
